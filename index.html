@@ -644,11 +644,15 @@
     <div class="auth-error" id="loginErr">Correo/teléfono o contraseña incorrectos.</div>
     <div class="form-group">
       <label class="form-label">Correo o teléfono</label>
-      <input class="form-input" type="text" id="loginEmail" placeholder="tu@correo.com o tu número" autocomplete="username">
+      <input class="form-input" type="text" id="loginEmail"
+             placeholder="tu@correo.com o tu número"
+             autocomplete="username" autocapitalize="none"
+             autocorrect="off" spellcheck="false">
     </div>
     <div class="form-group">
       <label class="form-label">Contraseña</label>
-      <input class="form-input" type="password" id="loginPass" placeholder="••••••••"
+      <input class="form-input" type="password" id="loginPass"
+             placeholder="••••••••" autocomplete="current-password"
              onkeydown="if(event.key==='Enter')doLogin()">
     </div>
     <div style="text-align:right;margin:-8px 0 14px">
@@ -676,7 +680,8 @@
     </div>
     <div class="form-group">
       <label class="form-label">Correo electrónico</label>
-      <input class="form-input" type="email" id="regEmail" placeholder="tu@correo.com">
+      <input class="form-input" type="email" id="regEmail" placeholder="tu@correo.com"
+             autocapitalize="none" autocorrect="off" spellcheck="false">
     </div>
     <div class="form-group">
       <label class="form-label">Teléfono / WhatsApp <span style="color:var(--text-light);font-weight:400">(para recuperar acceso)</span></label>
@@ -714,7 +719,10 @@
     <div class="auth-error" id="forgotErr"></div>
     <div class="form-group" style="margin-bottom:22px">
       <label class="form-label">Correo o teléfono registrado</label>
-      <input class="form-input" type="text" id="forgotInput" placeholder="tu@correo.com o tu número"
+      <input class="form-input" type="text" id="forgotInput"
+             placeholder="tu@correo.com o tu número"
+             autocomplete="username" autocapitalize="none"
+             autocorrect="off" spellcheck="false"
              onkeydown="if(event.key==='Enter')doForgot()">
     </div>
     <button class="btn-primary" onclick="doForgot()">📲 Enviar código por WhatsApp</button>
@@ -1248,16 +1256,19 @@ function openLoginModal() {
 function closeLoginModal(){ document.getElementById('loginModal').classList.remove('open'); unlockScroll(); }
 
 function doLogin() {
-  const raw = document.getElementById('loginEmail').value.trim();
-  const pw  = document.getElementById('loginPass').value;
-  const em  = raw.toLowerCase();
-  const ph  = raw.replace(/\D/g,'');
-  // buscar por email O por teléfono
-  const found = S.users.find(u=>
-    (u.email===em) || (u.phone && normalizePhone(u.phone)===ph && ph.length>=8)
-  ) && S.users.find(u=>
-    ((u.email===em)||(u.phone && normalizePhone(u.phone)===ph && ph.length>=8)) && u.pass===pw
-  );
+  const raw    = document.getElementById('loginEmail').value.trim();
+  const pw     = document.getElementById('loginPass').value;
+  const em     = raw.toLowerCase();
+  const ph     = normalizePhone(raw);
+  const isEmail= raw.includes('@');
+
+  const found = S.users.find(u => {
+    const matchId = isEmail
+      ? u.email === em
+      : (u.phone && normalizePhone(u.phone) === ph && ph.length >= 8);
+    return matchId && u.pass === pw;
+  });
+
   if(found){
     S.user = { name:found.name, email:found.email, phone:found.phone||'' };
     saveSession();
