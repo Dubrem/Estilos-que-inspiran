@@ -1007,9 +1007,47 @@ const WA_NUMBER  = '5214421052174';
 const ADMIN_CRED = { email:'admin@bellaesencia.com', pass:'bella2026' };
 
 /* ──────────────────────────────────────────────────────
+   PERSISTENCIA (localStorage)
+────────────────────────────────────────────────────── */
+const LS_USERS   = 'be_users_v1';
+const LS_SESSION = 'be_session_v1';
+
+function saveUsers(){
+  try { localStorage.setItem(LS_USERS, JSON.stringify(S.users)); } catch(e){}
+}
+function loadUsers(){
+  try {
+    const raw = localStorage.getItem(LS_USERS);
+    if(raw){
+      const stored = JSON.parse(raw);
+      if(Array.isArray(stored) && stored.length) S.users = stored;
+    }
+  } catch(e){}
+}
+function saveSession(){
+  try {
+    if(S.user) localStorage.setItem(LS_SESSION, JSON.stringify(S.user));
+    else        localStorage.removeItem(LS_SESSION);
+  } catch(e){}
+}
+function loadSession(){
+  try {
+    const raw = localStorage.getItem(LS_SESSION);
+    if(raw){
+      const u = JSON.parse(raw);
+      // verificar que el usuario aún existe en S.users
+      if(u && S.users.find(x=>x.email===u.email)) S.user = u;
+    }
+  } catch(e){}
+}
+
+/* ──────────────────────────────────────────────────────
    INIT
 ────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
+  loadUsers();      // recuperar cuentas guardadas
+  loadSession();    // recuperar sesión activa
+  renderLoginArea();
   renderGrid('all');
   spawnParticles();
 });
@@ -1222,6 +1260,7 @@ function doLogin() {
   );
   if(found){
     S.user = { name:found.name, email:found.email, phone:found.phone||'' };
+    saveSession();
     closeLoginModal();
     renderLoginArea();
     toast(`✓ ¡Bienvenida, ${found.name}!`,'ok');
@@ -1230,7 +1269,7 @@ function doLogin() {
     document.getElementById('loginPass').value='';
   }
 }
-function doLogout(){ S.user=null; renderLoginArea(); toast('Sesión cerrada',''); }
+function doLogout(){ S.user=null; saveSession(); renderLoginArea(); toast('Sesión cerrada',''); }
 function renderLoginArea(){
   const area=document.getElementById('loginArea');
   area.innerHTML = S.user
@@ -1283,7 +1322,9 @@ function doRegister(){
   if(pass !== pass2)                                { showRegErr('Las contraseñas no coinciden.'); return; }
 
   S.users.push({ name, email, phone, pass });
+  saveUsers();
   S.user = { name, email, phone };
+  saveSession();
   closeRegisterModal();
   renderLoginArea();
   toast(`✓ ¡Cuenta creada! Bienvenida, ${name} 🌸`, 'ok');
@@ -1468,6 +1509,7 @@ function doRecovery(){
   // Código correcto → iniciar sesión
   user.resetCode=null; user.resetExp=null; S._recoveryEmail=null;
   S.user = { name:user.name, email:user.email, phone:user.phone||'' };
+  saveSession();
   closeRecoveryModal();
   renderLoginArea();
   toast(`✓ ¡Acceso recuperado! Bienvenida, ${user.name} 🌸`,'ok');
