@@ -70,16 +70,58 @@
     /* ============================
        HERO
     ============================ */
-    .hero { position: relative; overflow: hidden; background: linear-gradient(135deg,var(--nude-light) 0%,var(--rose-light) 55%,var(--nude) 100%); padding: 80px 2rem 88px; text-align: center; }
-    .hero::before { content:''; position:absolute; top:-30%; right:-15%; width:560px; height:560px; border-radius:50%; background:radial-gradient(circle,rgba(201,169,110,.18) 0%,transparent 70%); pointer-events:none; }
-    .hero::after  { content:''; position:absolute; bottom:-25%; left:-10%; width:400px; height:400px; border-radius:50%; background:radial-gradient(circle,rgba(208,128,144,.2) 0%,transparent 70%); pointer-events:none; }
-    .hero-content { position:relative; z-index:1; max-width:660px; margin:0 auto; }
-    .hero-badge { display:inline-block; background:#fff; color:var(--rose); font-size:.72rem; font-weight:800; letter-spacing:2px; text-transform:uppercase; padding:6px 18px; border-radius:50px; margin-bottom:22px; box-shadow:0 3px 14px var(--shadow-md); }
-    .hero h1 { font-family:var(--ff-head); font-size:clamp(2.2rem,5.5vw,3.8rem); font-weight:700; line-height:1.1; color:var(--text-dark); margin-bottom:14px; }
+    .hero {
+      position:relative; overflow:hidden; text-align:center;
+      padding: 90px 2rem 100px;
+      background: linear-gradient(145deg, #fdf0e8 0%, #f7d9dc 40%, #eeddd0 100%);
+      min-height: 520px; display:flex; align-items:center; justify-content:center;
+    }
+    /* partículas cayendo */
+    .hero-particles { position:absolute; inset:0; pointer-events:none; overflow:hidden; z-index:0; }
+    .ptcl {
+      position:absolute; top:-90px;
+      animation: floatDown linear infinite;
+      opacity:0; user-select:none; will-change:transform;
+    }
+    @keyframes floatDown {
+      0%   { transform:translateY(0) rotate(-15deg) scale(1);   opacity:0;   }
+      6%   { opacity:.9; }
+      88%  { opacity:.75; }
+      100% { transform:translateY(110vh) rotate(340deg) scale(.85); opacity:0; }
+    }
+    /* brillo de fondo */
+    .hero::before {
+      content:''; position:absolute; top:-20%; right:-10%;
+      width:500px; height:500px; border-radius:50%; pointer-events:none;
+      background:radial-gradient(circle, rgba(201,169,110,.2) 0%, transparent 68%);
+    }
+    .hero::after {
+      content:''; position:absolute; bottom:-20%; left:-8%;
+      width:380px; height:380px; border-radius:50%; pointer-events:none;
+      background:radial-gradient(circle, rgba(208,128,144,.22) 0%, transparent 68%);
+    }
+    .hero-content { position:relative; z-index:1; max-width:660px; margin:0 auto; width:100%; }
+    .hero-badge {
+      display:inline-block; background:#fff; color:var(--rose);
+      font-size:.72rem; font-weight:800; letter-spacing:2px; text-transform:uppercase;
+      padding:6px 18px; border-radius:50px; margin-bottom:22px;
+      box-shadow:0 3px 14px var(--shadow-md);
+    }
+    .hero h1 { font-family:var(--ff-head); font-size:clamp(2rem,5.5vw,3.8rem); font-weight:700; line-height:1.1; color:var(--text-dark); margin-bottom:14px; }
     .hero h1 em { font-style:italic; color:var(--rose); }
-    .hero p { font-size:1.05rem; color:var(--text-med); max-width:480px; margin:0 auto 30px; }
-    .btn-hero { display:inline-block; padding:13px 36px; background:linear-gradient(135deg,var(--rose) 0%,var(--rose-dark) 100%); color:#fff; text-decoration:none; border:none; border-radius:50px; font-size:.93rem; font-weight:700; box-shadow:0 8px 22px rgba(208,128,144,.4); transition:all .22s; }
+    .hero p { font-size:clamp(.92rem,2.5vw,1.05rem); color:var(--text-med); max-width:480px; margin:0 auto 30px; }
+    .btn-hero {
+      display:inline-block; padding:13px 36px;
+      background:linear-gradient(135deg,var(--rose) 0%,var(--rose-dark) 100%);
+      color:#fff; text-decoration:none; border:none; border-radius:50px;
+      font-size:clamp(.85rem,.9rem + .3vw,.93rem); font-weight:700;
+      box-shadow:0 8px 22px rgba(208,128,144,.4); transition:all .22s;
+    }
     .btn-hero:hover { transform:translateY(-2px); box-shadow:0 12px 30px rgba(208,128,144,.5); }
+    @media(max-width:480px){
+      .hero{ padding:72px 1.2rem 80px; min-height:auto; }
+      .ptcl { font-size: .9rem !important; }
+    }
 
     /* ============================
        SECTION HELPERS
@@ -359,8 +401,10 @@
 
 <!-- ========== HERO ========== -->
 <section class="hero" id="inicio">
+  <!-- partículas animadas generadas por JS -->
+  <div class="hero-particles" id="heroParticles"></div>
   <div class="hero-content">
-    <span class="hero-badge">✨ Nueva Colección 2025</span>
+    <span class="hero-badge">✨ Nueva Colección 2026</span>
     <h1>Tu belleza,<br><em>nuestra pasión</em></h1>
     <p>Productos de belleza premium seleccionados con amor para realzar tu esencia única.</p>
     <button class="btn-hero" onclick="document.getElementById('catalogo').scrollIntoView({behavior:'smooth'})">Explorar Colección →</button>
@@ -595,7 +639,7 @@
     </div>
   </div>
   <div class="footer-bottom">
-    <span>© 2025 Bella Esencia. Todos los derechos reservados.</span>
+    <span>© 2026 Bella Esencia. Todos los derechos reservados.</span>
     <span>Hecho con 💗 en México</span>
   </div>
 </footer>
@@ -687,11 +731,40 @@ const SHIP_COST = 110;
 ────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   renderGrid('all');
+  spawnParticles();
 });
 
 /* ──────────────────────────────────────────────────────
    UTILIDADES
 ────────────────────────────────────────────────────── */
+/* ──────────────────────────────────────────────────────
+   HERO PARTICLES
+────────────────────────────────────────────────────── */
+function spawnParticles() {
+  const container = document.getElementById('heroParticles');
+  if (!container) return;
+  // emojis de uñas, labios y accesorios de belleza
+  const pool = ['💅','💅','💅','💄','💄','🌸','🌸','✨','✨','💋',
+                '💎','🌷','🌟','🧴','💅','💄','🌸','✨','💎','💅'];
+  const isMobile = window.innerWidth < 480;
+  const count = isMobile ? 10 : 20;
+
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement('span');
+    el.className = 'ptcl';
+    el.textContent = pool[i % pool.length];
+    const size   = isMobile ? (.8 + Math.random() * .9) : (1.2 + Math.random() * 1.6);
+    const delay  = (Math.random() * 10).toFixed(2);
+    const dur    = (7 + Math.random() * 9).toFixed(2);
+    const left   = (2 + Math.random() * 94).toFixed(1);
+    el.style.cssText =
+      `left:${left}%;font-size:${size}rem;` +
+      `animation-duration:${dur}s;animation-delay:${delay}s;` +
+      `filter:drop-shadow(0 2px 6px rgba(208,128,144,.35));`;
+    container.appendChild(el);
+  }
+}
+
 function fmtMXN(n){ return '$' + n.toLocaleString('es-MX'); }
 function catLabel(c){ return {maquillaje:'Maquillaje',skincare:'Skincare',cabello:'Cabello',unas:'Uñas'}[c]||c; }
 function lockScroll()   { document.body.style.overflow='hidden'; }
