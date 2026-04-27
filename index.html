@@ -1033,7 +1033,7 @@ async function fbFetch(path, opts={}){
     const r = await fetch(`${FIREBASE_DB_URL}/${path}.json`, opts);
     if(!r.ok) return null;
     return await r.json();
-  }catch(){ return null; }
+  }catch(e){ return null; }
 }
 async function fbSet(path, data){
   return fbFetch(path, {
