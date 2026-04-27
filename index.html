@@ -437,6 +437,52 @@
     }
 
     /* ============================
+       PHONE / FORGOT / RECOVERY
+    ============================ */
+    .forgot-link {
+      font-size:.78rem; color:var(--rose); font-weight:600;
+      cursor:pointer; text-decoration:underline dotted;
+    }
+    .forgot-link:hover { color:var(--rose-dark); }
+    .phone-wrap {
+      display:flex; align-items:center; border:1.5px solid var(--border);
+      border-radius:10px; overflow:hidden; transition:border-color .2s;
+    }
+    .phone-wrap:focus-within { border-color:var(--rose); }
+    .phone-prefix {
+      padding:0 12px; background:var(--nude-light); color:var(--text-med);
+      font-size:.83rem; font-weight:700; white-space:nowrap;
+      border-right:1.5px solid var(--border); height:100%;
+      display:flex; align-items:center; flex-shrink:0;
+    }
+    .phone-input {
+      border:none !important; border-radius:0 !important;
+      flex:1; min-width:0;
+    }
+    .phone-input:focus { box-shadow:none !important; }
+    .recovery-code-box {
+      background:linear-gradient(135deg,var(--nude-light),var(--rose-light));
+      border-radius:14px; padding:18px 20px; margin-bottom:16px;
+      text-align:center; display:none;
+    }
+    .recovery-code-box.show { display:block; }
+    .recovery-code-box .rc-label {
+      font-size:.72rem; font-weight:800; text-transform:uppercase;
+      letter-spacing:.8px; color:var(--text-med); margin-bottom:6px;
+    }
+    .recovery-code-box .rc-num {
+      font-family:var(--ff-head); font-size:2.4rem; font-weight:700;
+      letter-spacing:.35em; color:var(--rose-dark); line-height:1.1;
+    }
+    .recovery-code-box .rc-exp {
+      font-size:.72rem; color:var(--text-light); margin-top:6px;
+    }
+    .code-input {
+      text-align:center; font-size:1.6rem; font-family:var(--ff-head);
+      letter-spacing:.35em; font-weight:700;
+    }
+
+    /* ============================
        FOOTER
     ============================ */
     .footer { background:var(--text-dark); color:rgba(255,255,255,.68); padding:52px 2rem 24px; }
@@ -595,15 +641,18 @@
       <p class="auth-sub">Bienvenida de nuevo</p>
     </div>
 
-    <div class="auth-error" id="loginErr">Correo o contraseña incorrectos.</div>
+    <div class="auth-error" id="loginErr">Correo/teléfono o contraseña incorrectos.</div>
     <div class="form-group">
-      <label class="form-label">Correo electrónico</label>
-      <input class="form-input" type="email" id="loginEmail" placeholder="tu@correo.com">
+      <label class="form-label">Correo o teléfono</label>
+      <input class="form-input" type="text" id="loginEmail" placeholder="tu@correo.com o 4421052174" autocomplete="username">
     </div>
     <div class="form-group">
       <label class="form-label">Contraseña</label>
       <input class="form-input" type="password" id="loginPass" placeholder="••••••••"
              onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div style="text-align:right;margin:-8px 0 14px">
+      <a class="forgot-link" onclick="switchToForgot()">¿Olvidaste tu contraseña?</a>
     </div>
     <button class="btn-primary" onclick="doLogin()">Iniciar Sesión</button>
     <p class="auth-switch">¿No tienes cuenta? <a onclick="switchToRegister()">Regístrate aquí</a></p>
@@ -630,6 +679,14 @@
       <input class="form-input" type="email" id="regEmail" placeholder="tu@correo.com">
     </div>
     <div class="form-group">
+      <label class="form-label">Teléfono / WhatsApp <span style="color:var(--text-light);font-weight:400">(para recuperar acceso)</span></label>
+      <div class="phone-wrap">
+        <span class="phone-prefix">🇲🇽 +52</span>
+        <input class="form-input phone-input" type="tel" id="regPhone" placeholder="4421052174" maxlength="12"
+               oninput="this.value=this.value.replace(/\D/g,'')">
+      </div>
+    </div>
+    <div class="form-group">
       <label class="form-label">Contraseña</label>
       <input class="form-input" type="password" id="regPass" placeholder="Mínimo 6 caracteres">
     </div>
@@ -643,6 +700,54 @@
   </div>
 </div>
 
+
+<!-- ========== FORGOT PASSWORD MODAL ========== -->
+<div class="modal" id="forgotModal">
+  <div class="modal-overlay" onclick="closeForgotModal()"></div>
+  <div class="modal-box">
+    <button class="modal-x" onclick="closeForgotModal()">✕</button>
+    <div class="auth-icon-wrap">
+      <div class="auth-icon">🔑</div>
+      <h2 class="auth-title">Recuperar Acceso</h2>
+      <p class="auth-sub">Te enviaremos un código por WhatsApp</p>
+    </div>
+    <div class="auth-error" id="forgotErr"></div>
+    <div class="form-group" style="margin-bottom:22px">
+      <label class="form-label">Correo o teléfono registrado</label>
+      <input class="form-input" type="text" id="forgotInput" placeholder="tu@correo.com o 4421052174"
+             onkeydown="if(event.key==='Enter')doForgot()">
+    </div>
+    <button class="btn-primary" onclick="doForgot()">📲 Enviar código por WhatsApp</button>
+    <p class="auth-switch"><a onclick="switchToLogin()">← Volver a iniciar sesión</a></p>
+  </div>
+</div>
+
+<!-- ========== RECOVERY CODE MODAL ========== -->
+<div class="modal" id="recoveryModal">
+  <div class="modal-overlay"></div>
+  <div class="modal-box">
+    <div class="auth-icon-wrap">
+      <div class="auth-icon">💬</div>
+      <h2 class="auth-title">Ingresa tu Código</h2>
+      <p class="auth-sub" id="recoveryHint">Revisa tu WhatsApp</p>
+    </div>
+    <div class="recovery-code-box" id="recoveryCodeBox">
+      <!-- código temporal visible aquí -->
+    </div>
+    <div class="auth-error" id="recoveryErr">Código incorrecto o expirado.</div>
+    <div class="form-group" style="margin-bottom:22px">
+      <label class="form-label">Código de 6 dígitos</label>
+      <input class="form-input code-input" type="text" id="recoveryCode"
+             maxlength="6" placeholder="_ _ _ _ _ _"
+             oninput="this.value=this.value.replace(/\D/g,'')"
+             onkeydown="if(event.key==='Enter')doRecovery()">
+    </div>
+    <button class="btn-primary" onclick="doRecovery()">✓ Verificar y Entrar</button>
+    <p class="auth-switch" style="margin-top:12px">
+      <a onclick="switchToForgot()">Reenviar código</a>
+    </p>
+  </div>
+</div>
 
 <!-- ========== CHECKOUT MODAL ========== -->
 <div class="modal checkout-modal" id="checkoutModal">
@@ -1105,11 +1210,18 @@ function openLoginModal() {
 function closeLoginModal(){ document.getElementById('loginModal').classList.remove('open'); unlockScroll(); }
 
 function doLogin() {
-  const em = document.getElementById('loginEmail').value.trim().toLowerCase();
-  const pw = document.getElementById('loginPass').value;
-  const found = S.users.find(u=>u.email===em && u.pass===pw);
+  const raw = document.getElementById('loginEmail').value.trim();
+  const pw  = document.getElementById('loginPass').value;
+  const em  = raw.toLowerCase();
+  const ph  = raw.replace(/\D/g,'');
+  // buscar por email O por teléfono
+  const found = S.users.find(u=>
+    (u.email===em) || (u.phone && normalizePhone(u.phone)===ph && ph.length>=8)
+  ) && S.users.find(u=>
+    ((u.email===em)||(u.phone && normalizePhone(u.phone)===ph && ph.length>=8)) && u.pass===pw
+  );
   if(found){
-    S.user = { name:found.name, email:found.email };
+    S.user = { name:found.name, email:found.email, phone:found.phone||'' };
     closeLoginModal();
     renderLoginArea();
     toast(`✓ ¡Bienvenida, ${found.name}!`,'ok');
@@ -1127,15 +1239,19 @@ function renderLoginArea(){
 }
 
 /* ──────────────────────────────────────────────────────
-   SWITCH LOGIN ↔ REGISTER
+   SWITCH LOGIN ↔ REGISTER ↔ FORGOT
 ────────────────────────────────────────────────────── */
 function switchToRegister(){
   closeLoginModal();
   setTimeout(openRegisterModal, 180);
 }
 function switchToLogin(){
-  closeRegisterModal();
+  closeRegisterModal(); closeForgotModal(); closeRecoveryModal();
   setTimeout(openLoginModal, 180);
+}
+function switchToForgot(){
+  closeLoginModal(); closeRecoveryModal();
+  setTimeout(openForgotModal, 180);
 }
 
 /* ──────────────────────────────────────────────────────
@@ -1143,10 +1259,7 @@ function switchToLogin(){
 ────────────────────────────────────────────────────── */
 function openRegisterModal(){
   document.getElementById('regErr').classList.remove('show');
-  document.getElementById('regName').value='';
-  document.getElementById('regEmail').value='';
-  document.getElementById('regPass').value='';
-  document.getElementById('regPass2').value='';
+  ['regName','regEmail','regPhone','regPass','regPass2'].forEach(id=>{ document.getElementById(id).value=''; });
   document.getElementById('registerModal').classList.add('open');
   lockScroll();
 }
@@ -1155,26 +1268,29 @@ function closeRegisterModal(){ document.getElementById('registerModal').classLis
 function doRegister(){
   const name  = document.getElementById('regName').value.trim();
   const email = document.getElementById('regEmail').value.trim().toLowerCase();
+  const phone = document.getElementById('regPhone').value.replace(/\D/g,'');
   const pass  = document.getElementById('regPass').value;
   const pass2 = document.getElementById('regPass2').value;
 
   document.getElementById('regErr').classList.remove('show');
 
-  if(!name)                              { showRegErr('Ingresa tu nombre completo.'); return; }
-  if(!validateEmail(email))             { showRegErr('Ingresa un correo válido.'); return; }
-  if(S.users.find(u=>u.email===email))  { showRegErr('Este correo ya está registrado.'); return; }
-  if(pass.length < 6)                   { showRegErr('La contraseña debe tener al menos 6 caracteres.'); return; }
-  if(pass !== pass2)                    { showRegErr('Las contraseñas no coinciden.'); return; }
+  if(!name)                                         { showRegErr('Ingresa tu nombre completo.'); return; }
+  if(!validateEmail(email))                         { showRegErr('Ingresa un correo válido.'); return; }
+  if(phone.length < 10)                             { showRegErr('Ingresa un teléfono de 10 dígitos.'); return; }
+  if(S.users.find(u=>u.email===email))              { showRegErr('Este correo ya está registrado.'); return; }
+  if(S.users.find(u=>normalizePhone(u.phone||'')===phone)) { showRegErr('Este teléfono ya está registrado.'); return; }
+  if(pass.length < 6)                               { showRegErr('La contraseña debe tener al menos 6 caracteres.'); return; }
+  if(pass !== pass2)                                { showRegErr('Las contraseñas no coinciden.'); return; }
 
-  // Crear cuenta y hacer login directamente
-  S.users.push({ name, email, pass });
-  S.user = { name, email };
+  S.users.push({ name, email, phone, pass });
+  S.user = { name, email, phone };
   closeRegisterModal();
   renderLoginArea();
   toast(`✓ ¡Cuenta creada! Bienvenida, ${name} 🌸`, 'ok');
 }
 function showRegErr(msg){ const el=document.getElementById('regErr'); el.textContent=msg; el.classList.add('show'); }
 function validateEmail(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+function normalizePhone(p){ return String(p).replace(/\D/g,''); }
 
 /* ──────────────────────────────────────────────────────
    CHECKOUT
@@ -1261,6 +1377,100 @@ function toast(msg,type){
   el.className='toast show'+(type?` ${type}`:'');
   clearTimeout(el._t);
   el._t=setTimeout(()=>el.classList.remove('show'),2800);
+}
+
+/* ──────────────────────────────────────────────────────
+   RECUPERAR CONTRASEÑA
+────────────────────────────────────────────────────── */
+function openForgotModal(){
+  document.getElementById('forgotErr').classList.remove('show');
+  document.getElementById('forgotInput').value='';
+  document.getElementById('forgotModal').classList.add('open');
+  lockScroll();
+  setTimeout(()=>document.getElementById('forgotInput').focus(),200);
+}
+function closeForgotModal(){ document.getElementById('forgotModal').classList.remove('open'); unlockScroll(); }
+
+function doForgot(){
+  const raw = document.getElementById('forgotInput').value.trim();
+  const em  = raw.toLowerCase();
+  const ph  = raw.replace(/\D/g,'');
+
+  const user = S.users.find(u=>
+    u.email===em || (u.phone && normalizePhone(u.phone)===ph && ph.length>=8)
+  );
+
+  if(!user){
+    const el=document.getElementById('forgotErr');
+    el.textContent='No encontramos una cuenta con ese correo o teléfono.';
+    el.classList.add('show'); return;
+  }
+  if(!user.phone){
+    const el=document.getElementById('forgotErr');
+    el.textContent='Esta cuenta no tiene teléfono registrado. Contacta al administrador.';
+    el.classList.add('show'); return;
+  }
+
+  // Generar código de 6 dígitos
+  const code = String(Math.floor(100000 + Math.random()*900000));
+  user.resetCode = code;
+  user.resetExp  = Date.now() + 10 * 60 * 1000; // válido 10 min
+  user._resetTarget = user.email; // para identificar al usuario al verificar
+
+  // Abrir WhatsApp al número del usuario con el código
+  const waPhone = '521' + normalizePhone(user.phone);
+  const msg = `🌸 *Bella Esencia* — Código de recuperación\n\nHola ${user.name}, tu código temporal es:\n\n*${code}*\n\nVálido por 10 minutos. Si no lo solicitaste, ignora este mensaje.`;
+  window.open(`https://wa.me/${waPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+
+  closeForgotModal();
+  openRecoveryModal(user, code);
+}
+
+function openRecoveryModal(user, code){
+  document.getElementById('recoveryErr').classList.remove('show');
+  document.getElementById('recoveryCode').value='';
+  document.getElementById('recoveryHint').textContent =
+    `Se abrió WhatsApp con tu código para ${user.name}`;
+
+  // Mostrar el código en pantalla (para facilidad de uso en app de una sola página)
+  const box = document.getElementById('recoveryCodeBox');
+  box.innerHTML = `
+    <div class="rc-label">Tu código temporal</div>
+    <div class="rc-num">${code}</div>
+    <div class="rc-exp">⏱ Válido por 10 minutos</div>`;
+  box.classList.add('show');
+
+  // Guardar referencia al usuario en recuperación
+  S._recoveryEmail = user.email;
+
+  document.getElementById('recoveryModal').classList.add('open');
+  lockScroll();
+  setTimeout(()=>document.getElementById('recoveryCode').focus(),200);
+}
+function closeRecoveryModal(){ document.getElementById('recoveryModal').classList.remove('open'); unlockScroll(); }
+
+function doRecovery(){
+  const code = document.getElementById('recoveryCode').value.trim();
+  const user = S.users.find(u=>u.email===S._recoveryEmail);
+  const err  = document.getElementById('recoveryErr');
+
+  if(!user || !user.resetCode){
+    err.textContent='No hay código activo. Solicita uno nuevo.'; err.classList.add('show'); return;
+  }
+  if(Date.now() > user.resetExp){
+    err.textContent='El código expiró. Solicita uno nuevo.'; err.classList.add('show');
+    user.resetCode=null; user.resetExp=null; return;
+  }
+  if(code !== user.resetCode){
+    err.textContent='Código incorrecto. Revisa tu WhatsApp.'; err.classList.add('show'); return;
+  }
+
+  // Código correcto → iniciar sesión
+  user.resetCode=null; user.resetExp=null; S._recoveryEmail=null;
+  S.user = { name:user.name, email:user.email, phone:user.phone||'' };
+  closeRecoveryModal();
+  renderLoginArea();
+  toast(`✓ ¡Acceso recuperado! Bienvenida, ${user.name} 🌸`,'ok');
 }
 
 /* ──────────────────────────────────────────────────────
@@ -1396,8 +1606,8 @@ function setOrderStatus(orderNum, status){
 document.addEventListener('keydown', e=>{
   if(e.key!=='Escape') return;
   closeLightbox(); closeCart(); closeLoginModal();
-  closeRegisterModal(); closeCheckoutModal();
-  closeAdminLogin();
+  closeRegisterModal(); closeForgotModal(); closeRecoveryModal();
+  closeCheckoutModal(); closeAdminLogin();
 });
 </script>
 </body>
