@@ -644,7 +644,7 @@
     <div class="auth-error" id="loginErr">Correo/teléfono o contraseña incorrectos.</div>
     <div class="form-group">
       <label class="form-label">Correo o teléfono</label>
-      <input class="form-input" type="text" id="loginEmail" placeholder="tu@correo.com o 4421052174" autocomplete="username">
+      <input class="form-input" type="text" id="loginEmail" placeholder="tu@correo.com o tu número" autocomplete="username">
     </div>
     <div class="form-group">
       <label class="form-label">Contraseña</label>
@@ -682,7 +682,7 @@
       <label class="form-label">Teléfono / WhatsApp <span style="color:var(--text-light);font-weight:400">(para recuperar acceso)</span></label>
       <div class="phone-wrap">
         <span class="phone-prefix">🇲🇽 +52</span>
-        <input class="form-input phone-input" type="tel" id="regPhone" placeholder="4421052174" maxlength="12"
+        <input class="form-input phone-input" type="tel" id="regPhone" placeholder="10 dígitos" maxlength="12"
                oninput="this.value=this.value.replace(/\D/g,'')">
       </div>
     </div>
@@ -714,7 +714,7 @@
     <div class="auth-error" id="forgotErr"></div>
     <div class="form-group" style="margin-bottom:22px">
       <label class="form-label">Correo o teléfono registrado</label>
-      <input class="form-input" type="text" id="forgotInput" placeholder="tu@correo.com o 4421052174"
+      <input class="form-input" type="text" id="forgotInput" placeholder="tu@correo.com o tu número"
              onkeydown="if(event.key==='Enter')doForgot()">
     </div>
     <button class="btn-primary" onclick="doForgot()">📲 Enviar código por WhatsApp</button>
