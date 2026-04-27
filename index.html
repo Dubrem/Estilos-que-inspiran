@@ -384,6 +384,8 @@
     }
     .status-pendiente { background:#fff3cd; color:#856404; }
     .status-pagado    { background:#d1e7dd; color:#0a5931; }
+    .status-listo     { background:#cff4fc; color:#0d4f6c; }
+    .status-enviado   { background:#cfe2ff; color:#084298; }
     .status-despachado{ background:#cfe2ff; color:#084298; }
     .order-card-body { padding:16px 18px; }
     .order-meta { display:flex; flex-direction:column; gap:5px; margin-bottom:14px; }
@@ -434,6 +436,102 @@
       .admin-stats  { padding:14px 1rem 0; }
       .admin-body   { padding:12px 1rem 32px; }
       .admin-orders-grid { grid-template-columns:1fr; }
+    }
+
+    /* ============================
+       PANEL MIS PEDIDOS (CLIENTE)
+    ============================ */
+    .customer-panel {
+      display:none; position:fixed; inset:0; z-index:500;
+      background:#f8f4f1; flex-direction:column; overflow:hidden;
+    }
+    .customer-panel.open { display:flex; }
+    .customer-orders-body {
+      flex:1; overflow-y:auto; padding:24px 2rem 48px;
+      max-width:860px; margin:0 auto; width:100%;
+    }
+    .customer-empty { text-align:center; padding:80px 20px; color:var(--text-light); }
+    .customer-empty-icon { font-size:3.5rem; margin-bottom:14px; }
+    /* Card pedido cliente */
+    .corder-card {
+      background:#fff; border-radius:18px; margin-bottom:20px;
+      box-shadow:0 2px 14px var(--shadow-sm); border:1.5px solid var(--border); overflow:hidden;
+    }
+    .corder-head {
+      padding:16px 20px; background:var(--nude-lightest);
+      border-bottom:1px solid var(--border);
+      display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+    }
+    .corder-num  { font-family:var(--ff-head); font-weight:700; font-size:.95rem; color:var(--text-dark); }
+    .corder-meta { font-size:.72rem; color:var(--text-light); margin-top:3px; display:flex; flex-wrap:wrap; gap:6px; }
+    .corder-total{ font-weight:800; font-size:1.1rem; color:var(--rose-dark); white-space:nowrap; }
+    /* Timeline de progreso */
+    .corder-timeline {
+      display:flex; align-items:flex-start; padding:22px 20px 6px;
+      position:relative;
+    }
+    .cstep {
+      flex:1; display:flex; flex-direction:column; align-items:center;
+      position:relative; text-align:center;
+    }
+    .cstep:not(:last-child)::after {
+      content:''; position:absolute; top:13px; left:calc(50% + 14px);
+      right:calc(-50% + 14px); height:2px;
+      background:var(--border); transition:background .4s;
+    }
+    .cstep.done:not(:last-child)::after { background:var(--rose); }
+    .cstep-dot {
+      width:28px; height:28px; border-radius:50%; flex-shrink:0;
+      background:var(--nude-light); border:2px solid var(--border);
+      display:flex; align-items:center; justify-content:center;
+      font-size:13px; position:relative; z-index:1;
+      transition:all .3s;
+    }
+    .cstep.done .cstep-dot  { background:var(--rose); border-color:var(--rose); color:#fff; }
+    .cstep.active .cstep-dot{ background:#fff; border-color:var(--rose); box-shadow:0 0 0 4px rgba(208,128,144,.2); }
+    .cstep-lbl {
+      font-size:.6rem; font-weight:700; text-transform:uppercase;
+      letter-spacing:.5px; color:var(--text-light); margin-top:6px; line-height:1.2;
+    }
+    .cstep.done .cstep-lbl, .cstep.active .cstep-lbl { color:var(--rose-dark); }
+    /* Banner de estado */
+    .corder-banner {
+      margin:4px 20px 16px; border-radius:12px; padding:14px 18px;
+      display:flex; align-items:center; gap:14px;
+    }
+    .corder-banner.st-pendiente{ background:#fff3cd; }
+    .corder-banner.st-pagado   { background:#d1e7dd; }
+    .corder-banner.st-listo    { background:#cff4fc; }
+    .corder-banner.st-enviado  { background:#cfe2ff; }
+    .csb-icon { font-size:1.9rem; flex-shrink:0; }
+    .csb-lbl  { font-weight:800; font-size:.9rem; color:var(--text-dark); }
+    .csb-msg  { font-size:.76rem; color:var(--text-med); margin-top:2px; }
+    /* Productos del pedido */
+    .corder-items { padding:0 20px 20px; }
+    .corder-items-ttl { font-size:.7rem; font-weight:800; text-transform:uppercase; letter-spacing:.7px; color:var(--text-light); margin-bottom:10px; }
+    .corder-item { display:flex; justify-content:space-between; align-items:center; font-size:.82rem; padding:7px 0; border-bottom:1px solid var(--border); color:var(--text-med); }
+    .corder-item:last-child { border-bottom:none; }
+    .corder-item-price { font-weight:700; color:var(--text-dark); }
+    /* Botón Mis Pedidos en header */
+    .btn-orders {
+      padding:7px 13px; border:1.5px solid var(--rose-light);
+      background:var(--nude-light); color:var(--rose-dark); border-radius:50px;
+      font-size:.77rem; font-weight:700; cursor:pointer; transition:all .2s;
+      display:flex; align-items:center; gap:5px; white-space:nowrap;
+    }
+    .btn-orders:hover { background:var(--rose-light); border-color:var(--rose); }
+    /* Refresh button */
+    .btn-refresh {
+      padding:8px 20px; border:1.5px solid rgba(255,255,255,.3);
+      background:transparent; color:#fff; border-radius:50px;
+      font-family:var(--ff-body); font-size:.78rem; font-weight:700;
+      cursor:pointer; transition:all .2s;
+    }
+    .btn-refresh:hover { background:rgba(255,255,255,.12); }
+    @media(max-width:640px){
+      .customer-orders-body { padding:14px 1rem 32px; }
+      .corder-timeline { padding:18px 12px 4px; }
+      .cstep-lbl { font-size:.55rem; }
     }
 
     /* ============================
@@ -845,6 +943,20 @@
   </div>
 </div>
 
+<!-- ========== PANEL MIS PEDIDOS (CLIENTE) ========== -->
+<div class="customer-panel" id="customerPanel">
+  <div class="admin-header">
+    <div class="admin-header-left">
+      <button class="btn-admin-close" onclick="closeOrdersPanel()">✕</button>
+      <div class="admin-logo">📦 Mis <span>Pedidos</span></div>
+    </div>
+    <button class="btn-refresh" onclick="loadOrdersPanel()">↻ Actualizar</button>
+  </div>
+  <div class="customer-orders-body" id="customerOrdersBody">
+    <div class="customer-empty"><div class="customer-empty-icon">⏳</div><p>Cargando pedidos…</p></div>
+  </div>
+</div>
+
 <!-- ========== ADMIN LOGIN MODAL ========== -->
 <div class="modal admin-login-modal" id="adminLoginModal">
   <div class="modal-overlay" onclick="closeAdminLogin()"></div>
@@ -1063,6 +1175,45 @@ async function fbSaveUser(user){
   await fbSet(`users/${key}`, {
     name:user.name, email:user.email, phone:user.phone||'', pass:user.pass
   });
+}
+
+// ── Pedidos en Firebase ──────────────────────────────
+function orderKey(num){ return num.replace(/[^a-zA-Z0-9]/g,'_'); }
+
+async function fbSaveOrder(order){
+  await fbSet(`orders/${orderKey(order.num)}`, order);
+}
+async function fbUpdateOrderStatus(num, status){
+  if(!FIREBASE_DB_URL) return;
+  try{
+    await fetch(`${FIREBASE_DB_URL}/orders/${orderKey(num)}/status.json`,{
+      method:'PUT', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(status)
+    });
+  }catch(e){}
+}
+async function fbUpdateOrderItem(num, idx, done){
+  if(!FIREBASE_DB_URL) return;
+  try{
+    await fetch(`${FIREBASE_DB_URL}/orders/${orderKey(num)}/items/${idx}/done.json`,{
+      method:'PUT', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(done)
+    });
+  }catch(e){}
+}
+async function syncAdminOrders(){
+  const data = await fbFetch('orders');
+  if(!data || typeof data!=='object') return;
+  S.orders = Object.values(data)
+    .filter(o=>o&&o.num)
+    .sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+}
+async function fbGetUserOrders(email){
+  const data = await fbFetch('orders');
+  if(!data) return [];
+  return Object.values(data)
+    .filter(o=>o&&o.email===email)
+    .sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
 }
 
 /* ──────────────────────────────────────────────────────
@@ -1344,7 +1495,8 @@ function doLogout(){ S.user=null; saveSession(); renderLoginArea(); toast('Sesi�
 function renderLoginArea(){
   const area=document.getElementById('loginArea');
   area.innerHTML = S.user
-    ? `<button class="user-chip" onclick="doLogout()"><div class="user-avatar">👤</div><span>${S.user.name}</span><span class="user-logout">Salir</span></button>`
+    ? `<button class="btn-orders" onclick="openOrdersPanel()">📦 Mis Pedidos</button>
+       <button class="user-chip" onclick="doLogout()"><div class="user-avatar">👤</div><span>${S.user.name}</span><span class="user-logout">Salir</span></button>`
     : `<button class="btn-login" onclick="openLoginModal()">Iniciar Sesión</button>`;
 }
 
@@ -1476,16 +1628,19 @@ function confirmOrder(){
     const p = PRODUCTS.find(x=>x.id===item.id);
     return { id:item.id, name:p?p.name:'', qty:item.qty, price:p?p.price:0, done:false };
   });
-  S.orders.push({
+  const newOrder = {
     num,
+    timestamp: Date.now(),
     date: new Date().toLocaleString('es-MX'),
     customer: S.user ? S.user.name : 'Invitado',
     email: S.user ? S.user.email : '',
     delivery: S.delivery,
     total,
-    status: 'pendiente',   // pendiente | pagado | despachado
+    status: 'pendiente',   // pendiente | pagado | listo | enviado
     items: orderItems,
-  });
+  };
+  S.orders.push(newOrder);
+  fbSaveOrder(newOrder); // guardar en Firebase
 
   // Armar enlace de WhatsApp con número de orden y monto total
   const msg = `¡Hola! 🌸 Ya realicé la transferencia bancaria de *${fmtMXN(total)} MXN* para mi pedido *${num}*. `
@@ -1631,10 +1786,13 @@ function doAdminLogin(){
     document.getElementById('adminPass').value='';
   }
 }
-function openAdmin(){
-  renderAdminOrders();
+async function openAdmin(){
   document.getElementById('adminPanel').classList.add('open');
   lockScroll();
+  document.getElementById('adminBody').innerHTML =
+    `<div class="admin-empty"><div class="admin-empty-icon">⏳</div><p>Cargando pedidos…</p></div>`;
+  await syncAdminOrders();
+  renderAdminOrders();
 }
 function closeAdmin(){
   document.getElementById('adminPanel').classList.remove('open');
@@ -1645,30 +1803,32 @@ function renderAdminOrders(){
   const stats = document.getElementById('adminStats');
   const body  = document.getElementById('adminBody');
   const total   = S.orders.length;
-  const pagados = S.orders.filter(o=>o.status==='pagado').length;
-  const despach = S.orders.filter(o=>o.status==='despachado').length;
   const pendient= S.orders.filter(o=>o.status==='pendiente').length;
+  const pagados = S.orders.filter(o=>o.status==='pagado').length;
+  const listos  = S.orders.filter(o=>o.status==='listo').length;
+  const enviados= S.orders.filter(o=>o.status==='enviado'||o.status==='despachado').length;
   const revenue = S.orders.reduce((s,o)=>s+o.total,0);
 
   stats.innerHTML = `
-    <div class="stat-card"><div class="stat-val">${total}</div><div class="stat-lbl">Total pedidos</div></div>
+    <div class="stat-card"><div class="stat-val">${total}</div><div class="stat-lbl">Total</div></div>
     <div class="stat-card"><div class="stat-val">${pendient}</div><div class="stat-lbl">Pendientes</div></div>
     <div class="stat-card"><div class="stat-val">${pagados}</div><div class="stat-lbl">Pagados</div></div>
-    <div class="stat-card"><div class="stat-val">${despach}</div><div class="stat-lbl">Despachados</div></div>
-    <div class="stat-card"><div class="stat-val">${fmtMXN(revenue)}</div><div class="stat-lbl">Ingresos totales</div></div>`;
+    <div class="stat-card"><div class="stat-val">${listos}</div><div class="stat-lbl">Listos</div></div>
+    <div class="stat-card"><div class="stat-val">${enviados}</div><div class="stat-lbl">Enviados</div></div>
+    <div class="stat-card"><div class="stat-val">${fmtMXN(revenue)}</div><div class="stat-lbl">Ingresos</div></div>`;
 
   if(!total){
-    body.innerHTML=`<div class="admin-empty"><div class="admin-empty-icon">📋</div><p>No hay pedidos confirmados aún.</p></div>`;
+    body.innerHTML=`<div class="admin-empty"><div class="admin-empty-icon">📋</div><p>No hay pedidos aún.</p></div>`;
     return;
   }
-
-  // Más recientes primero
-  const sorted = [...S.orders].reverse();
-  body.innerHTML = `<div class="admin-orders-grid">${sorted.map(orderCardHTML).join('')}</div>`;
+  body.innerHTML = `<div class="admin-orders-grid">${S.orders.map(orderCardHTML).join('')}</div>`;
 }
 
 function orderCardHTML(o){
-  const statusMap = { pendiente:'🕐 Pendiente', pagado:'✅ Pagado', despachado:'🚚 Despachado' };
+  const statusMap = {
+    pendiente:'🕐 Pendiente', pagado:'✅ Pagado',
+    listo:'🏪 Listo p/recoger', enviado:'🚚 Enviado', despachado:'🚚 Enviado'
+  };
   const checkItems = o.items.map((it,idx)=>`
     <label class="check-item">
       <input type="checkbox" ${it.done?'checked':''} onchange="toggleCheck('${o.num}',${idx},this.checked)">
@@ -1677,6 +1837,7 @@ function orderCardHTML(o){
 
   const deliveryTxt = o.delivery==='home' ? '🚚 Envío a domicilio' : '🏪 Recoger en tienda';
   const allDone = o.items.every(it=>it.done);
+  const st = o.status||'pendiente';
 
   return `
     <div class="order-card" id="oc-${o.num}">
@@ -1687,39 +1848,32 @@ function orderCardHTML(o){
           <div style="font-size:.75rem;color:var(--text-light)">${deliveryTxt}</div>
         </div>
         <div style="text-align:right">
-          <span class="status-badge status-${o.status}">${statusMap[o.status]}</span>
+          <span class="status-badge status-${st}">${statusMap[st]||st}</span>
           <div style="font-weight:700;font-size:1rem;margin-top:6px;color:var(--rose-dark)">${fmtMXN(o.total)} MXN</div>
         </div>
       </div>
-
-      <!-- Checklist de productos -->
       <div class="order-card-body">
-        <div class="checklist-title">
-          Checklist del pedido ${allDone?'<span style="color:#5a9e5a">✓ Completo</span>':''}
-        </div>
+        <div class="checklist-title">Checklist ${allDone?'<span style="color:#5a9e5a">✓ Completo</span>':''}</div>
         ${checkItems}
       </div>
-
-      <!-- Botones de estado -->
       <div class="order-card-foot">
-        <button class="btn-status btn-status-pendiente"  onclick="setOrderStatus('${o.num}','pendiente')"
-          style="${o.status==='pendiente'?'outline:2px solid #856404':''}"
-        >🕐 Pendiente</button>
-        <button class="btn-status btn-status-pagado"     onclick="setOrderStatus('${o.num}','pagado')"
-          style="${o.status==='pagado'?'outline:2px solid #0a5931':''}"
-        >✅ Pagado</button>
-        <button class="btn-status btn-status-despachado" onclick="setOrderStatus('${o.num}','despachado')"
-          style="${o.status==='despachado'?'outline:2px solid #084298':''}"
-        >🚚 Despachado</button>
+        <button class="btn-status btn-status-pendiente" onclick="setOrderStatus('${o.num}','pendiente')"
+          style="${st==='pendiente'?'outline:2px solid #856404':''}">🕐 Pendiente</button>
+        <button class="btn-status btn-status-pagado"    onclick="setOrderStatus('${o.num}','pagado')"
+          style="${st==='pagado'?'outline:2px solid #0a5931':''}">✅ Pagado</button>
+        <button class="btn-status btn-status-pendiente" onclick="setOrderStatus('${o.num}','listo')"
+          style="${st==='listo'?'outline:2px solid #0d4f6c':''}; background:#cff4fc;color:#0d4f6c">🏪 Listo p/recoger</button>
+        <button class="btn-status btn-status-despachado" onclick="setOrderStatus('${o.num}','enviado')"
+          style="${st==='enviado'||st==='despachado'?'outline:2px solid #084298':''}">🚚 Enviado</button>
       </div>
     </div>`;
 }
 
 function toggleCheck(orderNum, itemIdx, checked){
   const order = S.orders.find(o=>o.num===orderNum);
-  if(order && order.items[itemIdx] !== undefined){
+  if(order && order.items[itemIdx]!==undefined){
     order.items[itemIdx].done = checked;
-    // Refrescar solo la card para evitar perder el checkbox state
+    fbUpdateOrderItem(orderNum, itemIdx, checked); // sync Firebase
     const card = document.getElementById(`oc-${orderNum}`);
     if(card) card.outerHTML = orderCardHTML(order);
   }
@@ -1729,8 +1883,114 @@ function setOrderStatus(orderNum, status){
   const order = S.orders.find(o=>o.num===orderNum);
   if(!order) return;
   order.status = status;
+  fbUpdateOrderStatus(orderNum, status); // sync Firebase
   renderAdminOrders();
   toast(`Pedido ${orderNum} → ${status}`, 'ok');
+}
+
+/* ──────────────────────────────────────────────────────
+   PANEL MIS PEDIDOS (CLIENTE)
+────────────────────────────────────────────────────── */
+function openOrdersPanel(){
+  document.getElementById('customerPanel').classList.add('open');
+  lockScroll();
+  loadOrdersPanel();
+}
+function closeOrdersPanel(){
+  document.getElementById('customerPanel').classList.remove('open');
+  unlockScroll();
+}
+async function loadOrdersPanel(){
+  const body = document.getElementById('customerOrdersBody');
+  body.innerHTML = `<div class="customer-empty"><div class="customer-empty-icon">⏳</div><p>Cargando pedidos…</p></div>`;
+  const orders = S.user ? await fbGetUserOrders(S.user.email) : [];
+  if(!orders.length){
+    body.innerHTML = `<div class="customer-empty">
+      <div class="customer-empty-icon">📦</div>
+      <p style="font-weight:700;margin-bottom:6px">No tienes pedidos aún</p>
+      <p style="font-size:.82rem">¡Cuando realices un pedido aparecerá aquí con su estado en tiempo real!</p>
+    </div>`;
+    return;
+  }
+  body.innerHTML = orders.map(customerOrderCard).join('');
+}
+
+function customerOrderCard(o){
+  const st = o.status || 'pendiente';
+
+  // Configuración de estados
+  const statusCfg = {
+    pendiente: { icon:'🕐', lbl:'Esperando confirmación de pago',
+                 msg:'Tu pago está siendo verificado. En cuanto lo confirmemos te avisamos.',
+                 cls:'st-pendiente' },
+    pagado:    { icon:'✅', lbl:'¡Pago confirmado!',
+                 msg:'Recibimos tu pago. Estamos preparando tu pedido con cariño 🌸',
+                 cls:'st-pagado' },
+    listo:     { icon:'🏪', lbl:'¡Tu pedido está listo para recoger!',
+                 msg:'Pasa a la tienda cuando quieras. ¡Te esperamos!',
+                 cls:'st-listo' },
+    enviado:   { icon:'🚚', lbl:'¡Tu pedido está en camino!',
+                 msg:'Tu pedido fue enviado y pronto llegará a tu dirección.',
+                 cls:'st-enviado' },
+    despachado:{ icon:'🚚', lbl:'¡Tu pedido está en camino!',
+                 msg:'Tu pedido fue enviado y pronto llegará a tu dirección.',
+                 cls:'st-enviado' },
+  };
+  const cfg = statusCfg[st] || statusCfg.pendiente;
+
+  // Pasos del timeline
+  const steps = [
+    { lbl:'Pedido\nrealizado', done: true, active: false },
+    { lbl:'Pago\nconfirmado',  done: ['pagado','listo','enviado','despachado'].includes(st), active: st==='pagado' },
+    { lbl:'En\npreparación',   done: ['listo','enviado','despachado'].includes(st), active: false },
+    { lbl: o.delivery==='home' ? 'Enviado\na domicilio' : 'Listo\np/recoger',
+      done: ['listo','enviado','despachado'].includes(st),
+      active: ['listo','enviado','despachado'].includes(st) },
+  ];
+
+  const timelineHTML = steps.map(s=>`
+    <div class="cstep ${s.done?'done':''} ${s.active&&!s.done?'active':''}">
+      <div class="cstep-dot">${s.done?'✓':''}</div>
+      <div class="cstep-lbl">${s.lbl.replace('\n','<br>')}</div>
+    </div>`).join('');
+
+  const itemsHTML = o.items.map(it=>`
+    <div class="corder-item">
+      <span>${it.name} <em style="opacity:.6">× ${it.qty}</em></span>
+      <span class="corder-item-price">${fmtMXN(it.price*it.qty)}</span>
+    </div>`).join('');
+
+  const deliveryTxt = o.delivery==='home' ? '🚚 Envío a domicilio' : '🏪 Recoger en tienda';
+
+  return `
+    <div class="corder-card">
+      <div class="corder-head">
+        <div>
+          <div class="corder-num">${o.num}</div>
+          <div class="corder-meta">
+            <span>📅 ${o.date}</span>
+            <span>${deliveryTxt}</span>
+          </div>
+        </div>
+        <div class="corder-total">${fmtMXN(o.total)} MXN</div>
+      </div>
+      <div class="corder-timeline">${timelineHTML}</div>
+      <div class="corder-banner ${cfg.cls}">
+        <div class="csb-icon">${cfg.icon}</div>
+        <div>
+          <div class="csb-lbl">${cfg.lbl}</div>
+          <div class="csb-msg">${cfg.msg}</div>
+        </div>
+      </div>
+      <div class="corder-items">
+        <div class="corder-items-ttl">Productos del pedido</div>
+        ${itemsHTML}
+        <div class="corder-item" style="margin-top:6px;font-weight:700">
+          <span>Total</span>
+          <span class="corder-item-price">${fmtMXN(o.total)} MXN</span>
+        </div>
+      </div>
+    </div>`;
 }
 
 /* ──────────────────────────────────────────────────────
@@ -1740,7 +2000,7 @@ document.addEventListener('keydown', e=>{
   if(e.key!=='Escape') return;
   closeLightbox(); closeCart(); closeLoginModal();
   closeRegisterModal(); closeForgotModal(); closeRecoveryModal();
-  closeCheckoutModal(); closeAdminLogin();
+  closeCheckoutModal(); closeAdminLogin(); closeOrdersPanel();
 });
 </script>
 </body>
