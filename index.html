@@ -316,6 +316,16 @@
     .confirm-steps h4 { font-size:.84rem; font-weight:800; margin-bottom:8px; }
     .confirm-steps ol { padding-left:18px; font-size:.78rem; color:var(--text-med); line-height:2.1; }
     .confirm-steps ol strong { color:var(--text-dark); }
+    .btn-whatsapp {
+      width:100%; padding:13px; border:none; border-radius:50px;
+      background:linear-gradient(135deg,#25d366 0%,#128c7e 100%);
+      color:#fff; font-size:.93rem; font-weight:800;
+      display:flex; align-items:center; justify-content:center; gap:8px;
+      cursor:pointer; text-decoration:none; margin-bottom:12px;
+      transition:all .2s; box-shadow:0 6px 18px rgba(37,211,102,.35);
+    }
+    .btn-whatsapp:hover { transform:translateY(-2px); box-shadow:0 10px 24px rgba(37,211,102,.45); }
+    .btn-whatsapp-icon { font-size:1.2rem; }
 
     /* ============================
        FOOTER
@@ -606,6 +616,9 @@
         <li>Recibirás confirmación en 24 horas hábiles</li>
       </ol>
     </div>
+    <a class="btn-whatsapp" id="btnWhatsApp" href="#" target="_blank" rel="noopener">
+      <span class="btn-whatsapp-icon">💬</span> Avisar por WhatsApp que ya pagué
+    </a>
     <button class="btn-primary" onclick="closeOrderModal()">Seguir Comprando</button>
   </div>
 </div>
@@ -723,6 +736,8 @@ const S = {
   shipCost: 0,
 };
 const SHIP_COST = 110;
+// ⬇️ Cambia este número por el de WhatsApp del vendedor (con código de país, sin + ni espacios)
+const WA_NUMBER = '521XXXXXXXXXX';
 
 /* ──────────────────────────────────────────────────────
    INIT
@@ -1043,6 +1058,14 @@ function buildSummaries(){
 function confirmOrder(){
   const num='BE-'+String(Date.now()).slice(-6)+'-'+String(Math.floor(Math.random()*900)+100);
   document.getElementById('orderNum').textContent=num;
+
+  // Armar enlace de WhatsApp con número de orden y monto total
+  const total = cartSubtotal() + S.shipCost;
+  const msg = `¡Hola! 🌸 Ya realicé la transferencia bancaria de *${fmtMXN(total)} MXN* para mi pedido *${num}*. `
+            + `Por favor confirmar el despacho. ¡Gracias!`;
+  document.getElementById('btnWhatsApp').href =
+    `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`;
+
   closeCheckoutModal();
   document.getElementById('orderModal').classList.add('open');
   lockScroll();
