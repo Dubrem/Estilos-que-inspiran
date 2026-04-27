@@ -1015,7 +1015,58 @@ const WA_NUMBER  = '5214421052174';
 const ADMIN_CRED = { email:'admin@bellaesencia.com', pass:'bella2026' };
 
 /* ──────────────────────────────────────────────────────
-   PERSISTENCIA (localStorage)
+   FIREBASE — sync entre dispositivos (GRATIS)
+   ─────────────────────────────────────────────────────
+   CÓMO ACTIVAR (5 minutos):
+   1. Ve a https://console.firebase.google.com
+   2. "Crear proyecto" → ponle cualquier nombre → Continuar
+   3. En el menú izquierdo: "Realtime Database" → "Crear base de datos"
+   4. Elige "Modo de prueba" → Listo
+   5. Copia la URL que aparece (ej: https://mi-proyecto-rtdb.firebaseio.com)
+   6. Pégala abajo entre las comillas de FIREBASE_DB_URL
+────────────────────────────────────────────────────── */
+const FIREBASE_DB_URL = ''; // ← pega aquí tu URL de Firebase
+
+async function fbFetch(path, opts={}){
+  if(!FIREBASE_DB_URL) return null;
+  try{
+    const r = await fetch(`${FIREBASE_DB_URL}/${path}.json`, opts);
+    if(!r.ok) return null;
+    return await r.json();
+  }catch(){ return null; }
+}
+async function fbSet(path, data){
+  return fbFetch(path, {
+    method:'PUT',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(data)
+  });
+}
+
+// Trae usuarios de Firebase y los fusiona con los locales
+async function syncUsers(){
+  const data = await fbFetch('users');
+  if(!data || typeof data !== 'object') return;
+  const fbUsers = Object.values(data).filter(u => u && u.email);
+  let changed = false;
+  fbUsers.forEach(fbU => {
+    const idx = S.users.findIndex(u => u.email === fbU.email);
+    if(idx >= 0) Object.assign(S.users[idx], fbU);
+    else { S.users.push(fbU); changed = true; }
+  });
+  if(changed) saveUsers();
+}
+
+// Guarda un usuario en Firebase
+async function fbSaveUser(user){
+  const key = user.email.replace(/[.#$[\]@]/g,'_');
+  await fbSet(`users/${key}`, {
+    name:user.name, email:user.email, phone:user.phone||'', pass:user.pass
+  });
+}
+
+/* ──────────────────────────────────────────────────────
+   PERSISTENCIA (localStorage — caché local)
 ────────────────────────────────────────────────────── */
 const LS_USERS   = 'be_users_v1';
 const LS_SESSION = 'be_session_v1';
@@ -1043,7 +1094,6 @@ function loadSession(){
     const raw = localStorage.getItem(LS_SESSION);
     if(raw){
       const u = JSON.parse(raw);
-      // verificar que el usuario aún existe en S.users
       if(u && S.users.find(x=>x.email===u.email)) S.user = u;
     }
   } catch(e){}
@@ -1053,11 +1103,12 @@ function loadSession(){
    INIT
 ────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
-  loadUsers();      // recuperar cuentas guardadas
-  loadSession();    // recuperar sesión activa
+  loadUsers();               // caché local inmediata
+  loadSession();             // sesión guardada
   renderLoginArea();
   renderGrid('all');
   spawnParticles();
+  syncUsers();               // sync Firebase en segundo plano
 });
 
 /* ──────────────────────────────────────────────────────
@@ -1255,19 +1306,28 @@ function openLoginModal() {
 }
 function closeLoginModal(){ document.getElementById('loginModal').classList.remove('open'); unlockScroll(); }
 
-function doLogin() {
+async function doLogin() {
   const raw    = document.getElementById('loginEmail').value.trim();
   const pw     = document.getElementById('loginPass').value;
   const em     = raw.toLowerCase();
   const ph     = normalizePhone(raw);
   const isEmail= raw.includes('@');
 
-  const found = S.users.find(u => {
-    const matchId = isEmail
-      ? u.email === em
-      : (u.phone && normalizePhone(u.phone) === ph && ph.length >= 8);
-    return matchId && u.pass === pw;
-  });
+  const match = u => {
+    const id = isEmail ? u.email===em : (u.phone && normalizePhone(u.phone)===ph && ph.length>=8);
+    return id && u.pass===pw;
+  };
+
+  let found = S.users.find(match);
+
+  // Si no está en caché local, intenta Firebase
+  if(!found && FIREBASE_DB_URL){
+    const btn = document.querySelector('#loginModal .btn-primary');
+    if(btn){ btn.disabled=true; btn.textContent='Verificando...'; }
+    await syncUsers();
+    found = S.users.find(match);
+    if(btn){ btn.disabled=false; btn.textContent='Iniciar Sesión'; }
+  }
 
   if(found){
     S.user = { name:found.name, email:found.email, phone:found.phone||'' };
@@ -1315,7 +1375,7 @@ function openRegisterModal(){
 }
 function closeRegisterModal(){ document.getElementById('registerModal').classList.remove('open'); unlockScroll(); }
 
-function doRegister(){
+async function doRegister(){
   const name  = document.getElementById('regName').value.trim();
   const email = document.getElementById('regEmail').value.trim().toLowerCase();
   const phone = document.getElementById('regPhone').value.replace(/\D/g,'');
@@ -1324,21 +1384,41 @@ function doRegister(){
 
   document.getElementById('regErr').classList.remove('show');
 
-  if(!name)                                         { showRegErr('Ingresa tu nombre completo.'); return; }
-  if(!validateEmail(email))                         { showRegErr('Ingresa un correo válido.'); return; }
-  if(phone.length < 10)                             { showRegErr('Ingresa un teléfono de 10 dígitos.'); return; }
-  if(S.users.find(u=>u.email===email))              { showRegErr('Este correo ya está registrado.'); return; }
-  if(S.users.find(u=>normalizePhone(u.phone||'')===phone)) { showRegErr('Este teléfono ya está registrado.'); return; }
-  if(pass.length < 6)                               { showRegErr('La contraseña debe tener al menos 6 caracteres.'); return; }
-  if(pass !== pass2)                                { showRegErr('Las contraseñas no coinciden.'); return; }
+  // Validaciones básicas antes de llamar a Firebase
+  if(!name)             { showRegErr('Ingresa tu nombre completo.'); return; }
+  if(!validateEmail(email)) { showRegErr('Ingresa un correo válido.'); return; }
+  if(phone.length < 10) { showRegErr('Ingresa un teléfono de 10 dígitos.'); return; }
+  if(pass.length < 6)   { showRegErr('La contraseña debe tener al menos 6 caracteres.'); return; }
+  if(pass !== pass2)    { showRegErr('Las contraseñas no coinciden.'); return; }
 
-  S.users.push({ name, email, phone, pass });
-  saveUsers();
-  S.user = { name, email, phone };
-  saveSession();
-  closeRegisterModal();
-  renderLoginArea();
-  toast(`✓ ¡Cuenta creada! Bienvenida, ${name} 🌸`, 'ok');
+  // Mostrar estado de carga y sincronizar Firebase
+  const btn = document.getElementById('regBtn');
+  btn.disabled=true; btn.textContent='Verificando...';
+
+  try {
+    await syncUsers(); // trae cuentas de todos los dispositivos
+
+    // Verificar duplicados con datos actualizados
+    if(S.users.find(u=>u.email===email)){
+      showRegErr('Este correo ya tiene una cuenta. ¿Ya te registraste? Inicia sesión.'); return;
+    }
+    if(S.users.find(u=>normalizePhone(u.phone||'')===phone)){
+      showRegErr('Este número de teléfono ya tiene una cuenta. Intenta iniciar sesión.'); return;
+    }
+
+    const newUser = { name, email, phone, pass };
+    S.users.push(newUser);
+    saveUsers();
+    fbSaveUser(newUser); // guardar en Firebase (no bloqueante)
+
+    S.user = { name, email, phone };
+    saveSession();
+    closeRegisterModal();
+    renderLoginArea();
+    toast(`✓ ¡Cuenta creada! Bienvenida, ${name} 🌸`, 'ok');
+  } finally {
+    btn.disabled=false; btn.textContent='Crear Cuenta';
+  }
 }
 function showRegErr(msg){ const el=document.getElementById('regErr'); el.textContent=msg; el.classList.add('show'); }
 function validateEmail(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
