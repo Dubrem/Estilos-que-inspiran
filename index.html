@@ -384,9 +384,10 @@
     }
     .status-pendiente { background:#fff3cd; color:#856404; }
     .status-pagado    { background:#d1e7dd; color:#0a5931; }
-    .status-listo     { background:#cff4fc; color:#0d4f6c; }
-    .status-enviado   { background:#cfe2ff; color:#084298; }
-    .status-despachado{ background:#cfe2ff; color:#084298; }
+    .status-listo      { background:#cff4fc; color:#0d4f6c; }
+    .status-enviado    { background:#cfe2ff; color:#084298; }
+    .status-despachado { background:#cfe2ff; color:#084298; }
+    .status-completado { background:#d4edda; color:#155724; }
     .order-card-body { padding:16px 18px; }
     .order-meta { display:flex; flex-direction:column; gap:5px; margin-bottom:14px; }
     .order-meta-row { font-size:.8rem; color:var(--text-med); display:flex; align-items:center; gap:6px; }
@@ -528,6 +529,32 @@
       cursor:pointer; transition:all .2s;
     }
     .btn-refresh:hover { background:rgba(255,255,255,.12); }
+    /* Bloque de ubicación en pedido cliente */
+    .corder-location {
+      margin:0 20px 16px; background:var(--nude-light); border-radius:12px;
+      padding:14px 18px; display:flex; align-items:flex-start; gap:12px;
+    }
+    .corder-location-icon { font-size:1.6rem; flex-shrink:0; }
+    .corder-location-ttl { font-weight:800; font-size:.88rem; color:var(--text-dark); margin-bottom:3px; }
+    .corder-location-addr { font-size:.78rem; color:var(--text-med); }
+    .corder-location-link {
+      display:inline-block; margin-top:7px; font-size:.75rem; font-weight:700;
+      color:var(--rose); text-decoration:none; border:1.5px solid var(--rose-light);
+      border-radius:50px; padding:4px 12px; transition:all .2s;
+    }
+    .corder-location-link:hover { background:var(--rose-light); }
+    /* Botón completar pedido (admin) */
+    .btn-completar {
+      flex:1; padding:10px 14px; border:none; border-radius:50px;
+      font-family:var(--ff-body); font-size:.78rem; font-weight:800;
+      cursor:pointer; background:#d4edda; color:#155724;
+      transition:all .18s; white-space:nowrap;
+    }
+    .btn-completar:hover { background:#b8dfc4; }
+    .completado-badge {
+      text-align:center; padding:14px; font-weight:800;
+      color:#155724; font-size:.9rem;
+    }
     @media(max-width:640px){
       .customer-orders-body { padding:14px 1rem 32px; }
       .corder-timeline { padding:18px 12px 4px; }
@@ -932,12 +959,12 @@
         <li>Realiza la transferencia a <strong>BBVA México</strong></li>
         <li>CLABE: <strong>012 180 00485761940 8</strong></li>
         <li>Incluye tu número de pedido en el concepto</li>
-        <li>Envía comprobante a <strong>pagos@bellaesencia.com</strong></li>
-        <li>Recibirás confirmación en 24 horas hábiles</li>
+        <li>Toca el botón de abajo y <strong>envía tu comprobante por WhatsApp</strong></li>
+        <li>¡Listo! Confirmaremos tu pedido en breve 🌸</li>
       </ol>
     </div>
     <a class="btn-whatsapp" id="btnWhatsApp" href="#" target="_blank" rel="noopener">
-      <span class="btn-whatsapp-icon">💬</span> Avisar por WhatsApp que ya pagué
+      <span class="btn-whatsapp-icon">💬</span> Enviar comprobante por WhatsApp
     </a>
     <button class="btn-primary" onclick="closeOrderModal()">Seguir Comprando</button>
   </div>
@@ -1125,6 +1152,12 @@ const S = {
 const SHIP_COST  = 110;
 const WA_NUMBER  = '5214421052174';
 const ADMIN_CRED = { email:'admin@bellaesencia.com', pass:'bella2026' };
+// ← Cambia esta dirección por la real de tu tienda
+const STORE_LOCATION = {
+  address: 'Av. Masaryk 123, Polanco, CDMX',
+  hours:   'Lun–Sáb 10:00–20:00 h',
+  maps:    'https://maps.google.com/?q=Av.+Masaryk+123+Polanco+CDMX',
+};
 
 /* ──────────────────────────────────────────────────────
    FIREBASE — sync entre dispositivos (GRATIS)
@@ -1633,10 +1666,11 @@ function confirmOrder(){
     timestamp: Date.now(),
     date: new Date().toLocaleString('es-MX'),
     customer: S.user ? S.user.name : 'Invitado',
-    email: S.user ? S.user.email : '',
+    email:    S.user ? S.user.email : '',
+    phone:    S.user ? (S.user.phone || '') : '',
     delivery: S.delivery,
     total,
-    status: 'pendiente',   // pendiente | pagado | listo | enviado
+    status: 'pendiente',   // pendiente | pagado | listo | enviado | completado
     items: orderItems,
   };
   S.orders.push(newOrder);
@@ -1827,7 +1861,8 @@ function renderAdminOrders(){
 function orderCardHTML(o){
   const statusMap = {
     pendiente:'🕐 Pendiente', pagado:'✅ Pagado',
-    listo:'🏪 Listo p/recoger', enviado:'🚚 Enviado', despachado:'🚚 Enviado'
+    listo:'🏪 Listo p/recoger', enviado:'🚚 Enviado',
+    despachado:'🚚 Enviado',   completado:'🎉 Completado'
   };
   const checkItems = o.items.map((it,idx)=>`
     <label class="check-item">
@@ -1837,7 +1872,25 @@ function orderCardHTML(o){
 
   const deliveryTxt = o.delivery==='home' ? '🚚 Envío a domicilio' : '🏪 Recoger en tienda';
   const allDone = o.items.every(it=>it.done);
-  const st = o.status||'pendiente';
+  const st = o.status || 'pendiente';
+  const phoneHtml = o.phone
+    ? `<div style="font-size:.75rem;color:var(--text-light)">📱 ${o.phone}</div>` : '';
+
+  // Botones de estado — se bloquean si ya está completado
+  const canComplete = st==='listo' || st==='enviado' || st==='despachado';
+  const footHtml = st==='completado'
+    ? `<div class="completado-badge">🎉 Pedido completado satisfactoriamente</div>`
+    : `<div class="order-card-foot" style="flex-wrap:wrap">
+        <button class="btn-status btn-status-pendiente" onclick="setOrderStatus('${o.num}','pendiente')"
+          style="${st==='pendiente'?'outline:2px solid #856404':''}">🕐 Pendiente</button>
+        <button class="btn-status btn-status-pagado" onclick="setOrderStatus('${o.num}','pagado')"
+          style="${st==='pagado'?'outline:2px solid #0a5931':''}">✅ Pagado</button>
+        <button class="btn-status" onclick="setOrderStatus('${o.num}','listo')"
+          style="${st==='listo'?'outline:2px solid #0d4f6c':''}; background:#cff4fc;color:#0d4f6c">🏪 Listo p/recoger</button>
+        <button class="btn-status btn-status-despachado" onclick="setOrderStatus('${o.num}','enviado')"
+          style="${st==='enviado'||st==='despachado'?'outline:2px solid #084298':''}">🚚 Enviado</button>
+        ${canComplete ? `<button class="btn-completar" onclick="setOrderStatus('${o.num}','completado')">🎉 Marcar como Completado</button>` : ''}
+      </div>`;
 
   return `
     <div class="order-card" id="oc-${o.num}">
@@ -1845,6 +1898,7 @@ function orderCardHTML(o){
         <div>
           <div style="font-weight:700;font-size:.95rem;color:var(--text-dark)">${o.num}</div>
           <div style="font-size:.75rem;color:var(--text-light);margin-top:2px">📅 ${o.date} &nbsp;·&nbsp; 👤 ${o.customer}</div>
+          ${phoneHtml}
           <div style="font-size:.75rem;color:var(--text-light)">${deliveryTxt}</div>
         </div>
         <div style="text-align:right">
@@ -1856,16 +1910,7 @@ function orderCardHTML(o){
         <div class="checklist-title">Checklist ${allDone?'<span style="color:#5a9e5a">✓ Completo</span>':''}</div>
         ${checkItems}
       </div>
-      <div class="order-card-foot">
-        <button class="btn-status btn-status-pendiente" onclick="setOrderStatus('${o.num}','pendiente')"
-          style="${st==='pendiente'?'outline:2px solid #856404':''}">🕐 Pendiente</button>
-        <button class="btn-status btn-status-pagado"    onclick="setOrderStatus('${o.num}','pagado')"
-          style="${st==='pagado'?'outline:2px solid #0a5931':''}">✅ Pagado</button>
-        <button class="btn-status btn-status-pendiente" onclick="setOrderStatus('${o.num}','listo')"
-          style="${st==='listo'?'outline:2px solid #0d4f6c':''}; background:#cff4fc;color:#0d4f6c">🏪 Listo p/recoger</button>
-        <button class="btn-status btn-status-despachado" onclick="setOrderStatus('${o.num}','enviado')"
-          style="${st==='enviado'||st==='despachado'?'outline:2px solid #084298':''}">🚚 Enviado</button>
-      </div>
+      ${footHtml}
     </div>`;
 }
 
@@ -1918,34 +1963,40 @@ async function loadOrdersPanel(){
 function customerOrderCard(o){
   const st = o.status || 'pendiente';
 
+  const done4 = ['listo','enviado','despachado','completado'].includes(st);
+  const done5 = st === 'completado';
+
   // Configuración de estados
   const statusCfg = {
-    pendiente: { icon:'🕐', lbl:'Esperando confirmación de pago',
-                 msg:'Tu pago está siendo verificado. En cuanto lo confirmemos te avisamos.',
-                 cls:'st-pendiente' },
-    pagado:    { icon:'✅', lbl:'¡Pago confirmado!',
-                 msg:'Recibimos tu pago. Estamos preparando tu pedido con cariño 🌸',
-                 cls:'st-pagado' },
-    listo:     { icon:'🏪', lbl:'¡Tu pedido está listo para recoger!',
-                 msg:'Pasa a la tienda cuando quieras. ¡Te esperamos!',
-                 cls:'st-listo' },
-    enviado:   { icon:'🚚', lbl:'¡Tu pedido está en camino!',
-                 msg:'Tu pedido fue enviado y pronto llegará a tu dirección.',
-                 cls:'st-enviado' },
-    despachado:{ icon:'🚚', lbl:'¡Tu pedido está en camino!',
-                 msg:'Tu pedido fue enviado y pronto llegará a tu dirección.',
-                 cls:'st-enviado' },
+    pendiente:  { icon:'🕐', lbl:'Esperando confirmación de pago',
+                  msg:'Tu pago está siendo verificado. En cuanto lo confirmemos te avisamos.',
+                  cls:'st-pendiente' },
+    pagado:     { icon:'✅', lbl:'¡Pago confirmado!',
+                  msg:'Recibimos tu pago. Estamos preparando tu pedido con cariño 🌸',
+                  cls:'st-pagado' },
+    listo:      { icon:'🏪', lbl:'¡Tu pedido está listo para recoger!',
+                  msg:'Pasa a la tienda cuando quieras. ¡Te esperamos!',
+                  cls:'st-listo' },
+    enviado:    { icon:'🚚', lbl:'¡Tu pedido está en camino!',
+                  msg:'Tu pedido fue enviado y pronto llegará a tu dirección.',
+                  cls:'st-enviado' },
+    despachado: { icon:'🚚', lbl:'¡Tu pedido está en camino!',
+                  msg:'Tu pedido fue enviado y pronto llegará a tu dirección.',
+                  cls:'st-enviado' },
+    completado: { icon:'🎉', lbl:'¡Pedido completado satisfactoriamente!',
+                  msg:'Gracias por tu compra. ¡Esperamos verte pronto de nuevo! 🌸',
+                  cls:'st-pagado' },
   };
   const cfg = statusCfg[st] || statusCfg.pendiente;
 
-  // Pasos del timeline
+  // Timeline de 5 pasos
+  const lastLbl = o.delivery==='home' ? 'Enviado\na domicilio' : 'Listo\np/recoger';
   const steps = [
-    { lbl:'Pedido\nrealizado', done: true, active: false },
-    { lbl:'Pago\nconfirmado',  done: ['pagado','listo','enviado','despachado'].includes(st), active: st==='pagado' },
-    { lbl:'En\npreparación',   done: ['listo','enviado','despachado'].includes(st), active: false },
-    { lbl: o.delivery==='home' ? 'Enviado\na domicilio' : 'Listo\np/recoger',
-      done: ['listo','enviado','despachado'].includes(st),
-      active: ['listo','enviado','despachado'].includes(st) },
+    { lbl:'Pedido\nrealizado', done:true,                                              active:false },
+    { lbl:'Pago\nconfirmado',  done:['pagado','listo','enviado','despachado','completado'].includes(st), active:st==='pagado' },
+    { lbl:'En\npreparación',   done:['listo','enviado','despachado','completado'].includes(st), active:false },
+    { lbl:lastLbl,             done:done4,                                             active:done4&&!done5 },
+    { lbl:'Entregado\n✓',      done:done5,                                             active:done5 },
   ];
 
   const timelineHTML = steps.map(s=>`
@@ -1953,6 +2004,19 @@ function customerOrderCard(o){
       <div class="cstep-dot">${s.done?'✓':''}</div>
       <div class="cstep-lbl">${s.lbl.replace('\n','<br>')}</div>
     </div>`).join('');
+
+  // Bloque de ubicación (solo si es pickup y status = listo o completado)
+  const showLocation = o.delivery!=='home' && ['listo','completado'].includes(st);
+  const locationHtml = showLocation ? `
+    <div class="corder-location">
+      <div class="corder-location-icon">📍</div>
+      <div>
+        <div class="corder-location-ttl">Dirección de la tienda</div>
+        <div class="corder-location-addr">${STORE_LOCATION.address}</div>
+        <div class="corder-location-addr">⏰ ${STORE_LOCATION.hours}</div>
+        <a class="corder-location-link" href="${STORE_LOCATION.maps}" target="_blank" rel="noopener">Ver en Google Maps →</a>
+      </div>
+    </div>` : '';
 
   const itemsHTML = o.items.map(it=>`
     <div class="corder-item">
@@ -1967,10 +2031,7 @@ function customerOrderCard(o){
       <div class="corder-head">
         <div>
           <div class="corder-num">${o.num}</div>
-          <div class="corder-meta">
-            <span>📅 ${o.date}</span>
-            <span>${deliveryTxt}</span>
-          </div>
+          <div class="corder-meta"><span>📅 ${o.date}</span><span>${deliveryTxt}</span></div>
         </div>
         <div class="corder-total">${fmtMXN(o.total)} MXN</div>
       </div>
@@ -1982,12 +2043,12 @@ function customerOrderCard(o){
           <div class="csb-msg">${cfg.msg}</div>
         </div>
       </div>
+      ${locationHtml}
       <div class="corder-items">
         <div class="corder-items-ttl">Productos del pedido</div>
         ${itemsHTML}
         <div class="corder-item" style="margin-top:6px;font-weight:700">
-          <span>Total</span>
-          <span class="corder-item-price">${fmtMXN(o.total)} MXN</span>
+          <span>Total</span><span class="corder-item-price">${fmtMXN(o.total)} MXN</span>
         </div>
       </div>
     </div>`;
