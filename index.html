@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bella Esencia — Tienda de Belleza Premium</title>
+  <title>DUBREM — Moda Urbana</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
 
@@ -12,22 +12,22 @@
        VARIABLES & RESET
     ============================ */
     :root {
-      --nude-lightest: #FFFAF7;
-      --nude-light:    #F5E9DF;
-      --nude:          #EDD9C8;
-      --nude-dark:     #D9C0AE;
-      --rose-light:    #F2CECE;
-      --rose:          #D08090;
-      --rose-dark:     #B56475;
-      --gold:          #C9A96E;
-      --gold-dark:     #A8854A;
-      --text-dark:     #2D1B14;
-      --text-med:      #6B4B3E;
-      --text-light:    #9C7A72;
+      --nude-lightest: #F9F7F5;
+      --nude-light:    #EDEDEA;
+      --nude:          #E2DDD8;
+      --nude-dark:     #C4BFB8;
+      --rose-light:    #F5C9B0;
+      --rose:          #D4622A;
+      --rose-dark:     #A8481C;
+      --gold:          #1A1A1A;
+      --gold-dark:     #0A0A0A;
+      --text-dark:     #0F0F0F;
+      --text-med:      #484848;
+      --text-light:    #888888;
       --white:         #FFFFFF;
-      --border:        #EDD9CE;
-      --shadow-sm:     rgba(45,27,20,0.08);
-      --shadow-md:     rgba(45,27,20,0.14);
+      --border:        #E0DBD5;
+      --shadow-sm:     rgba(0,0,0,0.06);
+      --shadow-md:     rgba(0,0,0,0.15);
       --ff-head:       'Playfair Display', Georgia, serif;
       --ff-body:       'Nunito', system-ui, sans-serif;
     }
@@ -40,11 +40,11 @@
     /* ============================
        HEADER
     ============================ */
-    .header { position: sticky; top: 0; z-index: 100; background: rgba(255,250,247,.97); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
+    .header { position: sticky; top: 0; z-index: 100; background: rgba(249,247,245,.97); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
     .header-inner { max-width: 1280px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; height: 70px; }
     .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-    .logo-icon { width: 38px; height: 38px; background: linear-gradient(135deg,var(--rose),var(--gold)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
-    .logo-text { font-family: var(--ff-head); font-size: 1.45rem; font-weight: 700; color: var(--text-dark); letter-spacing: -.4px; }
+    .logo-icon { width: 38px; height: 38px; background: linear-gradient(135deg,#1A1A1A,#D4622A); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .logo-text { font-family: var(--ff-head); font-size: 1.45rem; font-weight: 700; color: var(--text-dark); letter-spacing: 2px; text-transform: uppercase; }
     .logo-text span { color: var(--rose); }
     .nav { display: flex; gap: 1.8rem; }
     .nav a { text-decoration: none; color: var(--text-med); font-size: .88rem; font-weight: 600; transition: color .2s; }
@@ -73,7 +73,7 @@
     .hero {
       position:relative; overflow:hidden; text-align:center;
       padding: 90px 2rem 100px;
-      background: linear-gradient(145deg, #fdf0e8 0%, #f7d9dc 40%, #eeddd0 100%);
+      background: linear-gradient(145deg, #0F0F0F 0%, #1C1C1E 60%, #252528 100%);
       min-height: 520px; display:flex; align-items:center; justify-content:center;
     }
     /* partículas cayendo */
@@ -93,31 +93,31 @@
     .hero::before {
       content:''; position:absolute; top:-20%; right:-10%;
       width:500px; height:500px; border-radius:50%; pointer-events:none;
-      background:radial-gradient(circle, rgba(201,169,110,.2) 0%, transparent 68%);
+      background:radial-gradient(circle, rgba(212,98,42,.2) 0%, transparent 68%);
     }
     .hero::after {
       content:''; position:absolute; bottom:-20%; left:-8%;
       width:380px; height:380px; border-radius:50%; pointer-events:none;
-      background:radial-gradient(circle, rgba(208,128,144,.22) 0%, transparent 68%);
+      background:radial-gradient(circle, rgba(212,98,42,.15) 0%, transparent 68%);
     }
     .hero-content { position:relative; z-index:1; max-width:660px; margin:0 auto; width:100%; }
     .hero-badge {
-      display:inline-block; background:#fff; color:var(--rose);
+      display:inline-block; background:rgba(255,255,255,0.12); color:#fff;
       font-size:.72rem; font-weight:800; letter-spacing:2px; text-transform:uppercase;
       padding:6px 18px; border-radius:50px; margin-bottom:22px;
-      box-shadow:0 3px 14px var(--shadow-md);
+      border:1px solid rgba(255,255,255,0.25);
     }
-    .hero h1 { font-family:var(--ff-head); font-size:clamp(2rem,5.5vw,3.8rem); font-weight:700; line-height:1.1; color:var(--text-dark); margin-bottom:14px; }
+    .hero h1 { font-family:var(--ff-head); font-size:clamp(2rem,5.5vw,3.8rem); font-weight:700; line-height:1.1; color:#FFFFFF; margin-bottom:14px; }
     .hero h1 em { font-style:italic; color:var(--rose); }
-    .hero p { font-size:clamp(.92rem,2.5vw,1.05rem); color:var(--text-med); max-width:480px; margin:0 auto 30px; }
+    .hero p { font-size:clamp(.92rem,2.5vw,1.05rem); color:rgba(255,255,255,0.72); max-width:480px; margin:0 auto 30px; }
     .btn-hero {
       display:inline-block; padding:13px 36px;
       background:linear-gradient(135deg,var(--rose) 0%,var(--rose-dark) 100%);
       color:#fff; text-decoration:none; border:none; border-radius:50px;
       font-size:clamp(.85rem,.9rem + .3vw,.93rem); font-weight:700;
-      box-shadow:0 8px 22px rgba(208,128,144,.4); transition:all .22s;
+      box-shadow:0 8px 22px rgba(212,98,42,.5); transition:all .22s;
     }
-    .btn-hero:hover { transform:translateY(-2px); box-shadow:0 12px 30px rgba(208,128,144,.5); }
+    .btn-hero:hover { transform:translateY(-2px); box-shadow:0 12px 30px rgba(212,98,42,.65); }
     @media(max-width:480px){
       .hero{ padding:72px 1.2rem 80px; min-height:auto; }
       .ptcl { font-size: .9rem !important; }
@@ -133,7 +133,7 @@
     .filter-tabs { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; }
     .tab-btn { padding:9px 22px; border-radius:50px; border:1.5px solid var(--border); background:#fff; color:var(--text-med); font-size:.83rem; font-weight:700; transition:all .18s; display:flex; align-items:center; gap:5px; }
     .tab-btn:hover { border-color:var(--rose); color:var(--rose); }
-    .tab-btn.active { background:var(--rose); border-color:var(--rose); color:#fff; box-shadow:0 4px 14px rgba(208,128,144,.35); }
+    .tab-btn.active { background:var(--rose); border-color:var(--rose); color:#fff; box-shadow:0 4px 14px rgba(212,98,42,.35); }
 
     /* ============================
        PRODUCTS GRID
@@ -659,14 +659,14 @@
 <header class="header">
   <div class="header-inner">
     <a href="#" class="logo">
-      <div class="logo-icon">🌸</div>
-      <div class="logo-text">Bella <span>Esencia</span></div>
+      <div class="logo-icon" style="font-family:'Playfair Display',serif;font-weight:900;font-size:15px;letter-spacing:1px">D</div>
+      <div class="logo-text">DUB<span>REM</span></div>
     </a>
     <nav class="nav">
-      <a href="#catalogo" onclick="filterBy('all',null)">Catálogo</a>
-      <a href="#catalogo" onclick="filterBy('maquillaje',null)">Maquillaje</a>
-      <a href="#catalogo" onclick="filterBy('skincare',null)">Skincare</a>
-      <a href="#catalogo" onclick="filterBy('cabello',null)">Cabello</a>
+      <a href="#catalogo" onclick="filterBy('mujer',null)">Mujer</a>
+      <a href="#catalogo" onclick="filterBy('hombre',null)">Hombre</a>
+      <a href="#catalogo" onclick="filterBy('outerwear',null)">Outerwear</a>
+      <a href="#catalogo" onclick="filterBy('bottoms',null)">Bottoms</a>
     </nav>
     <div class="header-actions">
       <div id="loginArea">
@@ -681,11 +681,10 @@
     <button class="hamburger" onclick="toggleNav()"><span></span><span></span><span></span></button>
   </div>
   <nav class="mobile-nav" id="mobileNav">
-    <a href="#catalogo" onclick="filterBy('all',null);closeMobileNav()">Catálogo</a>
-    <a href="#catalogo" onclick="filterBy('maquillaje',null);closeMobileNav()">Maquillaje</a>
-    <a href="#catalogo" onclick="filterBy('skincare',null);closeMobileNav()">Skincare</a>
-    <a href="#catalogo" onclick="filterBy('cabello',null);closeMobileNav()">Cabello</a>
-    <a href="#catalogo" onclick="filterBy('unas',null);closeMobileNav()">Uñas</a>
+    <a href="#catalogo" onclick="filterBy('mujer',null);closeMobileNav()">Mujer</a>
+    <a href="#catalogo" onclick="filterBy('hombre',null);closeMobileNav()">Hombre</a>
+    <a href="#catalogo" onclick="filterBy('outerwear',null);closeMobileNav()">Outerwear</a>
+    <a href="#catalogo" onclick="filterBy('bottoms',null);closeMobileNav()">Bottoms</a>
   </nav>
 </header>
 
@@ -694,9 +693,9 @@
   <!-- partículas animadas generadas por JS -->
   <div class="hero-particles" id="heroParticles"></div>
   <div class="hero-content">
-    <span class="hero-badge">✨ Nueva Colección 2026</span>
-    <h1>Tu belleza,<br><em>nuestra pasión</em></h1>
-    <p>Productos de belleza premium seleccionados con amor para realzar tu esencia única.</p>
+    <span class="hero-badge">✨ Nueva Colección 2026 · Tula de Allende</span>
+    <h1>Viste tu mejor<br><em>versión</em></h1>
+    <p>Ropa urbana y contemporánea diseñada para los que marcan tendencia. Calidad y estilo en cada pieza.</p>
     <button class="btn-hero" onclick="document.getElementById('catalogo').scrollIntoView({behavior:'smooth'})">Explorar Colección →</button>
   </div>
 </section>
@@ -704,14 +703,14 @@
 <!-- ========== FILTER BAR ========== -->
 <section class="filter-bar" id="catalogo">
   <div class="section-wrap">
-    <h2 class="section-title">Nuestra Colección</h2>
-    <p class="section-sub">Belleza de calidad premium en cada producto</p>
+    <h2 class="section-title">Colección Dubrem</h2>
+    <p class="section-sub">Piezas seleccionadas para tu estilo — envíos a todo México desde Tula de Allende</p>
     <div class="filter-tabs" id="filterTabs">
-      <button class="tab-btn active" onclick="filterBy('all',this)">✨ Todos</button>
-      <button class="tab-btn" onclick="filterBy('maquillaje',this)">💄 Maquillaje</button>
-      <button class="tab-btn" onclick="filterBy('skincare',this)">🌿 Skincare</button>
-      <button class="tab-btn" onclick="filterBy('cabello',this)">💇 Cabello</button>
-      <button class="tab-btn" onclick="filterBy('unas',this)">💅 Uñas</button>
+      <button class="tab-btn active" onclick="filterBy('all',this)">✦ Todo</button>
+      <button class="tab-btn" onclick="filterBy('mujer',this)">👗 Mujer</button>
+      <button class="tab-btn" onclick="filterBy('hombre',this)">👔 Hombre</button>
+      <button class="tab-btn" onclick="filterBy('outerwear',this)">🧥 Outerwear</button>
+      <button class="tab-btn" onclick="filterBy('bottoms',this)">👖 Bottoms</button>
     </div>
   </div>
 </section>
@@ -796,7 +795,7 @@
     <div class="auth-icon-wrap">
       <div class="auth-icon">💎</div>
       <h2 class="auth-title">Crear Cuenta</h2>
-      <p class="auth-sub">Únete a Bella Esencia</p>
+      <p class="auth-sub">Únete a DUBREM</p>
     </div>
     <div class="auth-error" id="regErr"></div>
     <div class="form-group">
@@ -900,7 +899,7 @@
       <div class="delivery-opts">
         <label class="delivery-opt selected" id="dOpt1">
           <input type="radio" name="dv" value="pickup" checked onchange="setDelivery('pickup')">
-          <div class="delivery-opt-body"><h4>🏪 Recoger en Tienda</h4><p>Av. Masaryk 123, Polanco, CDMX · Lun–Sáb 10–20 h</p></div>
+          <div class="delivery-opt-body"><h4>🏪 Recoger en Tienda</h4><p>Tula de Allende, Hgo. · Lun–Sáb 10–19 h</p></div>
           <span class="delivery-opt-price">Gratis</span>
         </label>
         <label class="delivery-opt" id="dOpt2">
@@ -918,7 +917,7 @@
       <div class="bank-card">
         <h4>🏦 Transferencia Bancaria</h4>
         <div class="bank-row"><span class="bank-lbl">Banco</span><span class="bank-val">BBVA México</span></div>
-        <div class="bank-row"><span class="bank-lbl">Titular</span><span class="bank-val">Bella Esencia S.A. de C.V.</span></div>
+        <div class="bank-row"><span class="bank-lbl">Titular</span><span class="bank-val">DUBREM</span></div>
         <div class="bank-row"><span class="bank-lbl">No. Cuenta</span><span class="bank-val">4152 3140 2857 6194</span></div>
         <div class="bank-row" style="align-items:flex-start"><span class="bank-lbl" style="padding-top:3px">CLABE</span><span class="bank-clabe">012 180 00485761940 8</span></div>
       </div>
@@ -992,12 +991,12 @@
     <div class="auth-icon-wrap">
       <div class="auth-icon">🔐</div>
       <h2 class="auth-title">Acceso Admin</h2>
-      <p class="auth-sub">Panel exclusivo Bella Esencia</p>
+      <p class="auth-sub">Panel exclusivo DUBREM</p>
     </div>
     <div class="auth-error" id="adminErr">Credenciales incorrectas.</div>
     <div class="form-group">
       <label class="form-label">Correo</label>
-      <input class="form-input" id="adminEmail" type="email" placeholder="admin@bellaesencia.com" autocomplete="off"
+      <input class="form-input" id="adminEmail" type="email" placeholder="admin@dubrem.com" autocomplete="off"
              onkeydown="if(event.key==='Enter')doAdminLogin()">
     </div>
     <div class="form-group">
@@ -1016,7 +1015,7 @@
   <div class="admin-header">
     <div class="admin-header-left">
       <button class="btn-admin-close" onclick="closeAdmin()">✕</button>
-      <div class="admin-logo">Bella <span>Esencia</span> — <em style="font-weight:400;font-style:normal;font-size:.95rem;opacity:.8">Panel Admin</em></div>
+      <div class="admin-logo">DUB<span>REM</span> — <em style="font-weight:400;font-style:normal;font-size:.95rem;opacity:.8">Panel Admin</em></div>
     </div>
     <button class="btn-admin-close" onclick="closeAdmin()" style="font-size:.78rem;padding:7px 16px;border-radius:50px">⬅ Cerrar panel</button>
   </div>
@@ -1037,16 +1036,16 @@
 <footer class="footer">
   <div class="footer-grid">
     <div>
-      <div class="footer-logo">Bella <span>Esencia</span></div>
-      <p class="footer-desc">Tu destino de belleza premium en México. Productos seleccionados con amor para realzar tu esencia única cada día.</p>
+      <div class="footer-logo">DUB<span>REM</span></div>
+      <p class="footer-desc">Moda urbana y contemporánea desde Tula de Allende, Hgo. Envíos a todo México.</p>
     </div>
     <div class="footer-col">
       <h4>Categorías</h4>
       <ul>
-        <li><a href="#catalogo" onclick="filterBy('maquillaje',null)">Maquillaje</a></li>
-        <li><a href="#catalogo" onclick="filterBy('skincare',null)">Skincare</a></li>
-        <li><a href="#catalogo" onclick="filterBy('cabello',null)">Cabello</a></li>
-        <li><a href="#catalogo" onclick="filterBy('unas',null)">Uñas</a></li>
+        <li><a href="#catalogo" onclick="filterBy('mujer',null)">Mujer</a></li>
+        <li><a href="#catalogo" onclick="filterBy('hombre',null)">Hombre</a></li>
+        <li><a href="#catalogo" onclick="filterBy('outerwear',null)">Outerwear</a></li>
+        <li><a href="#catalogo" onclick="filterBy('bottoms',null)">Bottoms</a></li>
       </ul>
     </div>
     <div class="footer-col">
@@ -1060,9 +1059,9 @@
     </div>
   </div>
   <div class="footer-bottom">
-    <span>© 2026 Bella Esencia. Todos los derechos reservados.</span>
+    <span>© 2026 DUBREM. Todos los derechos reservados.</span>
     <span style="display:flex;align-items:center;gap:16px">
-      Hecho con 💗 en México
+      Hecho con 🖤 en Tula de Allende
       <button onclick="openAdminLogin()" style="background:none;border:none;color:var(--nude-dark);font-size:.7rem;cursor:pointer;opacity:.6;padding:0;font-family:var(--ff-body)">⚙ Admin</button>
     </span>
   </div>
@@ -1078,7 +1077,7 @@
 /* ──────────────────────────────────────────────────────
    IMAGEN FALLBACK (SVG inline, siempre funciona)
 ────────────────────────────────────────────────────── */
-const IMG_FALLBACK = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600'%3E%3Crect width='600' height='600' fill='%23EDD9C8'/%3E%3Ctext x='300' y='270' font-family='serif' font-size='80' fill='%23D08090' text-anchor='middle'%3E%F0%9F%8C%B8%3C/text%3E%3Ctext x='300' y='360' font-family='sans-serif' font-size='22' fill='%23B56475' text-anchor='middle'%3EBella Esencia%3C/text%3E%3C/svg%3E";
+const IMG_FALLBACK = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600'%3E%3Crect width='600' height='600' fill='%23EDD9C8'/%3E%3Ctext x='300' y='270' font-family='serif' font-size='80' fill='%23D08090' text-anchor='middle'%3E%F0%9F%91%95%3C/text%3E%3Ctext x='300' y='360' font-family='sans-serif' font-size='22' fill='%23B56475' text-anchor='middle'%3EDUBREM%3C/text%3E%3C/svg%3E";
 
 function imgErr(el) {
   el.onerror = null;
@@ -1089,51 +1088,51 @@ function imgErr(el) {
    PRODUCTOS (15)
 ────────────────────────────────────────────────────── */
 const PRODUCTS = [
-  { id:1,  name:"Labial Velvet Rouge",          cat:"maquillaje", price:189, stock:15,
-    desc:"Labial mate de larga duración con vitamina E y aceite de argán. Acabado aterciopelado hasta 12 h sin resecar. Tono Bordeaux.",
-    img:"img/labial.jpg" },
-  { id:2,  name:"Base Satin Finish SPF 30",      cat:"maquillaje", price:349, stock:12,
-    desc:"Base líquida cobertura media-alta, acabado satinado natural y SPF 30. Fórmula ligera en 20 tonos para todo tipo de piel.",
-    img:"img/base.jpg" },
-  { id:3,  name:"Paleta Golden Hour",            cat:"maquillaje", price:459, stock:10,
-    desc:"16 sombras en tonos cálidos: dorados, cobrizos y champagne. Acabados matte, shimmer y glitter. Alta pigmentación day-to-night.",
-    img:"img/paleta.jpg" },
-  { id:4,  name:"Rubor Rosé Bloom",              cat:"maquillaje", price:249, stock:18,
-    desc:"Rubor en polvo sedoso tono rosa palo. Flush natural y saludable con pigmentos ultra-blendable de alta definición.",
-    img:"img/rubor.jpg" },
-  { id:5,  name:"Máscara Volumax Pro",           cat:"maquillaje", price:199, stock:20,
-    desc:"Triple acción: volumen, curvado y alargamiento. Fórmula con argán. Resistente al agua 24 h. Cepillo de silicón de precisión.",
-    img:"img/mascara.jpg" },
-  { id:6,  name:"Sérum Vitamina C Glow",         cat:"skincare",   price:399, stock:14,
-    desc:"20% de vitamina C estabilizada, ácido hialurónico y niacinamida. Unifica tono, reduce manchas y aporta luminosidad visible.",
-    img:"https://images.unsplash.com/photo-1617897903246-719242758050?auto=format&fit=crop&w=600&q=80" },
-  { id:7,  name:"Crema Rose Gold Hidratante",    cat:"skincare",   price:329, stock:16,
-    desc:"Rosa búlgara, aceite de jojoba y ácido hialurónico. Textura gel-crema ligera, hidratación 24 h y SPF 15.",
-    img:"img/crema.jpg" },
-  { id:8,  name:"Mascarilla Purificante",        cat:"skincare",   price:279, stock:11,
-    desc:"Arcilla kaolin y carbón activado. Purifica poros, controla el sebo y minimiza imperfecciones en solo 10 minutos.",
-    img:"img/mascarilla.jpg" },
-  { id:9,  name:"Contorno de Ojos Anti-Edad",   cat:"skincare",   price:449, stock:10,
-    desc:"Retinol encapsulado, péptidos reafirmantes y cafeína. Reduce ojeras, bolsas y líneas de expresión desde la primera semana.",
-    img:"https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80" },
-  { id:10, name:"Shampoo Reparador Argán",       cat:"cabello",    price:219, stock:22,
-    desc:"Aceite de argán marroquí, queratina hidrolizada y proteínas de seda. Restaura el cabello dañado con brillo y suavidad intensos.",
-    img:"https://images.unsplash.com/photo-1585751119414-ef2636f8aede?auto=format&fit=crop&w=600&q=80" },
-  { id:11, name:"Mascarilla Capilar Nutritiva",  cat:"cabello",    price:289, stock:15,
-    desc:"Manteca de karité, aceite de coco y proteínas vegetales. Nutrición profunda para cabello seco y dañado en solo 5 minutos.",
-    img:"img/mascarilla-capilar.jpg" },
-  { id:12, name:"Aceite Brillo Total 6 en 1",   cat:"cabello",    price:259, stock:13,
-    desc:"Blend de argán, jojoba, rosa mosqueta, almendra, aguacate y camelia. Controla el frizz y aporta brillo espejo sin residuo.",
-    img:"img/aceite.jpg" },
-  { id:13, name:"Esmalte Berry Kiss Set x3",    cat:"unas",       price:159, stock:25,
-    desc:"3 esmaltes en tonos berry: frambuesa, mora y vino. Fórmula gel sin lámpara, brillo espejo y durabilidad hasta 14 días.",
-    img:"img/esmalte.jpg" },
-  { id:14, name:"Kit Manicure Profesional",      cat:"unas",       price:379, stock:10,
-    desc:"7 piezas de acero inoxidable: cortauñas, lima doble cara, empujador de cutícula, alicate, pulidora, separador y estuche de piel.",
-    img:"img/manicure.jpg" },
-  { id:15, name:"Base & Top Coat Duo",           cat:"unas",       price:229, stock:17,
-    desc:"Base fortalecedora que protege la uña natural + top coat brillo espejo. Duración hasta 10 días. Sin formaldehído ni tolueno.",
-    img:"img/topcoat.jpg" }
+  { id:1,  name:"Camiseta Esencial",      cat:"mujer",    price:299,  stock:20,
+    desc:"Básica de algodón premium 100%. Corte relajado, cuello redondo. Disponible en blanco, negro y beige. La pieza perfecta para cualquier look.",
+    img:"https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=600&q=80" },
+  { id:2,  name:"Hoodie Urban Drop",       cat:"mujer",    price:549,  stock:15,
+    desc:"Sudadera oversize con capucha forrada. Tejido grueso de algodón y poliéster. Bolsillo canguro. Perfecta para el día a día.",
+    img:"https://images.unsplash.com/photo-1556821840-3a63f15732ce?auto=format&fit=crop&w=600&q=80" },
+  { id:3,  name:"Jeans Slim Fit Classic",  cat:"bottoms",  price:799,  stock:18,
+    desc:"Jeans de mezclilla stretch. Corte slim que estiliza la figura. Cinco bolsillos clásicos. Lavado medio, perfecto para cualquier ocasión.",
+    img:"https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&w=600&q=80" },
+  { id:4,  name:"Vestido Midi Elegance",   cat:"mujer",    price:899,  stock:10,
+    desc:"Vestido midi de escote en V con cintilla. Tela fluida de viscosa. Ideal para looks casuales o de noche. Disponible en negro y vino.",
+    img:"https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?auto=format&fit=crop&w=600&q=80" },
+  { id:5,  name:"Chaqueta Denim Oversize", cat:"outerwear", price:1099, stock:12,
+    desc:"Chaqueta de mezclilla oversize con lavado vintage. Bolsillos frontales y en pecho. Cierre de botones metálicos. Imprescindible del clóset.",
+    img:"https://images.unsplash.com/photo-1551537482-f2075a1d41f2?auto=format&fit=crop&w=600&q=80" },
+  { id:6,  name:"Pantalón Cargo Street",   cat:"bottoms",  price:749,  stock:16,
+    desc:"Pantalón cargo de gabardina con múltiples bolsillos laterales. Corte recto y cómodo. Elástico en cintura. Estilo urbano garantizado.",
+    img:"https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=600&q=80" },
+  { id:7,  name:"Blusa Satinada Flow",     cat:"mujer",    price:449,  stock:14,
+    desc:"Blusa de tela satinada con escote en V y mangas largas. Caída perfecta. Versátil, de día o de noche con los accesorios correctos.",
+    img:"https://images.unsplash.com/photo-1594938298603-c8148f4f937e?auto=format&fit=crop&w=600&q=80" },
+  { id:8,  name:"Sudadera Cropped Bold",   cat:"mujer",    price:499,  stock:13,
+    desc:"Sudadera cropped sin capucha, cuello redondo. Estampado frontal gráfico. Tela de algodón fleece suave. Combínala con tus jeans favoritos.",
+    img:"https://images.unsplash.com/photo-1578932750294-f5075e85f44a?auto=format&fit=crop&w=600&q=80" },
+  { id:9,  name:"Conjunto Jogger Set",     cat:"mujer",    price:899,  stock:8,
+    desc:"Set completo de jogger + top combinado. Tela técnica stretch de alta calidad. Ideal para gym, loungewear o street style. Varios colores.",
+    img:"https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=600&q=80" },
+  { id:10, name:"Camisa Oxford Classic",   cat:"hombre",   price:499,  stock:22,
+    desc:"Camisa Oxford de algodón con tejido fino. Corte regular, cuello botón down. Mangas largas. Elegante para la oficina o casual con jeans.",
+    img:"https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=600&q=80" },
+  { id:11, name:"Falda Midi Plisada",      cat:"bottoms",  price:649,  stock:11,
+    desc:"Falda midi con pliegues de tela fluida. Cintura elástica cómoda. Movimiento perfecto al caminar. Disponible en varios colores neutros.",
+    img:"https://images.unsplash.com/photo-1583496661160-fb5974c8cfcf?auto=format&fit=crop&w=600&q=80" },
+  { id:12, name:"Abrigo Premium Wool",     cat:"outerwear", price:1499, stock:6,
+    desc:"Abrigo de mezcla de lana con forro interior. Corte recto y largo. Botones forrados. La inversión en ropa que vale cada peso.",
+    img:"https://images.unsplash.com/photo-1539533018447-63fcce2678e3?auto=format&fit=crop&w=600&q=80" },
+  { id:13, name:"Short Casual Flex",       cat:"bottoms",  price:349,  stock:25,
+    desc:"Short de gabardina con cintura elástica y cordón ajustable. Ligero y fresco. Dos bolsillos laterales. Perfecto para el clima cálido.",
+    img:"https://images.unsplash.com/photo-1591196440958-89c65c8ab218?auto=format&fit=crop&w=600&q=80" },
+  { id:14, name:"Top Ribbed Essentials",   cat:"mujer",    price:299,  stock:20,
+    desc:"Top de tela acanalada (ribbed) ajustado. Sin mangas, cuello redondo. Básico indispensable que combina con todo. Calidad y comodidad.",
+    img:"https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=600&q=80" },
+  { id:15, name:"Blazer Casual Chic",      cat:"outerwear", price:1199, stock:9,
+    desc:"Blazer de tela texturizada con solapa clásica. Forro interior, bolsillos funcionales. Estructura impecable. Eleva cualquier outfit al instante.",
+    img:"https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=600&q=80" },
 ];
 
 /* ──────────────────────────────────────────────────────
@@ -1142,7 +1141,7 @@ const PRODUCTS = [
 const S = {
   cart: [],
   user: null,
-  users: [{ name:'Cliente Demo', email:'cliente@bellaesencia.com', pass:'bella123' }],
+  users: [{ name:'Cliente Demo', email:'cliente@dubrem.com', pass:'dubrem123' }],
   orders: [],          // pedidos confirmados
   lbId: null,
   step: 1,
@@ -1151,12 +1150,12 @@ const S = {
 };
 const SHIP_COST  = 110;
 const WA_NUMBER  = '5214421052174';
-const ADMIN_CRED = { email:'admin@bellaesencia.com', pass:'bella2026' };
+const ADMIN_CRED = { email:'admin@dubrem.com', pass:'dubrem2026' };
 // ← Cambia esta dirección por la real de tu tienda
 const STORE_LOCATION = {
-  address: 'Av. Masaryk 123, Polanco, CDMX',
-  hours:   'Lun–Sáb 10:00–20:00 h',
-  maps:    'https://maps.google.com/?q=Av.+Masaryk+123+Polanco+CDMX',
+  address: 'Tula de Allende, Hidalgo, México',
+  hours:   'Lun–Sáb 10:00–19:00 h',
+  maps:    'https://maps.google.com/?q=Tula+de+Allende+Hidalgo+Mexico',
 };
 
 /* ──────────────────────────────────────────────────────
@@ -1304,9 +1303,8 @@ document.addEventListener('DOMContentLoaded', () => {
 function spawnParticles() {
   const container = document.getElementById('heroParticles');
   if (!container) return;
-  // emojis de uñas, labios y accesorios de belleza
-  const pool = ['💅','💅','💅','💄','💄','🌸','🌸','✨','✨','💋',
-                '💎','🌷','🌟','🧴','💅','💄','🌸','✨','💎','💅'];
+  // emojis de ropa y moda
+  const pool = ['👕','👗','🧥','👖','👔','✨','💫','🌟','🛍️','👕','👗','🧥','✨','👖','💫','👔','🌟','🛍️','✨','👕'];
   const isMobile = window.innerWidth < 480;
   const count = isMobile ? 10 : 20;
 
@@ -1327,7 +1325,9 @@ function spawnParticles() {
 }
 
 function fmtMXN(n){ return '$' + n.toLocaleString('es-MX'); }
-function catLabel(c){ return {maquillaje:'Maquillaje',skincare:'Skincare',cabello:'Cabello',unas:'Uñas'}[c]||c; }
+function catLabel(c){
+  return {mujer:'Mujer',hombre:'Hombre',outerwear:'Outerwear',bottoms:'Bottoms',sets:'Sets'}[c]||c;
+}
 function lockScroll()   { document.body.style.overflow='hidden'; }
 function unlockScroll() { document.body.style.overflow=''; }
 function toggleNav()    { document.getElementById('mobileNav').classList.toggle('open'); }
@@ -1518,7 +1518,7 @@ async function doLogin() {
     saveSession();
     closeLoginModal();
     renderLoginArea();
-    toast(`✓ ¡Bienvenida, ${found.name}!`,'ok');
+    toast(`✓ ¡Bienvenid@, ${found.name}!`,'ok');
   } else {
     document.getElementById('loginErr').classList.add('show');
     document.getElementById('loginPass').value='';
@@ -1600,7 +1600,7 @@ async function doRegister(){
     saveSession();
     closeRegisterModal();
     renderLoginArea();
-    toast(`✓ ¡Cuenta creada! Bienvenida, ${name} 🌸`, 'ok');
+    toast(`✓ ¡Cuenta creada! Bienvenid@, ${name}`, 'ok');
   } finally {
     btn.disabled=false; btn.textContent='Crear Cuenta';
   }
@@ -1677,8 +1677,8 @@ function confirmOrder(){
   fbSaveOrder(newOrder); // guardar en Firebase
 
   // Armar enlace de WhatsApp con número de orden y monto total
-  const msg = `¡Hola! 🌸 Ya realicé la transferencia bancaria de *${fmtMXN(total)} MXN* para mi pedido *${num}*. `
-            + `Por favor confirmar el despacho. ¡Gracias!`;
+  const msg = `¡Hola! 🖤 Ya realicé la transferencia bancaria de *${fmtMXN(total)} MXN* para mi pedido *${num}*. `
+            + `Por favor confirmar el despacho. ¡Gracias! — DUBREM`;
   document.getElementById('btnWhatsApp').href =
     `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`;
 
@@ -1740,7 +1740,7 @@ function doForgot(){
 
   // Abrir WhatsApp al número del usuario con el código
   const waPhone = '521' + normalizePhone(user.phone);
-  const msg = `🌸 *Bella Esencia* — Código de recuperación\n\nHola ${user.name}, tu código temporal es:\n\n*${code}*\n\nVálido por 10 minutos. Si no lo solicitaste, ignora este mensaje.`;
+  const msg = `🖤 *DUBREM* — Código de recuperación\n\nHola ${user.name}, tu código temporal es:\n\n*${code}*\n\nVálido por 10 minutos. Si no lo solicitaste, ignora este mensaje.`;
   window.open(`https://wa.me/${waPhone}?text=${encodeURIComponent(msg)}`, '_blank');
 
   closeForgotModal();
@@ -1792,7 +1792,7 @@ function doRecovery(){
   saveSession();
   closeRecoveryModal();
   renderLoginArea();
-  toast(`✓ ¡Acceso recuperado! Bienvenida, ${user.name} 🌸`,'ok');
+  toast(`✓ ¡Acceso recuperado! Bienvenid@, ${user.name}`,'ok');
 }
 
 /* ──────────────────────────────────────────────────────
