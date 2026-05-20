@@ -675,11 +675,76 @@
     /* Admin login modal */
     .admin-login-modal .modal-box { max-width:400px; }
 
+    /* Admin tabs */
+    .admin-tabs {
+      display: flex; gap: 0; padding: 0 2rem;
+      background: #0A0A0A; border-bottom: 1px solid rgba(255,255,255,.1);
+      flex-shrink: 0;
+    }
+    .admin-tab {
+      padding: 12px 24px; border: none; background: transparent;
+      color: rgba(255,255,255,.45); font-family: var(--ff-body);
+      font-size: .72rem; font-weight: 600; letter-spacing: .12em;
+      text-transform: uppercase; cursor: pointer;
+      border-bottom: 2px solid transparent; margin-bottom: -1px;
+      transition: all .2s;
+    }
+    .admin-tab.active { color: #fff; border-bottom-color: var(--rose); }
+    .admin-tab:hover { color: rgba(255,255,255,.85); }
+
+    /* Admin products section */
+    .admin-prods-section { flex:1; overflow-y:auto; padding:20px 2rem 48px; }
+    .admin-prods-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 14px; margin-top: 16px;
+    }
+    .prod-admin-card {
+      background: #fff; border-radius: 12px; overflow: hidden;
+      border: 1px solid var(--border); cursor: pointer;
+      transition: box-shadow .2s, transform .2s;
+    }
+    .prod-admin-card:hover { box-shadow: 0 6px 20px var(--shadow-md); transform: translateY(-3px); }
+    .prod-admin-img { width: 100%; aspect-ratio: 3/4; object-fit: cover; display: block; background: var(--blush-light); }
+    .prod-admin-info { padding: 10px 12px 12px; }
+    .prod-admin-name { font-size: .76rem; font-weight: 600; color: var(--text-dark); margin-bottom: 3px; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .prod-admin-meta { font-size: .68rem; color: var(--rose); font-weight: 700; margin-bottom: 2px; }
+    .prod-admin-stock { font-size: .62rem; color: var(--text-light); }
+    /* Add new product card */
+    .prod-admin-card-add {
+      background: var(--blush-light); border-radius: 12px;
+      border: 2px dashed var(--blush-mid); cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 220px; gap: 10px; transition: all .2s;
+    }
+    .prod-admin-card-add:hover { border-color: var(--rose); background: var(--rose-pale); }
+    .prod-admin-card-add-icon { font-size: 2rem; opacity: .5; }
+    .prod-admin-card-add-lbl { font-size: .72rem; font-weight: 600; color: var(--text-med); letter-spacing: .08em; text-transform: uppercase; }
+
+    /* Product edit modal textarea */
+    textarea.form-input { resize: vertical; min-height: 80px; font-family: var(--ff-body); line-height: 1.5; }
+    select.form-input { cursor: pointer; }
+
+    /* Upload dropzone */
+    .img-upload-zone {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 14px; border: 2px dashed var(--border); border-radius: 12px;
+      cursor: pointer; transition: all .22s; text-align: center;
+      background: var(--blush-light);
+    }
+    .img-upload-zone:hover { border-color: var(--rose); background: var(--rose-pale); }
+    .img-upload-zone input { display: none; }
+    .img-upload-zone-text { font-size: .72rem; font-weight: 600; color: var(--rose); }
+    .img-upload-zone-sub { font-size: .62rem; color: var(--text-light); margin-top: 2px; }
+
     @media(max-width:640px){
       .admin-header { padding:0 1rem; }
+      .admin-tabs   { padding:0 1rem; }
       .admin-stats  { padding:14px 1rem 0; }
       .admin-body   { padding:12px 1rem 32px; }
       .admin-orders-grid { grid-template-columns:1fr; }
+      .admin-prods-section { padding:14px 1rem 32px; }
+      .admin-prods-grid { grid-template-columns:repeat(2,1fr); gap:10px; }
     }
 
     /* ============================
@@ -1283,21 +1348,112 @@
   <div class="admin-header">
     <div class="admin-header-left">
       <button class="btn-admin-close" onclick="closeAdmin()">✕</button>
-      <div class="admin-logo">DUB<span>REM</span> — <em style="font-weight:400;font-style:normal;font-size:.95rem;opacity:.8">Panel Admin</em></div>
+      <div class="admin-logo">DUB<span>REM</span> — <em style="font-weight:400;font-style:normal;font-size:.95rem;opacity:.7">Admin</em></div>
     </div>
-    <button class="btn-admin-close" onclick="closeAdmin()" style="font-size:.78rem;padding:7px 16px;border-radius:50px">⬅ Cerrar panel</button>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="btn-refresh" onclick="syncAdminOrders().then(renderAdminOrders)" style="display:none" id="btnRefreshOrders">↺ Actualizar</button>
+      <button class="btn-admin-close" onclick="closeAdmin()" style="font-size:.75rem;padding:7px 18px;border-radius:50px">⬅ Cerrar</button>
+    </div>
   </div>
 
-  <!-- Stats -->
-  <div class="admin-stats" id="adminStats">
-    <!-- renderAdminOrders() lo rellena -->
+  <!-- Tabs -->
+  <div class="admin-tabs">
+    <button class="admin-tab active" data-tab="orders" onclick="switchAdminTab('orders')">📦 Pedidos</button>
+    <button class="admin-tab" data-tab="products" onclick="switchAdminTab('products')">🛍 Productos</button>
   </div>
 
-  <!-- Cuerpo / listado de pedidos -->
-  <div class="admin-body" id="adminBody">
-    <!-- renderAdminOrders() lo rellena -->
-  </div>
+  <!-- Stats (solo tab Pedidos) -->
+  <div class="admin-stats" id="adminStats"></div>
 
+  <!-- Cuerpo Pedidos -->
+  <div class="admin-body" id="adminBody"></div>
+
+  <!-- Sección Productos (oculta por defecto) -->
+  <div class="admin-prods-section" id="adminProdsSection" style="display:none"></div>
+
+</div>
+
+<!-- ========== MODAL EDITAR PRODUCTO ========== -->
+<div class="modal" id="productEditModal">
+  <div class="modal-overlay" onclick="closeProductModal()"></div>
+  <div class="modal-box" style="max-width:500px">
+    <button class="modal-x" onclick="closeProductModal()">✕</button>
+
+    <!-- Preview + título -->
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:22px">
+      <div style="width:68px;height:90px;border-radius:10px;overflow:hidden;background:var(--blush-light);flex-shrink:0">
+        <img id="prodEditImgPreview" src="" alt="" style="width:100%;height:100%;object-fit:cover;display:none" onerror="this.style.display='none'">
+      </div>
+      <div>
+        <h2 class="auth-title" id="prodEditTitle">Editar Producto</h2>
+        <p class="auth-sub" id="prodEditSubtitle">Actualiza la info y la foto</p>
+      </div>
+    </div>
+
+    <!-- Zona de imagen -->
+    <div class="form-group">
+      <label class="form-label">📷 Foto del producto</label>
+      <label class="img-upload-zone">
+        <input type="file" accept="image/*" id="prodImgFile" onchange="handleProductImageUpload(this)">
+        <div>
+          <div class="img-upload-zone-text">Toca aquí para subir una foto</div>
+          <div class="img-upload-zone-sub">JPG, PNG, WEBP · se comprime automáticamente</div>
+        </div>
+      </label>
+      <div style="display:flex;align-items:center;gap:8px;margin:10px 0">
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+        <span style="font-size:.65rem;color:var(--text-light);white-space:nowrap">o pega una URL de imagen</span>
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+      </div>
+      <input class="form-input" id="prodImgUrl" type="url" placeholder="https://ejemplo.com/foto.jpg"
+             oninput="previewFromUrl(this.value)">
+      <div id="prodImgStatus" style="font-size:.7rem;margin-top:5px;color:var(--text-light)"></div>
+    </div>
+
+    <!-- Nombre -->
+    <div class="form-group">
+      <label class="form-label">Nombre del producto</label>
+      <input class="form-input" id="prodEditName" type="text" placeholder="Ej: Blusa Satinada Rosa">
+    </div>
+
+    <!-- Precio + Stock -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group">
+        <label class="form-label">Precio (MXN)</label>
+        <input class="form-input" id="prodEditPrice" type="number" min="0" step="1" placeholder="499">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Stock</label>
+        <input class="form-input" id="prodEditStock" type="number" min="0" step="1" placeholder="10">
+      </div>
+    </div>
+
+    <!-- Categoría -->
+    <div class="form-group">
+      <label class="form-label">Categoría</label>
+      <select class="form-input" id="prodEditCat">
+        <option value="mujer">Mujer</option>
+        <option value="hombre">Hombre</option>
+        <option value="outerwear">Outerwear / Chamarras</option>
+        <option value="bottoms">Bottoms / Pantalones</option>
+      </select>
+    </div>
+
+    <!-- Descripción -->
+    <div class="form-group">
+      <label class="form-label">Descripción</label>
+      <textarea class="form-input" id="prodEditDesc" rows="3" placeholder="Describe materiales, tallas disponibles, colores…"></textarea>
+    </div>
+
+    <!-- Botones -->
+    <div style="display:flex;gap:10px;margin-top:6px">
+      <button class="btn-primary" id="prodSaveBtn" onclick="saveProductEdit()">Guardar</button>
+      <button id="prodDeleteBtn"
+        style="padding:13px 18px;border:1.5px solid #fcc;background:transparent;color:#c0392b;border-radius:50px;font-size:.72rem;font-weight:600;cursor:pointer;transition:all .2s;display:none"
+        onmouseover="this.style.background='#fff0f0'" onmouseout="this.style.background='transparent'"
+        onclick="deleteProduct()">Eliminar</button>
+    </div>
+  </div>
 </div>
 
 <!-- ========== FOOTER ========== -->
@@ -1518,6 +1674,291 @@ async function fbGetUserOrders(email){
 }
 
 /* ──────────────────────────────────────────────────────
+   FIREBASE — PRODUCTOS (subir fotos / editar / agregar)
+────────────────────────────────────────────────────── */
+let PRODUCT_OVERRIDES = {};   // { fbKey: { name, price, stock, cat, desc, img } }
+let _currentFilter = 'all';  // filtro activo en la tienda
+
+async function fbLoadProductOverrides(){
+  try {
+    const data = await fbFetch('products');
+    PRODUCT_OVERRIDES = (data && typeof data === 'object') ? data : {};
+  } catch(e){ PRODUCT_OVERRIDES = {}; }
+}
+async function fbSaveProductOverride(fbKey, data){
+  try { await fbSet(`products/${fbKey}`, data); } catch(e){}
+}
+async function fbDeleteProductOverride(fbKey){
+  try {
+    if(!FIREBASE_DB_URL) return;
+    await fetch(`${FIREBASE_DB_URL}/products/${fbKey}.json`, { method:'DELETE' });
+  } catch(e){}
+}
+
+/** Mezcla PRODUCTS hardcoded con overrides de Firebase */
+function getMergedProducts(){
+  // 1. Copiar base con posibles overrides
+  const base = PRODUCTS.map(p => {
+    const ov = PRODUCT_OVERRIDES[`p${p.id}`];
+    return ov ? { ...p, ...ov, id: p.id } : { ...p };
+  });
+  // 2. Agregar productos nuevos (claves que empiezan con 'new_')
+  const added = Object.entries(PRODUCT_OVERRIDES)
+    .filter(([k]) => k.startsWith('new_'))
+    .map(([k, v]) => ({ ...v, id: k }));
+  return [...base, ...added];
+}
+
+/* ──────────────────────────────────────────────────────
+   PRODUCT MANAGEMENT — ADMIN
+────────────────────────────────────────────────────── */
+let _editingProductId = null;  // null = nuevo, else id
+
+/** Busca producto en PRODUCTS (numérico) o PRODUCT_OVERRIDES (string new_*) */
+function findProduct(id) {
+  if (typeof id === 'number') return PRODUCTS.find(x => x.id === id);
+  return PRODUCT_OVERRIDES[id] || null;
+}
+
+function switchAdminTab(tab) {
+  document.querySelectorAll('.admin-tab').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === tab);
+  });
+  const body    = document.getElementById('adminBody');
+  const stats   = document.getElementById('adminStats');
+  const prods   = document.getElementById('adminProdsSection');
+  if (tab === 'orders') {
+    stats.style.display = '';
+    body.style.display  = '';
+    prods.style.display = 'none';
+    renderAdminOrders();
+  } else {
+    stats.style.display = 'none';
+    body.style.display  = 'none';
+    prods.style.display = '';
+    renderAdminProducts();
+  }
+}
+
+function renderAdminProducts() {
+  const sec  = document.getElementById('adminProdsSection');
+  const all  = getMergedProducts();
+  const cards = all.map(p => {
+    const imgSrc = p.img || '';
+    const stkColor = p.stock === 0 ? 'color:#c0392b' : p.stock <= 5 ? 'color:#856404' : '';
+    return `
+      <div class="prod-admin-card" onclick="openProductEditModal(${JSON.stringify(p.id)})">
+        <img class="prod-admin-img" src="${imgSrc}" alt="${p.name}" onerror="this.style.background='var(--blush)'">
+        <div class="prod-admin-info">
+          <div class="prod-admin-name">${p.name}</div>
+          <div class="prod-admin-meta">${fmtMXN(p.price)}</div>
+          <div class="prod-admin-stock" style="${stkColor}">${p.stock} en stock</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  sec.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <h3 style="font-family:var(--ff-head);font-size:1.1rem;color:#fff">Catálogo de Productos</h3>
+      <button class="btn-primary" style="padding:8px 18px;font-size:.7rem" onclick="openNewProductModal()">+ Nuevo Producto</button>
+    </div>
+    <p style="font-size:.72rem;color:rgba(255,255,255,.45);margin-bottom:16px">
+      Toca un producto para editar su foto, precio o stock.
+    </p>
+    <div class="admin-prods-grid">
+      <div class="prod-admin-card-add" onclick="openNewProductModal()">
+        <div class="prod-admin-card-add-icon">＋</div>
+        <div class="prod-admin-card-add-lbl">Agregar producto</div>
+      </div>
+      ${cards}
+    </div>`;
+}
+
+function openProductEditModal(id) {
+  _editingProductId = id;
+  const p = findProduct(id);
+  document.getElementById('prodEditTitle').textContent    = p ? 'Editar Producto' : 'Nuevo Producto';
+  document.getElementById('prodEditSubtitle').textContent = p ? 'Actualiza la info y la foto' : 'Rellena los datos del producto';
+  document.getElementById('prodEditName').value  = p ? p.name  : '';
+  document.getElementById('prodEditPrice').value = p ? p.price : '';
+  document.getElementById('prodEditStock').value = p ? p.stock : '';
+  document.getElementById('prodEditCat').value   = p ? (p.cat || 'mujer') : 'mujer';
+  document.getElementById('prodEditDesc').value  = p ? (p.desc || '') : '';
+  document.getElementById('prodImgUrl').value    = (p && p.img && !p.img.startsWith('data:')) ? p.img : '';
+  document.getElementById('prodImgStatus').textContent = '';
+  // preview
+  const preview = document.getElementById('prodEditImgPreview');
+  if (p && p.img) { preview.src = p.img; preview.style.display = 'block'; }
+  else            { preview.src = ''; preview.style.display = 'none'; }
+  // delete btn only for existing
+  document.getElementById('prodDeleteBtn').style.display = p ? 'block' : 'none';
+  document.getElementById('productEditModal').classList.add('open');
+  lockScroll();
+}
+
+function openNewProductModal() {
+  _editingProductId = null;
+  document.getElementById('prodEditTitle').textContent    = 'Nuevo Producto';
+  document.getElementById('prodEditSubtitle').textContent = 'Agrega un producto a tu catálogo';
+  document.getElementById('prodEditName').value  = '';
+  document.getElementById('prodEditPrice').value = '';
+  document.getElementById('prodEditStock').value = '';
+  document.getElementById('prodEditCat').value   = 'mujer';
+  document.getElementById('prodEditDesc').value  = '';
+  document.getElementById('prodImgUrl').value    = '';
+  document.getElementById('prodImgStatus').textContent = '';
+  document.getElementById('prodEditImgPreview').src = '';
+  document.getElementById('prodEditImgPreview').style.display = 'none';
+  document.getElementById('prodDeleteBtn').style.display = 'none';
+  document.getElementById('productEditModal').classList.add('open');
+  lockScroll();
+}
+
+function closeProductModal() {
+  document.getElementById('productEditModal').classList.remove('open');
+  unlockScroll();
+}
+
+async function handleProductImageUpload(input) {
+  const file = input.files[0]; if (!file) return;
+  const status = document.getElementById('prodImgStatus');
+  status.textContent = '⏳ Comprimiendo imagen…';
+  status.style.color = 'var(--text-med)';
+  try {
+    const b64 = await compressImage(file, 900, 0.78);
+    document.getElementById('prodEditImgPreview').src = b64;
+    document.getElementById('prodEditImgPreview').style.display = 'block';
+    document.getElementById('prodImgUrl').value = '';      // clear URL field
+    // store in dataset for saveProductEdit to pick up
+    input.dataset.b64 = b64;
+    status.textContent = '✓ Imagen lista';
+    status.style.color = '#2e7d32';
+  } catch(e) {
+    status.textContent = '✗ Error al cargar la imagen';
+    status.style.color = '#c0392b';
+  }
+}
+
+function compressImage(file, maxPx, quality) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+        const w = Math.round(img.width  * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function previewFromUrl(url) {
+  if (!url) return;
+  const preview = document.getElementById('prodEditImgPreview');
+  preview.src = url;
+  preview.style.display = 'block';
+  preview.onerror = () => { preview.style.display = 'none'; };
+  // clear any uploaded file b64
+  const fi = document.getElementById('prodImgFile');
+  if (fi) fi.dataset.b64 = '';
+}
+
+async function saveProductEdit() {
+  const btn = document.getElementById('prodSaveBtn');
+  btn.textContent = 'Guardando…'; btn.disabled = true;
+
+  const name  = document.getElementById('prodEditName').value.trim();
+  const price = parseFloat(document.getElementById('prodEditPrice').value) || 0;
+  const stock = parseInt(document.getElementById('prodEditStock').value)   || 0;
+  const cat   = document.getElementById('prodEditCat').value;
+  const desc  = document.getElementById('prodEditDesc').value.trim();
+
+  // Resolve image: prefer uploaded b64, then URL field, then existing
+  const fileInput = document.getElementById('prodImgFile');
+  const b64 = fileInput && fileInput.dataset.b64 ? fileInput.dataset.b64 : '';
+  const urlField = document.getElementById('prodImgUrl').value.trim();
+  let img = b64 || urlField;
+
+  if (!img && _editingProductId !== null) {
+    // keep existing image
+    const existing = findProduct(_editingProductId);
+    img = existing ? (existing.img || '') : '';
+  }
+
+  if (!name) { toast('El nombre es obligatorio', 'err'); btn.textContent = 'Guardar'; btn.disabled = false; return; }
+
+  const data = { name, price, stock, cat, desc, img };
+
+  if (_editingProductId === null) {
+    // Nuevo producto
+    const fbKey = `new_${Date.now()}`;
+    PRODUCT_OVERRIDES[fbKey] = { ...data, id: fbKey };
+    await fbSaveProductOverride(fbKey, PRODUCT_OVERRIDES[fbKey]);
+    toast(`✓ "${name}" agregado al catálogo`, 'ok');
+  } else {
+    // Editar producto existente
+    const id = _editingProductId;
+    if (typeof id === 'number') {
+      // base product override
+      const fbKey = `p${id}`;
+      PRODUCT_OVERRIDES[fbKey] = { ...data };
+      await fbSaveProductOverride(fbKey, PRODUCT_OVERRIDES[fbKey]);
+      // also update in-memory PRODUCTS
+      const bp = PRODUCTS.find(x => x.id === id);
+      if (bp) { bp.name = name; bp.price = price; bp.stock = stock; bp.cat = cat; bp.desc = desc; if (img) bp.img = img; }
+    } else {
+      // new_ product
+      PRODUCT_OVERRIDES[id] = { ...data, id };
+      await fbSaveProductOverride(id, PRODUCT_OVERRIDES[id]);
+    }
+    toast(`✓ "${name}" actualizado`, 'ok');
+  }
+
+  // reset file input
+  if (fileInput) { fileInput.value = ''; fileInput.dataset.b64 = ''; }
+
+  closeProductModal();
+  renderAdminProducts();
+  renderGrid(_currentFilter);
+
+  btn.textContent = 'Guardar'; btn.disabled = false;
+}
+
+async function deleteProduct() {
+  const id = _editingProductId;
+  if (id === null) return;
+
+  if (!confirm('¿Eliminar este producto del catálogo?')) return;
+
+  if (typeof id === 'number') {
+    // Hide base product — we just mark it hidden via override
+    const fbKey = `p${id}`;
+    PRODUCT_OVERRIDES[fbKey] = { ...(PRODUCT_OVERRIDES[fbKey] || {}), hidden: true };
+    await fbSaveProductOverride(fbKey, PRODUCT_OVERRIDES[fbKey]);
+    toast('Producto ocultado del catálogo', 'ok');
+  } else {
+    // new_ product — delete fully
+    delete PRODUCT_OVERRIDES[id];
+    await fbDeleteProductOverride(id);
+    toast('Producto eliminado', 'ok');
+  }
+
+  closeProductModal();
+  renderAdminProducts();
+  renderGrid(_currentFilter);
+}
+
+/* ──────────────────────────────────────────────────────
    PERSISTENCIA (localStorage — caché local)
 ────────────────────────────────────────────────────── */
 const LS_USERS   = 'be_users_v1';
@@ -1606,25 +2047,28 @@ function closeMobileNav(){ document.getElementById('mobileNav').classList.remove
    GRID
 ────────────────────────────────────────────────────── */
 function filterBy(cat, btn) {
+  _currentFilter = cat;
   if (btn) { document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
   renderGrid(cat);
   document.getElementById('catalogo').scrollIntoView({behavior:'smooth'});
 }
 function renderGrid(cat) {
   const grid = document.getElementById('grid');
-  const list = cat==='all' ? PRODUCTS : PRODUCTS.filter(p=>p.cat===cat);
+  const all  = getMergedProducts().filter(p => !p.hidden);
+  const list = (cat === 'all') ? all : all.filter(p => p.cat === cat);
   if (!list.length) { grid.innerHTML='<p class="no-products">No hay productos en esta categoría.</p>'; return; }
   grid.innerHTML = list.map(cardHTML).join('');
 }
 function cardHTML(p) {
   const stkTxt = p.stock===0 ? 'Agotado' : p.stock<=5 ? `Solo ${p.stock} disponibles` : `${p.stock} disponibles`;
   const quickLbl = p.stock===0 ? 'Agotado' : 'Añadir al Carrito';
+  const idArg = typeof p.id === 'number' ? p.id : `'${p.id}'`;
   return `
     <div class="product-card" id="card${p.id}">
-      <div class="product-img-wrap" onclick="openLightbox(${p.id})">
-        <img src="${p.img}" alt="${p.name}" loading="lazy" onerror="imgErr(this)">
+      <div class="product-img-wrap" onclick="openLightbox(${idArg})">
+        <img src="${p.img||''}" alt="${p.name}" loading="lazy" onerror="imgErr(this)">
         <span class="cat-badge">${catLabel(p.cat)}</span>
-        <button class="card-quick-add" id="badd${p.id}" onclick="event.stopPropagation();addToCart(${p.id})" ${p.stock===0?'disabled':''}>${quickLbl}</button>
+        <button class="card-quick-add" id="badd${p.id}" onclick="event.stopPropagation();addToCart(${idArg})" ${p.stock===0?'disabled':''}>${quickLbl}</button>
       </div>
       <div class="product-info">
         <h3 class="product-name">${p.name}</h3>
@@ -1640,7 +2084,7 @@ function cardHTML(p) {
    LIGHTBOX
 ────────────────────────────────────────────────────── */
 function openLightbox(id) {
-  const p = PRODUCTS.find(x=>x.id===id); if(!p) return;
+  const p = getMergedProducts().find(x=>x.id===id); if(!p) return;
   S.lbId = id;
   document.getElementById('lbImg').src   = p.img;
   document.getElementById('lbImg').alt   = p.name;
@@ -1667,7 +2111,7 @@ function addFromLightbox(){ if(S.lbId!==null){ addToCart(S.lbId); closeLightbox(
    CARRITO
 ────────────────────────────────────────────────────── */
 function addToCart(id) {
-  const p = PRODUCTS.find(x=>x.id===id); if(!p||p.stock===0) return;
+  const p = findProduct(id); if(!p||p.stock===0) return;
   const item = S.cart.find(x=>x.id===id);
   if(item) item.qty++; else S.cart.push({id, qty:1});
   p.stock--;
@@ -1676,21 +2120,21 @@ function addToCart(id) {
 }
 function removeFromCart(id) {
   const item = S.cart.find(x=>x.id===id); if(!item) return;
-  const p = PRODUCTS.find(x=>x.id===id);
+  const p = findProduct(id);
   if(p){ p.stock+=item.qty; refreshStockUI(p); }
   S.cart = S.cart.filter(x=>x.id!==id);
   refreshCartUI();
 }
 function changeQty(id, delta) {
   const item = S.cart.find(x=>x.id===id);
-  const p    = PRODUCTS.find(x=>x.id===id);
+  const p    = findProduct(id);
   if(!item||!p) return;
   if(delta===-1 && item.qty===1){ removeFromCart(id); return; }
   if(delta===1 && p.stock===0){ toast('Sin stock disponible','err'); return; }
   item.qty+=delta; p.stock-=delta;
   refreshStockUI(p); refreshCartUI();
 }
-function cartSubtotal(){ return S.cart.reduce((s,i)=>{ const p=PRODUCTS.find(x=>x.id===i.id); return s+(p?p.price*i.qty:0); },0); }
+function cartSubtotal(){ return S.cart.reduce((s,i)=>{ const p=findProduct(i.id); return s+(p?p.price*i.qty:0); },0); }
 function cartItemCount(){ return S.cart.reduce((s,i)=>s+i.qty,0); }
 
 function refreshStockUI(p) {
@@ -1717,21 +2161,22 @@ function renderCartBody() {
     foot.style.display='none'; return;
   }
   body.innerHTML = S.cart.map(item=>{
-    const p=PRODUCTS.find(x=>x.id===item.id); if(!p) return '';
+    const p=findProduct(item.id); if(!p) return '';
+    const idArg = typeof p.id === 'number' ? p.id : `'${p.id}'`;
     return `
       <div class="cart-item">
-        <img class="cart-item-img" src="${p.img}" alt="${p.name}" onerror="imgErr(this)">
+        <img class="cart-item-img" src="${p.img||''}" alt="${p.name}" onerror="imgErr(this)">
         <div class="cart-item-info">
           <div class="cart-item-name">${p.name}</div>
           <div class="cart-item-unit">${fmtMXN(p.price)} c/u</div>
           <div class="cart-item-price">${fmtMXN(p.price*item.qty)}</div>
           <div class="qty-controls">
-            <button class="qty-btn" onclick="changeQty(${p.id},-1)">−</button>
+            <button class="qty-btn" onclick="changeQty(${idArg},-1)">−</button>
             <span class="qty-num">${item.qty}</span>
-            <button class="qty-btn" onclick="changeQty(${p.id},1)">+</button>
+            <button class="qty-btn" onclick="changeQty(${idArg},1)">+</button>
           </div>
         </div>
-        <button class="cart-item-del" onclick="removeFromCart(${p.id})" title="Eliminar">🗑</button>
+        <button class="cart-item-del" onclick="removeFromCart(${idArg})" title="Eliminar">🗑</button>
       </div>`;
   }).join('');
   const sub = cartSubtotal();
@@ -1907,7 +2352,7 @@ function goStep(n){
 }
 function summaryHTML(){
   const sub=cartSubtotal(), total=sub+S.shipCost;
-  const lines=S.cart.map(item=>{ const p=PRODUCTS.find(x=>x.id===item.id); return p?`<div class="summary-line"><span>${p.name} × ${item.qty}</span><span>${fmtMXN(p.price*item.qty)}</span></div>`:''; }).join('');
+  const lines=S.cart.map(item=>{ const p=findProduct(item.id); return p?`<div class="summary-line"><span>${p.name} × ${item.qty}</span><span>${fmtMXN(p.price*item.qty)}</span></div>`:''; }).join('');
   return `<div class="summary-hdr">Resumen del Pedido</div>${lines}<div class="summary-line"><span>Subtotal</span><span>${fmtMXN(sub)}</span></div><div class="summary-line"><span>Envío (${S.delivery==='pickup'?'Recoger en tienda':'Envío a domicilio'})</span><span>${S.shipCost===0?'Gratis':fmtMXN(S.shipCost)}</span></div><div class="summary-total"><span>Total</span><span>${fmtMXN(total)} MXN</span></div>`;
 }
 function buildSummaries(){
@@ -1922,7 +2367,7 @@ function confirmOrder(){
 
   // Guardar pedido en S.orders para el panel admin
   const orderItems = S.cart.map(item=>{
-    const p = PRODUCTS.find(x=>x.id===item.id);
+    const p = findProduct(item.id);
     return { id:item.id, name:p?p.name:'', qty:item.qty, price:p?p.price:0, done:false };
   });
   const newOrder = {
@@ -2087,9 +2532,15 @@ function doAdminLogin(){
 async function openAdmin(){
   document.getElementById('adminPanel').classList.add('open');
   lockScroll();
+  // reset to orders tab visually
+  document.querySelectorAll('.admin-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === 'orders'));
+  document.getElementById('adminStats').style.display = '';
+  document.getElementById('adminBody').style.display  = '';
+  document.getElementById('adminProdsSection').style.display = 'none';
   document.getElementById('adminBody').innerHTML =
     `<div class="admin-empty"><div class="admin-empty-icon">⏳</div><p>Cargando pedidos…</p></div>`;
-  await syncAdminOrders();
+  // load both in parallel
+  await Promise.all([syncAdminOrders(), fbLoadProductOverrides()]);
   renderAdminOrders();
 }
 function closeAdmin(){
