@@ -605,24 +605,24 @@
       display:flex; gap:6px; flex-wrap:wrap; align-items:center;
     }
     .filter-pill {
-      padding:6px 14px; border-radius:50px; border:1px solid rgba(255,255,255,.15);
-      background:transparent; color:rgba(255,255,255,.45);
+      padding:6px 14px; border-radius:50px; border:1px solid var(--border-dark);
+      background:#fff; color:var(--text-med);
       font-family:var(--ff-body); font-size:.65rem; font-weight:600;
       letter-spacing:.1em; text-transform:uppercase; cursor:pointer; transition:all .18s;
       white-space:nowrap;
     }
-    .filter-pill:hover { border-color:rgba(255,255,255,.4); color:rgba(255,255,255,.8); }
+    .filter-pill:hover { border-color:var(--rose); color:var(--rose); }
     .filter-pill.active { background:var(--rose); border-color:var(--rose); color:#fff; }
     .filter-search {
       flex:1; min-width:160px; padding:7px 14px;
-      background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12);
-      border-radius:50px; color:#fff; font-family:var(--ff-body); font-size:.72rem;
+      background:#fff; border:1px solid var(--border);
+      border-radius:50px; color:var(--text-dark); font-family:var(--ff-body); font-size:.72rem;
       outline:none; transition:border-color .18s;
     }
-    .filter-search::placeholder { color:rgba(255,255,255,.3); }
-    .filter-search:focus { border-color:rgba(255,255,255,.35); }
+    .filter-search::placeholder { color:var(--text-light); }
+    .filter-search:focus { border-color:var(--rose); }
     .filter-result-count {
-      font-size:.62rem; color:rgba(255,255,255,.3);
+      font-size:.62rem; color:var(--text-light);
       letter-spacing:.1em; text-transform:uppercase; padding:4px 2px;
     }
     @media(max-width:640px){
