@@ -49,9 +49,14 @@
        HEADER — Fashion Editorial
     ============================ */
     .header {
-      position: sticky; top: 0; z-index: 100;
-      background: rgba(10,6,8,.96); backdrop-filter: blur(16px);
-      border-bottom: 1px solid rgba(196,86,106,.2);
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: transparent;
+      border-bottom: none;
+      transition: background .3s, border-color .3s;
+    }
+    .header.scrolled {
+      background: rgba(8,4,6,.95); backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255,255,255,.07);
     }
     .header-inner {
       max-width: 1440px; margin: 0 auto;
@@ -142,203 +147,151 @@
     .mobile-nav a:hover { color: #fff; }
 
     /* ============================
-       HERO — Split Screen Fashion
+       HERO — Full-bleed split (Pull&Bear style)
     ============================ */
     .hero {
-      display: flex; flex-direction: row;
-      min-height: 100vh; overflow: hidden;
-    }
-    .hero-watermark { display:none; }
-    .hero-particles { display:none; }
-    .ptcl { display:none; }
-    .hero-dots { display:none; }
-
-    /* LEFT — texto editorial */
-    .hero-left {
-      width: 42%; background: #0C0608;
-      display: flex; flex-direction: column;
-      justify-content: flex-end; padding: 80px 52px 60px;
-      position: relative; flex-shrink: 0; z-index: 2;
-    }
-    .hero-left::after {
-      content: ''; position: absolute; top: 0; right: 0;
-      width: 1px; height: 100%;
-      background: linear-gradient(to bottom, transparent, rgba(196,86,106,.5) 40%, rgba(196,86,106,.5) 60%, transparent);
-    }
-    .hero-season {
-      font-family: var(--ff-body); font-size: .58rem; font-weight: 600;
-      letter-spacing: .42em; text-transform: uppercase;
-      color: var(--rose); margin-bottom: 28px;
-      display: flex; align-items: center; gap: 12px;
-    }
-    .hero-season::before { content:''; width:28px; height:1px; background:var(--rose); }
-    .hero h1 {
-      font-family: var(--ff-display);
-      font-size: clamp(5rem, 9vw, 10rem);
-      line-height: .82; color: #fff;
-      letter-spacing: .05em; text-transform: uppercase;
-      margin: 0 0 32px; display: block;
-    }
-    .hero h1 .accent {
-      display: block; color: transparent;
-      -webkit-text-stroke: 2px var(--rose);
-    }
-    .hero-tagline {
-      font-family: var(--ff-head); font-style: italic;
-      font-size: clamp(.9rem, 1.4vw, 1.15rem);
-      color: rgba(255,255,255,.38); line-height: 1.6;
-      margin: 0 0 40px; max-width: 300px;
-    }
-    .hero-bottom {
-      display: flex; flex-direction: column; gap: 12px;
-    }
-    .hero p { display:none; }
-    .hero-badge { display:none; }
-    .btn-hero {
-      display: inline-flex; align-items: center; justify-content: space-between;
-      gap: 12px; padding: 16px 24px;
-      background: var(--rose); color: #fff; border: none;
-      font-family: var(--ff-body); font-size: .62rem; font-weight: 700;
-      letter-spacing: .22em; text-transform: uppercase;
-      transition: all .24s; cursor: pointer;
-    }
-    .btn-hero:hover { background: var(--rose-dark); padding-right: 20px; }
-    .btn-hero svg { width: 16px; height: 16px; flex-shrink:0; }
-    .btn-hero-outline {
-      display: inline-flex; align-items: center; justify-content: space-between;
-      gap: 12px; padding: 15px 24px;
-      background: transparent; color: rgba(255,255,255,.5);
-      border: 1px solid rgba(255,255,255,.15);
-      font-family: var(--ff-body); font-size: .62rem; font-weight: 500;
-      letter-spacing: .2em; text-transform: uppercase;
-      cursor: pointer; transition: all .22s;
-    }
-    .btn-hero-outline:hover { border-color: rgba(255,255,255,.5); color: #fff; }
-    .hero-location {
-      margin-top: 48px; padding-top: 24px;
-      border-top: 1px solid rgba(255,255,255,.08);
-      font-size: .55rem; letter-spacing: .28em; text-transform: uppercase;
-      color: rgba(255,255,255,.22);
-    }
-
-    /* RIGHT — photo grid */
-    .hero-right {
-      flex: 1; display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr 1fr;
-      gap: 3px; overflow: hidden;
-    }
-    .hero-photo {
+      display: flex; height: 100vh; min-height: 500px;
       overflow: hidden; position: relative;
     }
-    .hero-photo img {
-      width: 100%; height: 100%; object-fit: cover;
-      transition: transform .7s ease;
-      display: block;
+    .hero-watermark,.hero-particles,.ptcl,.hero-dots { display:none; }
+    .hero-content { display:none; }
+
+    /* Panel */
+    .hero-panel {
+      flex: 1; position: relative; overflow: hidden; cursor: pointer;
     }
-    .hero-photo:hover img { transform: scale(1.04); }
-    .hero-photo-main {
-      grid-column: 1; grid-row: 1 / 3; /* ocupa toda la columna izquierda */
+    .hero-panel + .hero-panel { border-left: 2px solid #fff; }
+    .hero-panel img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+      transition: transform .8s cubic-bezier(.25,.46,.45,.94);
     }
-    .hero-photo-label {
+    .hero-panel:hover img { transform: scale(1.04); }
+    /* Bottom gradient for text readability */
+    .hero-panel::after {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background: linear-gradient(to top,
+        rgba(0,0,0,.55) 0%,
+        rgba(0,0,0,.15) 35%,
+        transparent 65%
+      );
+    }
+    /* Category label */
+    .hero-panel-info {
       position: absolute; bottom: 0; left: 0; right: 0;
-      padding: 40px 20px 16px;
-      background: linear-gradient(to top, rgba(0,0,0,.6) 0%, transparent 100%);
-      font-family: var(--ff-display); font-size: 1.1rem;
-      letter-spacing: .18em; text-transform: uppercase;
-      color: #fff;
+      z-index: 2; padding: 36px 40px;
+      display: flex; align-items: flex-end; justify-content: space-between;
     }
+    .hero-panel-label {
+      font-family: var(--ff-body); font-size: clamp(2rem, 4vw, 3.2rem);
+      font-weight: 700; color: #fff; letter-spacing: -.01em; line-height: 1;
+    }
+    .hero-panel-cta {
+      padding: 11px 24px; background: #fff; color: #0C0608;
+      font-family: var(--ff-body); font-size: .62rem; font-weight: 700;
+      letter-spacing: .16em; text-transform: uppercase; border: none;
+      cursor: pointer; transition: all .22s; white-space: nowrap;
+      opacity: 0; transform: translateY(8px);
+      transition: opacity .25s, transform .25s, background .2s;
+    }
+    .hero-panel:hover .hero-panel-cta {
+      opacity: 1; transform: translateY(0);
+    }
+    .hero-panel-cta:hover { background: var(--rose); color: #fff; }
 
     /* Scroll indicator */
     .hero-scroll {
-      position: absolute; bottom: 2rem; left: 20%;
+      position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
       z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 8px;
-      color: rgba(255,255,255,.22); font-size: .5rem; letter-spacing: .26em; text-transform: uppercase;
+      color: rgba(255,255,255,.4); font-size: .5rem; letter-spacing: .26em;
+      text-transform: uppercase; pointer-events: none;
     }
     .hero-scroll-line {
       width: 1px; height: 44px;
-      background: linear-gradient(to bottom, var(--rose), transparent);
+      background: linear-gradient(to bottom, #fff, transparent);
       animation: scrollPulse 2s ease-in-out infinite;
     }
     @keyframes scrollPulse {
-      0%,100%{ opacity:.4; transform:scaleY(1); }
-      50%{ opacity:1; transform:scaleY(1.18); }
+      0%,100%{ opacity:.35; transform:scaleY(1); }
+      50%{ opacity:.9; transform:scaleY(1.15); }
     }
 
-    /* ─── Ticker strip ─── */
+    /* Buttons (kept for cart/login etc.) */
+    .btn-hero,.btn-hero-outline { display:none; }
+    .hero-bottom,.hero p,.hero-badge,.hero-season,
+    .hero-tagline,.hero-location { display:none; }
+
+    /* ─── Ticker ─── */
     .hero-ticker {
-      background: var(--rose); overflow: hidden;
-      padding: 12px 0; flex-shrink: 0;
+      background: #111; overflow: hidden; padding: 13px 0;
     }
     .hero-ticker-track {
       display: flex; width: max-content;
-      animation: tickerScroll 32s linear infinite;
+      animation: tickerScroll 30s linear infinite;
     }
     .hero-ticker-item {
-      white-space: nowrap; padding: 0 2.8rem;
-      font-family: var(--ff-display); font-size: .9rem;
-      letter-spacing: .2em; text-transform: uppercase; color: #fff;
-      display: flex; align-items: center; gap: 2.8rem;
+      white-space: nowrap; padding: 0 3rem;
+      font-family: var(--ff-display); font-size: .95rem;
+      letter-spacing: .22em; text-transform: uppercase; color: rgba(255,255,255,.55);
+      display: flex; align-items: center; gap: 3rem;
     }
-    .hero-ticker-item::after { content:'✦'; font-size:.45rem; opacity:.65; }
+    .hero-ticker-item::after { content:'·'; font-size:1.2rem; opacity:.4; }
     @keyframes tickerScroll {
       from{ transform:translateX(0); }
       to  { transform:translateX(-50%); }
     }
 
-    /* ─── Lookbook strip ─── */
+    /* ─── Lookbook ─── */
     .lookbook {
-      display: grid; grid-template-columns: repeat(3,1fr);
-      gap: 3px; background: #0C0608; padding: 3px;
+      display: grid; grid-template-columns: repeat(3,1fr); gap: 2px;
     }
     .look-card {
       position: relative; overflow: hidden;
-      aspect-ratio: 3/4; cursor: pointer;
+      aspect-ratio: 2/3; cursor: pointer;
     }
     .look-card img {
       width: 100%; height: 100%; object-fit: cover;
       display: block; transition: transform .6s ease;
     }
-    .look-card:hover img { transform: scale(1.05); }
+    .look-card:hover img { transform: scale(1.04); }
     .look-card-overlay {
       position: absolute; inset: 0;
-      background: linear-gradient(to top, rgba(0,0,0,.65) 0%, transparent 50%);
+      background: linear-gradient(to top, rgba(0,0,0,.6) 0%, transparent 55%);
       display: flex; flex-direction: column;
-      justify-content: flex-end; padding: 24px 20px;
+      justify-content: flex-end; padding: 28px 24px;
     }
     .look-card-label {
-      font-family: var(--ff-display); font-size: 1.5rem;
-      letter-spacing: .15em; text-transform: uppercase; color: #fff;
-      margin-bottom: 4px;
+      font-family: var(--ff-body); font-size: clamp(1.4rem,2.5vw,2rem);
+      font-weight: 700; color: #fff; letter-spacing: -.01em; margin-bottom: 6px;
     }
     .look-card-sub {
-      font-size: .58rem; letter-spacing: .22em;
-      text-transform: uppercase; color: rgba(255,255,255,.55);
+      font-size: .58rem; letter-spacing: .2em;
+      text-transform: uppercase; color: rgba(255,255,255,.5);
     }
     .look-card-btn {
-      margin-top: 14px; display: inline-block;
-      padding: 9px 20px; background: #fff; color: #0C0608;
-      font-family: var(--ff-body); font-size: .58rem;
-      font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
-      border: none; cursor: pointer; transition: all .22s;
-      align-self: flex-start;
+      margin-top: 16px; display: inline-block;
+      padding: 10px 22px; background: #fff; color: #0C0608;
+      font-family: var(--ff-body); font-size: .6rem;
+      font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
+      border: none; cursor: pointer; transition: all .22s; align-self: flex-start;
+      opacity: 0; transform: translateY(6px);
+      transition: opacity .25s, transform .25s, background .2s;
     }
+    .look-card:hover .look-card-btn { opacity:1; transform:translateY(0); }
     .look-card-btn:hover { background: var(--rose); color: #fff; }
 
-    @media(max-width:900px){
-      .hero { flex-direction: column; min-height: auto; }
-      .hero-left { width: 100%; padding: 100px 28px 40px; }
-      .hero-left::after { display:none; }
-      .hero h1 { font-size: clamp(4.5rem, 18vw, 7rem); }
-      .hero-right { min-height: 65vw; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; }
-      .hero-photo-main { grid-column:1; grid-row:1/3; }
-      .lookbook { grid-template-columns:1fr; }
-      .look-card { aspect-ratio:4/3; }
+    @media(max-width:768px){
+      .hero { height: 100svh; }
+      .hero-panel + .hero-panel { border-left: 1px solid rgba(255,255,255,.4); }
+      .hero-panel-info { padding: 20px 18px; }
+      .hero-panel-label { font-size: clamp(1.4rem, 6vw, 2.2rem); }
+      .hero-panel-cta { display:none; }
+      .lookbook { grid-template-columns: 1fr 1fr; }
+      .look-card:nth-child(3) { grid-column: 1 / -1; aspect-ratio: 16/9; }
+      .look-card-btn { opacity:1; transform:none; }
     }
     @media(max-width:480px){
-      .hero-left { padding: 90px 22px 36px; }
-      .hero h1 { font-size: clamp(4rem,20vw,6rem); }
-      .hero h1 .accent { -webkit-text-stroke:1.5px var(--rose); }
+      .lookbook { grid-template-columns: 1fr; }
+      .look-card,.look-card:nth-child(3) { aspect-ratio: 3/2; }
     }
 
     /* ============================
@@ -1118,37 +1071,21 @@
 <!-- ========== HERO ========== -->
 <section class="hero" id="inicio">
 
-  <!-- LEFT: texto editorial -->
-  <div class="hero-left">
-    <p class="hero-season">Primavera — 2026</p>
-    <h1><span class="accent">DUB</span>REM</h1>
-    <p class="hero-tagline">Moda femenina con carácter propio. Diseñada para quienes saben lo que quieren.</p>
-    <div class="hero-bottom">
-      <button class="btn-hero" onclick="document.getElementById('catalogo').scrollIntoView({behavior:'smooth'})">
-        Ver Colección
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </button>
-      <button class="btn-hero-outline" onclick="document.getElementById('catalogo').scrollIntoView({behavior:'smooth'})">
-        Explorar Prendas
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </button>
+  <!-- Panel Mujer -->
+  <div class="hero-panel" onclick="filterBy('mujer',null);document.getElementById('catalogo').scrollIntoView({behavior:'smooth'})">
+    <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=900&q=85" alt="Colección Mujer" loading="eager">
+    <div class="hero-panel-info">
+      <span class="hero-panel-label">Mujer</span>
+      <button class="hero-panel-cta">Ver Colección</button>
     </div>
-    <div class="hero-location">Tula de Allende, Hidalgo · México</div>
   </div>
 
-  <!-- RIGHT: foto grid -->
-  <div class="hero-right">
-    <div class="hero-photo hero-photo-main">
-      <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80" alt="Moda Dubrem" loading="eager">
-      <div class="hero-photo-label">Nueva Temporada</div>
-    </div>
-    <div class="hero-photo">
-      <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=600&q=80" alt="Colección Mujer" loading="eager">
-      <div class="hero-photo-label">Mujer</div>
-    </div>
-    <div class="hero-photo">
-      <img src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&w=600&q=80" alt="Colección" loading="eager">
-      <div class="hero-photo-label">Essentials</div>
+  <!-- Panel Hombre -->
+  <div class="hero-panel" onclick="filterBy('hombre',null);document.getElementById('catalogo').scrollIntoView({behavior:'smooth'})">
+    <img src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&w=900&q=85" alt="Colección Hombre" loading="eager">
+    <div class="hero-panel-info">
+      <span class="hero-panel-label">Hombre</span>
+      <button class="hero-panel-cta">Ver Colección</button>
     </div>
   </div>
 
@@ -2204,12 +2141,18 @@ function logoutAdmin(){
    INIT
 ────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
-  loadUsers();               // caché local inmediata
-  loadSession();             // sesión guardada
+  loadUsers();
+  loadSession();
   renderLoginArea();
   renderGrid('all');
   spawnParticles();
-  syncUsers();               // sync Firebase en segundo plano
+  syncUsers();
+
+  // Header transparente sobre el hero, opaco al bajar
+  const header = document.querySelector('.header');
+  const onScroll = () => header.classList.toggle('scrolled', window.scrollY > 40);
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
 });
 
 /* ──────────────────────────────────────────────────────
