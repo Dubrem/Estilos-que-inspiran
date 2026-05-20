@@ -1393,13 +1393,12 @@
     <!-- Zona de imagen -->
     <div class="form-group">
       <label class="form-label">📷 Foto del producto</label>
-      <label class="img-upload-zone">
-        <input type="file" accept="image/*" id="prodImgFile" onchange="handleProductImageUpload(this)">
+      <div class="img-upload-zone" onclick="triggerImgPicker()">
         <div>
           <div class="img-upload-zone-text">Toca aquí para subir una foto</div>
           <div class="img-upload-zone-sub">JPG, PNG, WEBP · se comprime automáticamente</div>
         </div>
-      </label>
+      </div>
       <div style="display:flex;align-items:center;gap:8px;margin:10px 0">
         <div style="flex:1;height:1px;background:var(--border)"></div>
         <span style="font-size:.65rem;color:var(--text-light);white-space:nowrap">o pega una URL de imagen</span>
@@ -1455,6 +1454,11 @@
     </div>
   </div>
 </div>
+
+<!-- Input de archivo fuera de cualquier modal (fix iOS/Android) -->
+<input type="file" accept="image/*" id="prodImgFile"
+       style="position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none"
+       onchange="handleProductImageUpload(this)">
 
 <!-- ========== FOOTER ========== -->
 <footer class="footer">
@@ -1817,6 +1821,13 @@ function openNewProductModal() {
 function closeProductModal() {
   document.getElementById('productEditModal').classList.remove('open');
   unlockScroll();
+}
+
+function triggerImgPicker() {
+  const fi = document.getElementById('prodImgFile');
+  fi.value = '';          // reset para poder elegir la misma foto de nuevo
+  fi.dataset.b64 = '';
+  fi.click();
 }
 
 async function handleProductImageUpload(input) {
