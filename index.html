@@ -46,32 +46,36 @@
     button { font-family: var(--ff-body); cursor: pointer; }
 
     /* ============================
-       HEADER — Femenino luminoso
+       HEADER — Fashion Editorial
     ============================ */
     .header {
       position: sticky; top: 0; z-index: 100;
-      background: rgba(254,249,246,.97); backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
+      background: rgba(10,6,8,.96); backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(196,86,106,.2);
     }
     .header-inner {
       max-width: 1440px; margin: 0 auto;
       display: grid; grid-template-columns: 1fr auto 1fr;
-      align-items: center; padding: 0 2.5rem; height: 68px;
+      align-items: center; padding: 0 2.5rem; height: 64px;
     }
-    /* Logo — wordmark rosa */
-    .logo { text-decoration: none; justify-self: start; display: flex; align-items: center; }
-    .logo-icon { display: none; }
+    /* Logo — mark geométrico + wordmark */
+    .logo { text-decoration: none; justify-self: start; display: flex; align-items: center; gap: 10px; }
+    .logo-icon {
+      display: flex; align-items: center; justify-content: center;
+      width: 30px; height: 30px; flex-shrink: 0;
+    }
+    .logo-icon svg { width: 100%; height: 100%; }
     .logo-text {
       font-family: var(--ff-display);
-      font-size: 1.9rem; letter-spacing: 0.2em;
-      color: var(--text-dark); line-height: 1; text-transform: uppercase;
+      font-size: 1.65rem; letter-spacing: 0.28em;
+      color: #fff; line-height: 1; text-transform: uppercase;
     }
     .logo-text span { color: var(--rose); }
     /* Nav centrado */
-    .nav { display: flex; gap: 2.2rem; justify-self: center; }
+    .nav { display: flex; gap: 2.4rem; justify-self: center; }
     .nav a {
-      text-decoration: none; color: var(--text-med); font-size: .72rem;
-      font-weight: 500; letter-spacing: .14em; text-transform: uppercase;
+      text-decoration: none; color: rgba(255,255,255,.45); font-size: .64rem;
+      font-weight: 500; letter-spacing: .18em; text-transform: uppercase;
       position: relative; padding-bottom: 3px; transition: color .2s;
     }
     .nav a::after {
@@ -79,187 +83,222 @@
       height: 1px; background: var(--rose); transform: scaleX(0);
       transform-origin: left; transition: transform .25s ease;
     }
-    .nav a:hover { color: var(--rose); }
+    .nav a:hover { color: #fff; }
     .nav a:hover::after { transform: scaleX(1); }
     /* Acciones derecha */
-    .header-actions { display: flex; align-items: center; gap: 1rem; justify-self: end; }
+    .header-actions { display: flex; align-items: center; gap: .9rem; justify-self: end; }
     .btn-login {
-      padding: 7px 20px; border: 1.5px solid var(--rose);
-      background: transparent; color: var(--rose);
-      border-radius: 50px; font-size: .7rem; font-weight: 600;
-      letter-spacing: .1em; text-transform: uppercase; transition: all .22s;
+      padding: 7px 20px; border: 1px solid rgba(196,86,106,.6);
+      background: transparent; color: rgba(255,255,255,.8);
+      border-radius: 2px; font-size: .62rem; font-weight: 600;
+      letter-spacing: .14em; text-transform: uppercase; transition: all .22s;
     }
-    .btn-login:hover { background: var(--rose); color: #fff; }
+    .btn-login:hover { background: var(--rose); border-color: var(--rose); color: #fff; }
     .cart-btn {
       position: relative; background: none; border: none;
-      padding: 6px 10px; border-radius: 50px;
+      padding: 6px 10px; border-radius: 2px;
       display: flex; align-items: center; gap: 6px;
-      color: var(--text-dark); font-size: .7rem; font-weight: 500;
-      letter-spacing: .06em; text-transform: uppercase; transition: color .2s;
+      color: rgba(255,255,255,.6); font-size: .62rem; font-weight: 500;
+      letter-spacing: .1em; text-transform: uppercase; transition: color .2s;
     }
-    .cart-btn:hover { color: var(--rose); }
-    .cart-icon { font-size: 1rem; }
+    .cart-btn:hover { color: #fff; }
+    .cart-icon { font-size: .95rem; }
     .cart-badge {
       position: absolute; top: 0; right: 0;
-      background: var(--rose); color: #fff; font-size: .55rem;
-      font-weight: 800; min-width: 16px; height: 16px; border-radius: 50%;
+      background: var(--rose); color: #fff; font-size: .5rem;
+      font-weight: 800; min-width: 15px; height: 15px; border-radius: 50%;
       display: none; align-items: center; justify-content: center;
     }
     .cart-badge.show { display: flex; }
     .user-chip {
       display: flex; align-items: center; gap: 7px;
-      padding: 6px 16px; border-radius: 50px;
-      background: var(--rose-pale); border: none;
-      font-size: .7rem; font-weight: 500; letter-spacing: .06em;
-      text-transform: uppercase; color: var(--rose-dark); transition: background .2s;
+      padding: 6px 14px; border-radius: 2px;
+      background: rgba(196,86,106,.15); border: 1px solid rgba(196,86,106,.3);
+      font-size: .62rem; font-weight: 500; letter-spacing: .1em;
+      text-transform: uppercase; color: rgba(255,255,255,.8); transition: background .2s;
     }
-    .user-chip:hover { background: var(--blush); }
+    .user-chip:hover { background: rgba(196,86,106,.3); }
     .user-avatar {
-      width: 22px; height: 22px; border-radius: 50%;
+      width: 20px; height: 20px; border-radius: 50%;
       background: var(--rose);
       display: flex; align-items: center; justify-content: center;
-      font-size: 10px; color: #fff; font-family: var(--ff-display); letter-spacing: .06em;
+      font-size: 9px; color: #fff; font-family: var(--ff-display); letter-spacing: .06em;
     }
-    .user-logout { font-size: .62rem; color: var(--text-light); }
+    .user-logout { font-size: .58rem; color: rgba(255,255,255,.35); }
     /* Hamburger */
     .hamburger { display: none; flex-direction: column; gap: 5px; background: none; border: none; padding: 6px; }
-    .hamburger span { display: block; width: 22px; height: 1.5px; background: var(--text-dark); border-radius: 2px; }
+    .hamburger span { display: block; width: 22px; height: 1px; background: rgba(255,255,255,.7); }
     .mobile-nav {
       display: none; flex-direction: column;
-      background: var(--cream); border-bottom: 1px solid var(--border);
-      padding: 16px 2.5rem 20px; gap: 16px;
+      background: #0A0608; border-bottom: 1px solid rgba(196,86,106,.2);
+      padding: 20px 2rem 24px; gap: 18px;
     }
     .mobile-nav.open { display: flex; }
     .mobile-nav a {
-      text-decoration: none; color: var(--text-med);
-      font-size: .82rem; font-weight: 500; letter-spacing: .12em; text-transform: uppercase;
+      text-decoration: none; color: rgba(255,255,255,.5);
+      font-size: .72rem; font-weight: 500; letter-spacing: .18em; text-transform: uppercase;
+      transition: color .2s;
     }
+    .mobile-nav a:hover { color: #fff; }
 
     /* ============================
-       HERO — Femenino, luminoso, DUBREM grande
+       HERO — Dark Fashion Editorial
     ============================ */
     .hero {
       position: relative; overflow: hidden;
       min-height: 100vh;
-      background: linear-gradient(160deg, #FEF5F3 0%, #FBE8EC 45%, #F5D4D8 100%);
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      text-align: center; padding: 100px 2rem 80px;
+      background: #0A0608;
+      display: flex; flex-direction: column;
+      padding: 0;
     }
-    /* Círculos decorativos de fondo */
+    /* Grain texture overlay */
     .hero::before {
-      content: ''; position: absolute; top: -15%; right: -10%;
-      width: 55vw; height: 55vw; border-radius: 50%; pointer-events: none;
-      background: radial-gradient(circle, rgba(244,192,200,.45) 0%, transparent 70%);
+      content: ''; position: absolute; inset: 0; z-index: 1;
+      pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      opacity: .35;
     }
+    /* Rose glow top-right */
     .hero::after {
-      content: ''; position: absolute; bottom: -20%; left: -12%;
-      width: 45vw; height: 45vw; border-radius: 50%; pointer-events: none;
-      background: radial-gradient(circle, rgba(255,255,255,.6) 0%, transparent 70%);
+      content: ''; position: absolute; top: -20%; right: -15%; z-index: 0;
+      width: 60vw; height: 60vw; border-radius: 50%; pointer-events: none;
+      background: radial-gradient(circle, rgba(196,86,106,.18) 0%, transparent 65%);
     }
-    /* Líneas decorativas laterales */
+    /* Left accent line */
     .hero-watermark {
-      position: absolute; inset: 0; z-index: 0; pointer-events: none;
-      overflow: hidden;
+      position: absolute; left: 8%; top: 0; bottom: 0; z-index: 2;
+      width: 1px; pointer-events: none;
+      background: linear-gradient(to bottom, transparent 0%, rgba(196,86,106,.4) 30%, rgba(196,86,106,.4) 70%, transparent 100%);
     }
-    .hero-watermark::before, .hero-watermark::after {
-      content: '';
-      position: absolute; top: 15%; width: 1px; height: 70%;
-      background: linear-gradient(to bottom, transparent, rgba(196,86,106,.15), transparent);
-    }
-    .hero-watermark::before { left: 6%; }
-    .hero-watermark::after  { right: 6%; }
     .hero-particles { display: none; }
     .ptcl { display: none; }
-    /* Contenido hero */
+    .hero-dots { display: none; }
+
+    /* ─── Main hero content wrapper ─── */
     .hero-content {
-      position: relative; z-index: 2;
-      display: flex; flex-direction: column; align-items: center;
-      max-width: 900px; width: 100%;
+      position: relative; z-index: 3;
+      flex: 1; display: flex; flex-direction: column;
+      justify-content: center; padding: 120px 6% 80px;
+      max-width: 1440px; width: 100%; margin: 0 auto;
     }
-    /* Tag / eyebrow en script */
+    /* Eyebrow — editorial label */
     .hero-eyebrow {
-      font-family: var(--ff-script);
-      font-size: clamp(1.6rem, 4vw, 2.6rem);
-      color: var(--rose); margin-bottom: .6rem; line-height: 1;
-      display: block;
+      font-family: var(--ff-body); font-weight: 500;
+      font-size: .6rem; letter-spacing: .38em; text-transform: uppercase;
+      color: var(--rose); margin-bottom: 2rem;
+      display: flex; align-items: center; gap: 14px;
     }
-    /* DUBREM — enorme, protagonista */
+    .hero-eyebrow::before {
+      content: ''; display: inline-block;
+      width: 40px; height: 1px; background: var(--rose);
+    }
+    /* DUBREM — display typographic headline */
     .hero h1 {
       font-family: var(--ff-display);
-      font-size: clamp(5.5rem, 18vw, 14rem);
-      line-height: .88; color: var(--text-dark);
-      letter-spacing: .06em; text-transform: uppercase;
-      margin-bottom: 1rem;
+      font-size: clamp(5.5rem, 16vw, 15rem);
+      line-height: .85; color: #fff;
+      letter-spacing: .04em; text-transform: uppercase;
+      margin: 0 0 1.8rem;
     }
-    .hero h1 .accent { color: var(--rose); }
-    /* Tagline serif italic */
+    .hero h1 .accent {
+      color: transparent;
+      -webkit-text-stroke: 2px var(--rose);
+    }
+    /* Sub-row: tagline + location */
+    .hero-sub-row {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      gap: 2rem; flex-wrap: wrap; margin-bottom: 3rem;
+    }
     .hero-tagline {
-      font-family: var(--ff-head);
-      font-style: italic; font-size: clamp(.95rem, 2.5vw, 1.3rem);
-      color: var(--text-med); margin-bottom: 2rem; letter-spacing: .02em;
+      font-family: var(--ff-head); font-style: italic;
+      font-size: clamp(1rem, 2.5vw, 1.4rem);
+      color: rgba(255,255,255,.45); max-width: 420px; line-height: 1.4;
+      margin: 0;
     }
+    .hero-location {
+      font-family: var(--ff-body); font-size: .62rem;
+      font-weight: 500; letter-spacing: .24em; text-transform: uppercase;
+      color: rgba(255,255,255,.3); text-align: right; white-space: nowrap;
+    }
+    .hero-location span { display: block; color: rgba(255,255,255,.5); margin-bottom: 2px; }
+    /* Buttons */
     .hero-bottom {
-      display: flex; align-items: center; justify-content: center;
-      gap: 1.2rem; flex-wrap: wrap;
+      display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
     }
     .hero p { display: none; }
     .hero-badge { display: none; }
-    /* Botón hero — rosa lleno, redondeado */
     .btn-hero {
-      display: inline-flex; align-items: center; gap: 10px;
-      padding: 14px 36px;
+      display: inline-flex; align-items: center; gap: 12px;
+      padding: 15px 36px;
       background: var(--rose); color: #fff;
-      text-decoration: none; border: none; border-radius: 50px;
-      font-size: .72rem; font-weight: 600; letter-spacing: .18em;
+      text-decoration: none; border: none; border-radius: 2px;
+      font-size: .65rem; font-weight: 700; letter-spacing: .22em;
       text-transform: uppercase; transition: all .24s; white-space: nowrap;
-      box-shadow: 0 8px 28px rgba(196,86,106,.35);
     }
-    .btn-hero:hover { background: var(--rose-dark); box-shadow: 0 12px 36px rgba(196,86,106,.45); transform: translateY(-2px); }
-    .btn-hero svg { width: 14px; height: 14px; }
-    /* Botón secundario outline */
+    .btn-hero:hover { background: var(--rose-dark); transform: translateY(-2px); }
+    .btn-hero svg { width: 13px; height: 13px; }
     .btn-hero-outline {
       display: inline-flex; align-items: center; gap: 8px;
-      padding: 13px 28px;
-      background: transparent; color: var(--text-dark);
-      border: 1.5px solid var(--blush-mid); border-radius: 50px;
-      font-size: .72rem; font-weight: 500; letter-spacing: .14em;
+      padding: 14px 28px;
+      background: transparent; color: rgba(255,255,255,.6);
+      border: 1px solid rgba(255,255,255,.2); border-radius: 2px;
+      font-size: .65rem; font-weight: 500; letter-spacing: .18em;
       text-transform: uppercase; cursor: pointer; transition: all .22s;
       white-space: nowrap;
     }
-    .btn-hero-outline:hover { border-color: var(--rose); color: var(--rose); }
+    .btn-hero-outline:hover { border-color: rgba(255,255,255,.6); color: #fff; }
     /* Scroll indicator */
     .hero-scroll {
-      position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%);
-      z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 6px;
-      color: var(--text-light); font-size: .58rem; letter-spacing: .22em; text-transform: uppercase;
+      position: absolute; bottom: 2.5rem; right: 6%;
+      z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 8px;
+      color: rgba(255,255,255,.25); font-size: .52rem; letter-spacing: .28em; text-transform: uppercase;
     }
     .hero-scroll-line {
-      width: 1px; height: 36px;
+      width: 1px; height: 48px;
       background: linear-gradient(to bottom, var(--rose), transparent);
       animation: scrollPulse 2s ease-in-out infinite;
     }
     @keyframes scrollPulse {
-      0%,100% { opacity:.5; transform: scaleY(1); }
-      50% { opacity:1; transform: scaleY(1.2); }
+      0%,100% { opacity:.4; transform: scaleY(1); }
+      50% { opacity:1; transform: scaleY(1.15); }
     }
-    /* Puntos decorativos flotantes */
-    .hero-dots {
-      position: absolute; z-index: 1; pointer-events: none; width: 100%; height: 100%; top: 0; left: 0;
+
+    /* ─── Marquee ticker strip ─── */
+    .hero-ticker {
+      position: relative; z-index: 3;
+      background: var(--rose); overflow: hidden;
+      padding: 11px 0; flex-shrink: 0;
+      border-top: 1px solid rgba(255,255,255,.1);
     }
-    .hero-dot {
-      position: absolute; border-radius: 50%;
-      background: rgba(196,86,106,.12);
-      animation: floatDot 6s ease-in-out infinite;
+    .hero-ticker-track {
+      display: flex; width: max-content;
+      animation: tickerScroll 28s linear infinite;
     }
-    @keyframes floatDot {
-      0%,100% { transform: translateY(0) scale(1); }
-      50% { transform: translateY(-18px) scale(1.04); }
+    .hero-ticker-item {
+      white-space: nowrap; padding: 0 2.5rem;
+      font-family: var(--ff-display); font-size: .85rem;
+      letter-spacing: .22em; text-transform: uppercase; color: #fff;
+      display: flex; align-items: center; gap: 2.5rem;
     }
-    @media(max-width:640px){
-      .hero { min-height: 95svh; padding: 90px 1.5rem 70px; }
-      .hero h1 { font-size: clamp(4.5rem, 22vw, 7rem); }
-      .hero-eyebrow { font-size: 1.5rem; }
-      .hero-tagline { font-size: .9rem; }
+    .hero-ticker-item::after {
+      content: '✦'; font-size: .5rem; opacity: .7;
+    }
+    @keyframes tickerScroll {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    @media(max-width:768px){
+      .hero-content { padding: 100px 5% 60px; }
+      .hero h1 { font-size: clamp(4.2rem, 20vw, 7.5rem); }
+      .hero h1 .accent { -webkit-text-stroke: 1.5px var(--rose); }
+      .hero-sub-row { flex-direction: column; align-items: flex-start; margin-bottom: 2rem; }
+      .hero-location { text-align: left; }
+      .hero-scroll { right: 5%; }
+    }
+    @media(max-width:480px){
+      .hero h1 { font-size: clamp(3.8rem, 22vw, 6rem); }
+      .hero-eyebrow { font-size: .55rem; }
     }
 
     /* ============================
@@ -267,20 +306,19 @@
     ============================ */
     .section-wrap { max-width:1440px; margin:0 auto; padding:0 2.5rem; }
     .section-title {
-      font-family: var(--ff-head);
-      font-style: italic;
-      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-family: var(--ff-display);
+      font-size: clamp(2.2rem, 5vw, 3.8rem);
       font-weight: 400; color: var(--text-dark);
-      margin-bottom: 4px;
+      letter-spacing: .1em; text-transform: uppercase;
+      margin-bottom: 4px; line-height: 1;
     }
     .section-super {
-      font-family: var(--ff-display);
-      font-size: clamp(2.8rem, 7vw, 5.5rem);
-      color: var(--rose); letter-spacing: .08em;
-      text-transform: uppercase; line-height: .9;
-      display: block; margin-bottom: 6px;
+      font-family: var(--ff-head); font-style: italic;
+      font-size: clamp(1rem, 2vw, 1.3rem);
+      color: var(--rose); letter-spacing: .04em;
+      display: block; margin-bottom: 8px;
     }
-    .section-sub { color:var(--text-light); font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; margin-bottom:32px; }
+    .section-sub { color:var(--text-light); font-size:.65rem; letter-spacing:.2em; text-transform:uppercase; margin-bottom:32px; }
 
     /* FILTER BAR — femenino con punto activo */
     .filter-bar { padding: 52px 2.5rem 20px; }
@@ -1003,7 +1041,12 @@
 <header class="header">
   <div class="header-inner">
     <a href="#" class="logo">
-      <div class="logo-icon" style="font-family:'Playfair Display',serif;font-weight:900;font-size:15px;letter-spacing:1px">D</div>
+      <div class="logo-icon">
+        <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="16,1 31,16 16,31 1,16" fill="none" stroke="#C4566A" stroke-width="1.5"/>
+          <polygon points="16,7 25,16 16,25 7,16" fill="#C4566A"/>
+        </svg>
+      </div>
       <div class="logo-text">DUB<span>REM</span></div>
     </a>
     <nav class="nav">
@@ -1035,28 +1078,49 @@
 <!-- ========== HERO ========== -->
 <section class="hero" id="inicio">
   <div class="hero-watermark" aria-hidden="true"></div>
-  <!-- Puntos decorativos flotantes -->
-  <div class="hero-dots" aria-hidden="true">
-    <div class="hero-dot" style="width:120px;height:120px;top:12%;left:8%;animation-delay:0s"></div>
-    <div class="hero-dot" style="width:60px;height:60px;top:22%;right:12%;animation-delay:1.5s"></div>
-    <div class="hero-dot" style="width:80px;height:80px;bottom:20%;right:7%;animation-delay:.8s"></div>
-    <div class="hero-dot" style="width:40px;height:40px;bottom:30%;left:15%;animation-delay:2.2s"></div>
-  </div>
-  <div class="hero-particles" id="heroParticles"></div>
+  <div class="hero-particles" id="heroParticles" style="display:none"></div>
+
   <div class="hero-content">
-    <span class="hero-eyebrow">Colección Primavera 2026</span>
+    <p class="hero-eyebrow">Colección Primavera · 2026</p>
     <h1><span class="accent">DUB</span>REM</h1>
-    <p class="hero-tagline">Moda femenina que te hace brillar</p>
+    <div class="hero-sub-row">
+      <p class="hero-tagline">Moda femenina con carácter.<br>Diseñada para quienes saben lo que quieren.</p>
+      <div class="hero-location">
+        <span>Hidalgo, México</span>
+        Tula de Allende
+      </div>
+    </div>
     <div class="hero-bottom">
       <button class="btn-hero" onclick="document.getElementById('catalogo').scrollIntoView({behavior:'smooth'})">
         Ver Colección
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </button>
       <button class="btn-hero-outline" onclick="document.getElementById('catalogo').scrollIntoView({behavior:'smooth'})">
-        Tula de Allende, Hgo.
+        Explorar Prendas
       </button>
     </div>
   </div>
+
+  <!-- Ticker marquee -->
+  <div class="hero-ticker" aria-hidden="true">
+    <div class="hero-ticker-track">
+      <span class="hero-ticker-item">Nueva Colección</span>
+      <span class="hero-ticker-item">Moda Femenina</span>
+      <span class="hero-ticker-item">Dubrem</span>
+      <span class="hero-ticker-item">Primavera 2026</span>
+      <span class="hero-ticker-item">Tula de Allende</span>
+      <span class="hero-ticker-item">Estilo Único</span>
+      <span class="hero-ticker-item">Prendas Exclusivas</span>
+      <span class="hero-ticker-item">Nueva Colección</span>
+      <span class="hero-ticker-item">Moda Femenina</span>
+      <span class="hero-ticker-item">Dubrem</span>
+      <span class="hero-ticker-item">Primavera 2026</span>
+      <span class="hero-ticker-item">Tula de Allende</span>
+      <span class="hero-ticker-item">Estilo Único</span>
+      <span class="hero-ticker-item">Prendas Exclusivas</span>
+    </div>
+  </div>
+
   <div class="hero-scroll" aria-hidden="true">
     <div class="hero-scroll-line"></div>
     <span>Scroll</span>
@@ -1066,8 +1130,8 @@
 <!-- ========== FILTER BAR ========== -->
 <section class="filter-bar" id="catalogo">
   <div class="section-wrap" style="text-align:center">
-    <h2 class="section-title">Nuestra</h2>
-    <span class="section-super">Colección</span>
+    <span class="section-super">Nuestra</span>
+    <h2 class="section-title">Colección</h2>
     <p class="section-sub">Envíos a todo México · Tula de Allende, Hidalgo</p>
     <div class="filter-tabs" id="filterTabs">
       <button class="tab-btn active" onclick="filterBy('all',this)">✦ Todo</button>
