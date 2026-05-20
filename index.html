@@ -1393,12 +1393,12 @@
     <!-- Zona de imagen -->
     <div class="form-group">
       <label class="form-label">📷 Foto del producto</label>
-      <div class="img-upload-zone" onclick="triggerImgPicker()">
+      <label for="prodImgFile" class="img-upload-zone">
         <div>
-          <div class="img-upload-zone-text">Toca aquí para subir una foto</div>
+          <div class="img-upload-zone-text">📷 Toca aquí para elegir una foto</div>
           <div class="img-upload-zone-sub">JPG, PNG, WEBP · se comprime automáticamente</div>
         </div>
-      </div>
+      </label>
       <div style="display:flex;align-items:center;gap:8px;margin:10px 0">
         <div style="flex:1;height:1px;background:var(--border)"></div>
         <span style="font-size:.65rem;color:var(--text-light);white-space:nowrap">o pega una URL de imagen</span>
@@ -1457,7 +1457,7 @@
 
 <!-- Input de archivo fuera de cualquier modal (fix iOS/Android) -->
 <input type="file" accept="image/*" id="prodImgFile"
-       style="position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none"
+       style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0"
        onchange="handleProductImageUpload(this)">
 
 <!-- ========== FOOTER ========== -->
