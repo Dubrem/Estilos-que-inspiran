@@ -1374,7 +1374,7 @@
 </div>
 
 <!-- ========== MODAL EDITAR PRODUCTO ========== -->
-<div class="modal" id="productEditModal">
+<div class="modal" id="productEditModal" style="z-index:700">
   <div class="modal-overlay" onclick="closeProductModal()"></div>
   <div class="modal-box" style="max-width:500px">
     <button class="modal-x" onclick="closeProductModal()">✕</button>
@@ -1762,20 +1762,22 @@ function renderAdminProducts() {
   }).join('');
 
   sec.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-      <h3 style="font-family:var(--ff-head);font-size:1.1rem;color:#fff">Catálogo de Productos</h3>
-      <button class="btn-primary" style="padding:8px 18px;font-size:.7rem" onclick="openNewProductModal()">+ Nuevo Producto</button>
+    <div style="margin-bottom:20px">
+      <button onclick="openNewProductModal()" style="
+        display:block;width:100%;padding:16px;border-radius:14px;
+        background:var(--rose);color:#fff;border:none;
+        font-family:var(--ff-body);font-size:1rem;font-weight:700;
+        letter-spacing:.06em;cursor:pointer;">
+        + Agregar Producto
+      </button>
     </div>
-    <p style="font-size:.72rem;color:rgba(255,255,255,.45);margin-bottom:16px">
-      Toca un producto para editar su foto, precio o stock.
-    </p>
-    <div class="admin-prods-grid">
-      <div class="prod-admin-card-add" onclick="openNewProductModal()">
-        <div class="prod-admin-card-add-icon">＋</div>
-        <div class="prod-admin-card-add-lbl">Agregar producto</div>
-      </div>
-      ${cards}
-    </div>`;
+    ${all.length ? `
+      <p style="font-size:.72rem;color:rgba(255,255,255,.45);margin-bottom:12px">
+        Toca un producto para editar su foto, precio o stock.
+      </p>
+      <div class="admin-prods-grid">${cards}</div>
+    ` : `<p style="font-size:.8rem;color:rgba(255,255,255,.35);text-align:center;margin-top:40px">Aún no hay productos. ¡Agrega el primero!</p>`}
+  `;
 }
 
 function openProductEditModal(id) {
@@ -1797,7 +1799,6 @@ function openProductEditModal(id) {
   // delete btn only for existing
   document.getElementById('prodDeleteBtn').style.display = p ? 'block' : 'none';
   document.getElementById('productEditModal').classList.add('open');
-  lockScroll();
 }
 
 function openNewProductModal() {
@@ -1815,12 +1816,10 @@ function openNewProductModal() {
   document.getElementById('prodEditImgPreview').style.display = 'none';
   document.getElementById('prodDeleteBtn').style.display = 'none';
   document.getElementById('productEditModal').classList.add('open');
-  lockScroll();
 }
 
 function closeProductModal() {
   document.getElementById('productEditModal').classList.remove('open');
-  unlockScroll();
 }
 
 function triggerImgPicker() {
