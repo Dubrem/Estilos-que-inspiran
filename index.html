@@ -142,163 +142,203 @@
     .mobile-nav a:hover { color: #fff; }
 
     /* ============================
-       HERO — Dark Fashion Editorial
+       HERO — Split Screen Fashion
     ============================ */
     .hero {
-      position: relative; overflow: hidden;
-      min-height: 100vh;
-      background: #0A0608;
-      display: flex; flex-direction: column;
-      padding: 0;
+      display: flex; flex-direction: row;
+      min-height: 100vh; overflow: hidden;
     }
-    /* Grain texture overlay */
-    .hero::before {
-      content: ''; position: absolute; inset: 0; z-index: 1;
-      pointer-events: none;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-      opacity: .35;
-    }
-    /* Rose glow top-right */
-    .hero::after {
-      content: ''; position: absolute; top: -20%; right: -15%; z-index: 0;
-      width: 60vw; height: 60vw; border-radius: 50%; pointer-events: none;
-      background: radial-gradient(circle, rgba(196,86,106,.18) 0%, transparent 65%);
-    }
-    /* Left accent line */
-    .hero-watermark {
-      position: absolute; left: 8%; top: 0; bottom: 0; z-index: 2;
-      width: 1px; pointer-events: none;
-      background: linear-gradient(to bottom, transparent 0%, rgba(196,86,106,.4) 30%, rgba(196,86,106,.4) 70%, transparent 100%);
-    }
-    .hero-particles { display: none; }
-    .ptcl { display: none; }
-    .hero-dots { display: none; }
+    .hero-watermark { display:none; }
+    .hero-particles { display:none; }
+    .ptcl { display:none; }
+    .hero-dots { display:none; }
 
-    /* ─── Main hero content wrapper ─── */
-    .hero-content {
-      position: relative; z-index: 3;
-      flex: 1; display: flex; flex-direction: column;
-      justify-content: center; padding: 120px 6% 80px;
-      max-width: 1440px; width: 100%; margin: 0 auto;
+    /* LEFT — texto editorial */
+    .hero-left {
+      width: 42%; background: #0C0608;
+      display: flex; flex-direction: column;
+      justify-content: flex-end; padding: 80px 52px 60px;
+      position: relative; flex-shrink: 0; z-index: 2;
     }
-    /* Eyebrow — editorial label */
-    .hero-eyebrow {
-      font-family: var(--ff-body); font-weight: 500;
-      font-size: .6rem; letter-spacing: .38em; text-transform: uppercase;
-      color: var(--rose); margin-bottom: 2rem;
-      display: flex; align-items: center; gap: 14px;
+    .hero-left::after {
+      content: ''; position: absolute; top: 0; right: 0;
+      width: 1px; height: 100%;
+      background: linear-gradient(to bottom, transparent, rgba(196,86,106,.5) 40%, rgba(196,86,106,.5) 60%, transparent);
     }
-    .hero-eyebrow::before {
-      content: ''; display: inline-block;
-      width: 40px; height: 1px; background: var(--rose);
+    .hero-season {
+      font-family: var(--ff-body); font-size: .58rem; font-weight: 600;
+      letter-spacing: .42em; text-transform: uppercase;
+      color: var(--rose); margin-bottom: 28px;
+      display: flex; align-items: center; gap: 12px;
     }
-    /* DUBREM — display typographic headline */
+    .hero-season::before { content:''; width:28px; height:1px; background:var(--rose); }
     .hero h1 {
       font-family: var(--ff-display);
-      font-size: clamp(5.5rem, 16vw, 15rem);
-      line-height: .85; color: #fff;
-      letter-spacing: .04em; text-transform: uppercase;
-      margin: 0 0 1.8rem;
+      font-size: clamp(5rem, 9vw, 10rem);
+      line-height: .82; color: #fff;
+      letter-spacing: .05em; text-transform: uppercase;
+      margin: 0 0 32px; display: block;
     }
     .hero h1 .accent {
-      color: transparent;
+      display: block; color: transparent;
       -webkit-text-stroke: 2px var(--rose);
-    }
-    /* Sub-row: tagline + location */
-    .hero-sub-row {
-      display: flex; align-items: flex-end; justify-content: space-between;
-      gap: 2rem; flex-wrap: wrap; margin-bottom: 3rem;
     }
     .hero-tagline {
       font-family: var(--ff-head); font-style: italic;
-      font-size: clamp(1rem, 2.5vw, 1.4rem);
-      color: rgba(255,255,255,.45); max-width: 420px; line-height: 1.4;
-      margin: 0;
+      font-size: clamp(.9rem, 1.4vw, 1.15rem);
+      color: rgba(255,255,255,.38); line-height: 1.6;
+      margin: 0 0 40px; max-width: 300px;
     }
-    .hero-location {
-      font-family: var(--ff-body); font-size: .62rem;
-      font-weight: 500; letter-spacing: .24em; text-transform: uppercase;
-      color: rgba(255,255,255,.3); text-align: right; white-space: nowrap;
-    }
-    .hero-location span { display: block; color: rgba(255,255,255,.5); margin-bottom: 2px; }
-    /* Buttons */
     .hero-bottom {
-      display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+      display: flex; flex-direction: column; gap: 12px;
     }
-    .hero p { display: none; }
-    .hero-badge { display: none; }
+    .hero p { display:none; }
+    .hero-badge { display:none; }
     .btn-hero {
-      display: inline-flex; align-items: center; gap: 12px;
-      padding: 15px 36px;
-      background: var(--rose); color: #fff;
-      text-decoration: none; border: none; border-radius: 2px;
-      font-size: .65rem; font-weight: 700; letter-spacing: .22em;
-      text-transform: uppercase; transition: all .24s; white-space: nowrap;
+      display: inline-flex; align-items: center; justify-content: space-between;
+      gap: 12px; padding: 16px 24px;
+      background: var(--rose); color: #fff; border: none;
+      font-family: var(--ff-body); font-size: .62rem; font-weight: 700;
+      letter-spacing: .22em; text-transform: uppercase;
+      transition: all .24s; cursor: pointer;
     }
-    .btn-hero:hover { background: var(--rose-dark); transform: translateY(-2px); }
-    .btn-hero svg { width: 13px; height: 13px; }
+    .btn-hero:hover { background: var(--rose-dark); padding-right: 20px; }
+    .btn-hero svg { width: 16px; height: 16px; flex-shrink:0; }
     .btn-hero-outline {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 14px 28px;
-      background: transparent; color: rgba(255,255,255,.6);
-      border: 1px solid rgba(255,255,255,.2); border-radius: 2px;
-      font-size: .65rem; font-weight: 500; letter-spacing: .18em;
-      text-transform: uppercase; cursor: pointer; transition: all .22s;
-      white-space: nowrap;
+      display: inline-flex; align-items: center; justify-content: space-between;
+      gap: 12px; padding: 15px 24px;
+      background: transparent; color: rgba(255,255,255,.5);
+      border: 1px solid rgba(255,255,255,.15);
+      font-family: var(--ff-body); font-size: .62rem; font-weight: 500;
+      letter-spacing: .2em; text-transform: uppercase;
+      cursor: pointer; transition: all .22s;
     }
-    .btn-hero-outline:hover { border-color: rgba(255,255,255,.6); color: #fff; }
+    .btn-hero-outline:hover { border-color: rgba(255,255,255,.5); color: #fff; }
+    .hero-location {
+      margin-top: 48px; padding-top: 24px;
+      border-top: 1px solid rgba(255,255,255,.08);
+      font-size: .55rem; letter-spacing: .28em; text-transform: uppercase;
+      color: rgba(255,255,255,.22);
+    }
+
+    /* RIGHT — photo grid */
+    .hero-right {
+      flex: 1; display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 3px; overflow: hidden;
+    }
+    .hero-photo {
+      overflow: hidden; position: relative;
+    }
+    .hero-photo img {
+      width: 100%; height: 100%; object-fit: cover;
+      transition: transform .7s ease;
+      display: block;
+    }
+    .hero-photo:hover img { transform: scale(1.04); }
+    .hero-photo-main {
+      grid-column: 1; grid-row: 1 / 3; /* ocupa toda la columna izquierda */
+    }
+    .hero-photo-label {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      padding: 40px 20px 16px;
+      background: linear-gradient(to top, rgba(0,0,0,.6) 0%, transparent 100%);
+      font-family: var(--ff-display); font-size: 1.1rem;
+      letter-spacing: .18em; text-transform: uppercase;
+      color: #fff;
+    }
+
     /* Scroll indicator */
     .hero-scroll {
-      position: absolute; bottom: 2.5rem; right: 6%;
-      z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 8px;
-      color: rgba(255,255,255,.25); font-size: .52rem; letter-spacing: .28em; text-transform: uppercase;
+      position: absolute; bottom: 2rem; left: 20%;
+      z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 8px;
+      color: rgba(255,255,255,.22); font-size: .5rem; letter-spacing: .26em; text-transform: uppercase;
     }
     .hero-scroll-line {
-      width: 1px; height: 48px;
+      width: 1px; height: 44px;
       background: linear-gradient(to bottom, var(--rose), transparent);
       animation: scrollPulse 2s ease-in-out infinite;
     }
     @keyframes scrollPulse {
-      0%,100% { opacity:.4; transform: scaleY(1); }
-      50% { opacity:1; transform: scaleY(1.15); }
+      0%,100%{ opacity:.4; transform:scaleY(1); }
+      50%{ opacity:1; transform:scaleY(1.18); }
     }
 
-    /* ─── Marquee ticker strip ─── */
+    /* ─── Ticker strip ─── */
     .hero-ticker {
-      position: relative; z-index: 3;
       background: var(--rose); overflow: hidden;
-      padding: 11px 0; flex-shrink: 0;
-      border-top: 1px solid rgba(255,255,255,.1);
+      padding: 12px 0; flex-shrink: 0;
     }
     .hero-ticker-track {
       display: flex; width: max-content;
-      animation: tickerScroll 28s linear infinite;
+      animation: tickerScroll 32s linear infinite;
     }
     .hero-ticker-item {
-      white-space: nowrap; padding: 0 2.5rem;
-      font-family: var(--ff-display); font-size: .85rem;
-      letter-spacing: .22em; text-transform: uppercase; color: #fff;
-      display: flex; align-items: center; gap: 2.5rem;
+      white-space: nowrap; padding: 0 2.8rem;
+      font-family: var(--ff-display); font-size: .9rem;
+      letter-spacing: .2em; text-transform: uppercase; color: #fff;
+      display: flex; align-items: center; gap: 2.8rem;
     }
-    .hero-ticker-item::after {
-      content: '✦'; font-size: .5rem; opacity: .7;
-    }
+    .hero-ticker-item::after { content:'✦'; font-size:.45rem; opacity:.65; }
     @keyframes tickerScroll {
-      from { transform: translateX(0); }
-      to   { transform: translateX(-50%); }
+      from{ transform:translateX(0); }
+      to  { transform:translateX(-50%); }
     }
 
-    @media(max-width:768px){
-      .hero-content { padding: 100px 5% 60px; }
-      .hero h1 { font-size: clamp(4.2rem, 20vw, 7.5rem); }
-      .hero h1 .accent { -webkit-text-stroke: 1.5px var(--rose); }
-      .hero-sub-row { flex-direction: column; align-items: flex-start; margin-bottom: 2rem; }
-      .hero-location { text-align: left; }
-      .hero-scroll { right: 5%; }
+    /* ─── Lookbook strip ─── */
+    .lookbook {
+      display: grid; grid-template-columns: repeat(3,1fr);
+      gap: 3px; background: #0C0608; padding: 3px;
+    }
+    .look-card {
+      position: relative; overflow: hidden;
+      aspect-ratio: 3/4; cursor: pointer;
+    }
+    .look-card img {
+      width: 100%; height: 100%; object-fit: cover;
+      display: block; transition: transform .6s ease;
+    }
+    .look-card:hover img { transform: scale(1.05); }
+    .look-card-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,.65) 0%, transparent 50%);
+      display: flex; flex-direction: column;
+      justify-content: flex-end; padding: 24px 20px;
+    }
+    .look-card-label {
+      font-family: var(--ff-display); font-size: 1.5rem;
+      letter-spacing: .15em; text-transform: uppercase; color: #fff;
+      margin-bottom: 4px;
+    }
+    .look-card-sub {
+      font-size: .58rem; letter-spacing: .22em;
+      text-transform: uppercase; color: rgba(255,255,255,.55);
+    }
+    .look-card-btn {
+      margin-top: 14px; display: inline-block;
+      padding: 9px 20px; background: #fff; color: #0C0608;
+      font-family: var(--ff-body); font-size: .58rem;
+      font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
+      border: none; cursor: pointer; transition: all .22s;
+      align-self: flex-start;
+    }
+    .look-card-btn:hover { background: var(--rose); color: #fff; }
+
+    @media(max-width:900px){
+      .hero { flex-direction: column; min-height: auto; }
+      .hero-left { width: 100%; padding: 100px 28px 40px; }
+      .hero-left::after { display:none; }
+      .hero h1 { font-size: clamp(4.5rem, 18vw, 7rem); }
+      .hero-right { min-height: 65vw; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; }
+      .hero-photo-main { grid-column:1; grid-row:1/3; }
+      .lookbook { grid-template-columns:1fr; }
+      .look-card { aspect-ratio:4/3; }
     }
     @media(max-width:480px){
-      .hero h1 { font-size: clamp(3.8rem, 22vw, 6rem); }
-      .hero-eyebrow { font-size: .55rem; }
+      .hero-left { padding: 90px 22px 36px; }
+      .hero h1 { font-size: clamp(4rem,20vw,6rem); }
+      .hero h1 .accent { -webkit-text-stroke:1.5px var(--rose); }
     }
 
     /* ============================
@@ -1077,53 +1117,92 @@
 
 <!-- ========== HERO ========== -->
 <section class="hero" id="inicio">
-  <div class="hero-watermark" aria-hidden="true"></div>
-  <div class="hero-particles" id="heroParticles" style="display:none"></div>
 
-  <div class="hero-content">
-    <p class="hero-eyebrow">Colección Primavera · 2026</p>
+  <!-- LEFT: texto editorial -->
+  <div class="hero-left">
+    <p class="hero-season">Primavera — 2026</p>
     <h1><span class="accent">DUB</span>REM</h1>
-    <div class="hero-sub-row">
-      <p class="hero-tagline">Moda femenina con carácter.<br>Diseñada para quienes saben lo que quieren.</p>
-      <div class="hero-location">
-        <span>Hidalgo, México</span>
-        Tula de Allende
-      </div>
-    </div>
+    <p class="hero-tagline">Moda femenina con carácter propio. Diseñada para quienes saben lo que quieren.</p>
     <div class="hero-bottom">
       <button class="btn-hero" onclick="document.getElementById('catalogo').scrollIntoView({behavior:'smooth'})">
         Ver Colección
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </button>
       <button class="btn-hero-outline" onclick="document.getElementById('catalogo').scrollIntoView({behavior:'smooth'})">
         Explorar Prendas
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </button>
     </div>
+    <div class="hero-location">Tula de Allende, Hidalgo · México</div>
   </div>
 
-  <!-- Ticker marquee -->
-  <div class="hero-ticker" aria-hidden="true">
-    <div class="hero-ticker-track">
-      <span class="hero-ticker-item">Nueva Colección</span>
-      <span class="hero-ticker-item">Moda Femenina</span>
-      <span class="hero-ticker-item">Dubrem</span>
-      <span class="hero-ticker-item">Primavera 2026</span>
-      <span class="hero-ticker-item">Tula de Allende</span>
-      <span class="hero-ticker-item">Estilo Único</span>
-      <span class="hero-ticker-item">Prendas Exclusivas</span>
-      <span class="hero-ticker-item">Nueva Colección</span>
-      <span class="hero-ticker-item">Moda Femenina</span>
-      <span class="hero-ticker-item">Dubrem</span>
-      <span class="hero-ticker-item">Primavera 2026</span>
-      <span class="hero-ticker-item">Tula de Allende</span>
-      <span class="hero-ticker-item">Estilo Único</span>
-      <span class="hero-ticker-item">Prendas Exclusivas</span>
+  <!-- RIGHT: foto grid -->
+  <div class="hero-right">
+    <div class="hero-photo hero-photo-main">
+      <img src="https://images.unsplash.com/photo-1581044777550-4cfa14e4bde5?auto=format&fit=crop&w=800&q=80" alt="Moda Dubrem" loading="eager">
+      <div class="hero-photo-label">Nueva Temporada</div>
+    </div>
+    <div class="hero-photo">
+      <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=600&q=80" alt="Colección Mujer" loading="eager">
+      <div class="hero-photo-label">Mujer</div>
+    </div>
+    <div class="hero-photo">
+      <img src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&w=600&q=80" alt="Colección" loading="eager">
+      <div class="hero-photo-label">Essentials</div>
     </div>
   </div>
 
   <div class="hero-scroll" aria-hidden="true">
     <div class="hero-scroll-line"></div>
     <span>Scroll</span>
+  </div>
+</section>
+
+<!-- ========== TICKER ========== -->
+<div class="hero-ticker" aria-hidden="true">
+  <div class="hero-ticker-track">
+    <span class="hero-ticker-item">Nueva Colección</span>
+    <span class="hero-ticker-item">Moda Femenina</span>
+    <span class="hero-ticker-item">Dubrem</span>
+    <span class="hero-ticker-item">Primavera 2026</span>
+    <span class="hero-ticker-item">Tula de Allende</span>
+    <span class="hero-ticker-item">Estilo Único</span>
+    <span class="hero-ticker-item">Prendas Exclusivas</span>
+    <span class="hero-ticker-item">Nueva Colección</span>
+    <span class="hero-ticker-item">Moda Femenina</span>
+    <span class="hero-ticker-item">Dubrem</span>
+    <span class="hero-ticker-item">Primavera 2026</span>
+    <span class="hero-ticker-item">Tula de Allende</span>
+    <span class="hero-ticker-item">Estilo Único</span>
+    <span class="hero-ticker-item">Prendas Exclusivas</span>
+  </div>
+</div>
+
+<!-- ========== LOOKBOOK ========== -->
+<section class="lookbook" aria-label="Categorías">
+  <div class="look-card" onclick="filterBy('mujer',null);document.getElementById('catalogo').scrollIntoView({behavior:'smooth'})">
+    <img src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=700&q=80" alt="Mujer" loading="lazy">
+    <div class="look-card-overlay">
+      <div class="look-card-label">Mujer</div>
+      <div class="look-card-sub">Blusas · Vestidos · Tops</div>
+      <button class="look-card-btn">Ver todo →</button>
+    </div>
+  </div>
+  <div class="look-card" onclick="filterBy('outerwear',null);document.getElementById('catalogo').scrollIntoView({behavior:'smooth'})">
+    <img src="https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=700&q=80" alt="Outerwear" loading="lazy">
+    <div class="look-card-overlay">
+      <div class="look-card-label">Outerwear</div>
+      <div class="look-card-sub">Chamarras · Abrigos</div>
+      <button class="look-card-btn">Ver todo →</button>
+    </div>
+  </div>
+  <div class="look-card" onclick="filterBy('bottoms',null);document.getElementById('catalogo').scrollIntoView({behavior:'smooth'})">
+    <img src="https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=700&q=80" alt="Bottoms" loading="lazy">
+    <div class="look-card-overlay">
+      <div class="look-card-label">Bottoms</div>
+      <div class="look-card-sub">Pantalones · Faldas</div>
+      <button class="look-card-btn">Ver todo →</button>
+    </div>
   </div>
 </section>
 
