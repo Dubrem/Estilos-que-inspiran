@@ -1045,6 +1045,7 @@
     <nav class="nav">
       <a href="#catalogo" onclick="filterBy('mujer',null)">Mujer</a>
       <a href="#catalogo" onclick="filterBy('hombre',null)">Hombre</a>
+      <a href="#catalogo" onclick="filterBy('ninos',null)">Niños</a>
       <a href="#catalogo" onclick="filterBy('outerwear',null)">Outerwear</a>
       <a href="#catalogo" onclick="filterBy('bottoms',null)">Bottoms</a>
     </nav>
@@ -1063,6 +1064,7 @@
   <nav class="mobile-nav" id="mobileNav">
     <a href="#catalogo" onclick="filterBy('mujer',null);closeMobileNav()">Mujer</a>
     <a href="#catalogo" onclick="filterBy('hombre',null);closeMobileNav()">Hombre</a>
+    <a href="#catalogo" onclick="filterBy('ninos',null);closeMobileNav()">Niños</a>
     <a href="#catalogo" onclick="filterBy('outerwear',null);closeMobileNav()">Outerwear</a>
     <a href="#catalogo" onclick="filterBy('bottoms',null);closeMobileNav()">Bottoms</a>
   </nav>
@@ -1073,7 +1075,7 @@
 
   <!-- Panel Mujer -->
   <div class="hero-panel" onclick="filterBy('mujer',null);document.getElementById('catalogo').scrollIntoView({behavior:'smooth'})">
-    <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=900&q=85" alt="Colección Mujer" loading="eager">
+    <img src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=900&q=85" alt="Colección Mujer" loading="eager">
     <div class="hero-panel-info">
       <span class="hero-panel-label">Mujer</span>
       <button class="hero-panel-cta">Ver Colección</button>
@@ -1082,9 +1084,18 @@
 
   <!-- Panel Hombre -->
   <div class="hero-panel" onclick="filterBy('hombre',null);document.getElementById('catalogo').scrollIntoView({behavior:'smooth'})">
-    <img src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&w=900&q=85" alt="Colección Hombre" loading="eager">
+    <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=900&q=85" alt="Colección Hombre" loading="eager">
     <div class="hero-panel-info">
       <span class="hero-panel-label">Hombre</span>
+      <button class="hero-panel-cta">Ver Colección</button>
+    </div>
+  </div>
+
+  <!-- Panel Niños -->
+  <div class="hero-panel" onclick="filterBy('ninos',null);document.getElementById('catalogo').scrollIntoView({behavior:'smooth'})">
+    <img src="https://images.unsplash.com/photo-1622290291468-a28f7a7dc6a8?auto=format&fit=crop&w=900&q=85" alt="Colección Niños" loading="eager">
+    <div class="hero-panel-info">
+      <span class="hero-panel-label">Niños</span>
       <button class="hero-panel-cta">Ver Colección</button>
     </div>
   </div>
@@ -1153,6 +1164,7 @@
       <button class="tab-btn active" onclick="filterBy('all',this)">✦ Todo</button>
       <button class="tab-btn" onclick="filterBy('mujer',this)">Mujer</button>
       <button class="tab-btn" onclick="filterBy('hombre',this)">Hombre</button>
+      <button class="tab-btn" onclick="filterBy('ninos',this)">Niños</button>
       <button class="tab-btn" onclick="filterBy('outerwear',this)">Outerwear</button>
       <button class="tab-btn" onclick="filterBy('bottoms',this)">Bottoms</button>
     </div>
@@ -1549,6 +1561,7 @@
       <select class="form-input" id="prodEditCat">
         <option value="mujer">Mujer</option>
         <option value="hombre">Hombre</option>
+        <option value="ninos">Niños</option>
         <option value="outerwear">Outerwear / Chamarras</option>
         <option value="bottoms">Bottoms / Pantalones</option>
       </select>
@@ -2187,7 +2200,7 @@ function spawnParticles() {
 
 function fmtMXN(n){ return '$' + n.toLocaleString('es-MX'); }
 function catLabel(c){
-  return {mujer:'Mujer',hombre:'Hombre',outerwear:'Outerwear',bottoms:'Bottoms',sets:'Sets'}[c]||c;
+  return {mujer:'Mujer',hombre:'Hombre',ninos:'Niños',outerwear:'Outerwear',bottoms:'Bottoms',sets:'Sets'}[c]||c;
 }
 let _scrollLockCount = 0;
 function lockScroll() {
