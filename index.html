@@ -596,6 +596,38 @@
     }
     .stat-val { font-size:1.8rem; font-weight:700; color:var(--text-dark); font-family:var(--ff-display); letter-spacing:.04em; }
     .stat-lbl { font-size:.62rem; font-weight:600; text-transform:uppercase; letter-spacing:.12em; color:var(--text-light); }
+    /* Filtros de pedidos */
+    .admin-filters {
+      flex-shrink:0; padding:14px 2rem 0;
+      display:flex; flex-direction:column; gap:10px;
+    }
+    .admin-filter-row {
+      display:flex; gap:6px; flex-wrap:wrap; align-items:center;
+    }
+    .filter-pill {
+      padding:6px 14px; border-radius:50px; border:1px solid rgba(255,255,255,.15);
+      background:transparent; color:rgba(255,255,255,.45);
+      font-family:var(--ff-body); font-size:.65rem; font-weight:600;
+      letter-spacing:.1em; text-transform:uppercase; cursor:pointer; transition:all .18s;
+      white-space:nowrap;
+    }
+    .filter-pill:hover { border-color:rgba(255,255,255,.4); color:rgba(255,255,255,.8); }
+    .filter-pill.active { background:var(--rose); border-color:var(--rose); color:#fff; }
+    .filter-search {
+      flex:1; min-width:160px; padding:7px 14px;
+      background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12);
+      border-radius:50px; color:#fff; font-family:var(--ff-body); font-size:.72rem;
+      outline:none; transition:border-color .18s;
+    }
+    .filter-search::placeholder { color:rgba(255,255,255,.3); }
+    .filter-search:focus { border-color:rgba(255,255,255,.35); }
+    .filter-result-count {
+      font-size:.62rem; color:rgba(255,255,255,.3);
+      letter-spacing:.1em; text-transform:uppercase; padding:4px 2px;
+    }
+    @media(max-width:640px){
+      .admin-filters { padding:10px 1rem 0; }
+    }
     .admin-body { flex:1; overflow-y:auto; padding:16px 2rem 40px; }
     .admin-empty {
       text-align:center; padding:80px 20px; color:var(--text-light);
@@ -1366,6 +1398,9 @@
   <!-- Stats (solo tab Pedidos) -->
   <div class="admin-stats" id="adminStats"></div>
 
+  <!-- Filtros (solo tab Pedidos) -->
+  <div class="admin-filters" id="adminFilters" style="display:none"></div>
+
   <!-- Cuerpo Pedidos -->
   <div class="admin-body" id="adminBody"></div>
 
@@ -1731,16 +1766,19 @@ function switchAdminTab(tab) {
   });
   const body    = document.getElementById('adminBody');
   const stats   = document.getElementById('adminStats');
+  const filters = document.getElementById('adminFilters');
   const prods   = document.getElementById('adminProdsSection');
   if (tab === 'orders') {
-    stats.style.display = '';
-    body.style.display  = '';
-    prods.style.display = 'none';
+    stats.style.display   = '';
+    filters.style.display = '';
+    body.style.display    = '';
+    prods.style.display   = 'none';
     renderAdminOrders();
   } else {
-    stats.style.display = 'none';
-    body.style.display  = 'none';
-    prods.style.display = '';
+    stats.style.display   = 'none';
+    filters.style.display = 'none';
+    body.style.display    = 'none';
+    prods.style.display   = '';
     renderAdminProducts();
   }
 }
@@ -2583,29 +2621,132 @@ function closeAdmin(){
   document.getElementById('adminPanel').classList.remove('open');
 }
 
+/* ── filtros de pedidos ── */
+let _orderStatusFilter = 'all';
+let _orderDateFilter   = 'all';
+let _orderSearch       = '';
+
+function setOrderStatusFilter(f){
+  _orderStatusFilter = f;
+  renderAdminOrders();
+}
+function setOrderDateFilter(f){
+  _orderDateFilter = f;
+  renderAdminOrders();
+}
+function setOrderSearch(val){
+  _orderSearch = val.toLowerCase().trim();
+  renderAdminOrders();
+}
+
+function _filterOrders(){
+  let list = [...S.orders];
+
+  /* filtro de estado */
+  if(_orderStatusFilter !== 'all'){
+    if(_orderStatusFilter === 'enviado'){
+      list = list.filter(o => o.status==='enviado' || o.status==='despachado');
+    } else {
+      list = list.filter(o => o.status === _orderStatusFilter);
+    }
+  }
+
+  /* filtro de fecha */
+  if(_orderDateFilter !== 'all'){
+    const now  = new Date();
+    const sod  = d => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    const todayStart = sod(now);
+    list = list.filter(o => {
+      if(!o.timestamp) return true;
+      const t = o.timestamp;
+      if(_orderDateFilter === 'today'){
+        return t >= todayStart;
+      }
+      if(_orderDateFilter === 'week'){
+        const weekStart = todayStart - 6 * 864e5;
+        return t >= weekStart;
+      }
+      if(_orderDateFilter === 'month'){
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+        return t >= monthStart;
+      }
+      return true;
+    });
+  }
+
+  /* búsqueda */
+  if(_orderSearch){
+    list = list.filter(o =>
+      o.num.toLowerCase().includes(_orderSearch) ||
+      (o.customer||'').toLowerCase().includes(_orderSearch) ||
+      (o.email||'').toLowerCase().includes(_orderSearch) ||
+      (o.phone||'').toLowerCase().includes(_orderSearch)
+    );
+  }
+
+  /* más recientes primero */
+  return list.sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
+}
+
 function renderAdminOrders(){
-  const stats = document.getElementById('adminStats');
-  const body  = document.getElementById('adminBody');
-  const total   = S.orders.length;
-  const pendient= S.orders.filter(o=>o.status==='pendiente').length;
-  const pagados = S.orders.filter(o=>o.status==='pagado').length;
-  const listos  = S.orders.filter(o=>o.status==='listo').length;
-  const enviados= S.orders.filter(o=>o.status==='enviado'||o.status==='despachado').length;
-  const revenue = S.orders.reduce((s,o)=>s+o.total,0);
+  const stats   = document.getElementById('adminStats');
+  const filtersEl = document.getElementById('adminFilters');
+  const body    = document.getElementById('adminBody');
+
+  /* — stats generales siempre sobre todos los pedidos — */
+  const total    = S.orders.length;
+  const pendient = S.orders.filter(o=>o.status==='pendiente').length;
+  const pagados  = S.orders.filter(o=>o.status==='pagado').length;
+  const listos   = S.orders.filter(o=>o.status==='listo').length;
+  const enviados = S.orders.filter(o=>o.status==='enviado'||o.status==='despachado').length;
+  const complet  = S.orders.filter(o=>o.status==='completado').length;
+  const revenue  = S.orders.reduce((s,o)=>s+o.total,0);
 
   stats.innerHTML = `
-    <div class="stat-card"><div class="stat-val">${total}</div><div class="stat-lbl">Total</div></div>
-    <div class="stat-card"><div class="stat-val">${pendient}</div><div class="stat-lbl">Pendientes</div></div>
-    <div class="stat-card"><div class="stat-val">${pagados}</div><div class="stat-lbl">Pagados</div></div>
-    <div class="stat-card"><div class="stat-val">${listos}</div><div class="stat-lbl">Listos</div></div>
-    <div class="stat-card"><div class="stat-val">${enviados}</div><div class="stat-lbl">Enviados</div></div>
+    <div class="stat-card" style="cursor:pointer" onclick="setOrderStatusFilter('all')"         title="Ver todos"><div class="stat-val">${total}</div><div class="stat-lbl">Total</div></div>
+    <div class="stat-card" style="cursor:pointer" onclick="setOrderStatusFilter('pendiente')"   title="Filtrar pendientes"><div class="stat-val">${pendient}</div><div class="stat-lbl">Pendientes</div></div>
+    <div class="stat-card" style="cursor:pointer" onclick="setOrderStatusFilter('pagado')"      title="Filtrar pagados"><div class="stat-val">${pagados}</div><div class="stat-lbl">Pagados</div></div>
+    <div class="stat-card" style="cursor:pointer" onclick="setOrderStatusFilter('listo')"       title="Filtrar listos"><div class="stat-val">${listos}</div><div class="stat-lbl">Listos</div></div>
+    <div class="stat-card" style="cursor:pointer" onclick="setOrderStatusFilter('enviado')"     title="Filtrar enviados"><div class="stat-val">${enviados}</div><div class="stat-lbl">Enviados</div></div>
+    <div class="stat-card" style="cursor:pointer" onclick="setOrderStatusFilter('completado')"  title="Filtrar completados"><div class="stat-val">${complet}</div><div class="stat-lbl">Completados</div></div>
     <div class="stat-card"><div class="stat-val">${fmtMXN(revenue)}</div><div class="stat-lbl">Ingresos</div></div>`;
+
+  /* — barra de filtros — */
+  const sf = _orderStatusFilter, df = _orderDateFilter;
+  filtersEl.style.display = '';
+  filtersEl.innerHTML = `
+    <div class="admin-filter-row">
+      <button class="filter-pill ${sf==='all'?'active':''}"        onclick="setOrderStatusFilter('all')">Todos</button>
+      <button class="filter-pill ${sf==='pendiente'?'active':''}"  onclick="setOrderStatusFilter('pendiente')">🕐 Pendiente</button>
+      <button class="filter-pill ${sf==='pagado'?'active':''}"     onclick="setOrderStatusFilter('pagado')">✅ Pagado</button>
+      <button class="filter-pill ${sf==='listo'?'active':''}"      onclick="setOrderStatusFilter('listo')">🏪 Listo</button>
+      <button class="filter-pill ${sf==='enviado'?'active':''}"    onclick="setOrderStatusFilter('enviado')">🚚 Enviado</button>
+      <button class="filter-pill ${sf==='completado'?'active':''}" onclick="setOrderStatusFilter('completado')">🎉 Completado</button>
+    </div>
+    <div class="admin-filter-row">
+      <button class="filter-pill ${df==='all'?'active':''}"   onclick="setOrderDateFilter('all')">Todas las fechas</button>
+      <button class="filter-pill ${df==='today'?'active':''}" onclick="setOrderDateFilter('today')">Hoy</button>
+      <button class="filter-pill ${df==='week'?'active':''}"  onclick="setOrderDateFilter('week')">Esta semana</button>
+      <button class="filter-pill ${df==='month'?'active':''}" onclick="setOrderDateFilter('month')">Este mes</button>
+      <input class="filter-search" type="text" placeholder="🔍 Buscar cliente, # pedido, teléfono…"
+             value="${_orderSearch}" oninput="setOrderSearch(this.value)">
+    </div>`;
+
+  /* — lista filtrada — */
+  const filtered = _filterOrders();
 
   if(!total){
     body.innerHTML=`<div class="admin-empty"><div class="admin-empty-icon">📋</div><p>No hay pedidos aún.</p></div>`;
     return;
   }
-  body.innerHTML = `<div class="admin-orders-grid">${S.orders.map(orderCardHTML).join('')}</div>`;
+  if(!filtered.length){
+    body.innerHTML=`<div class="admin-empty"><div class="admin-empty-icon">🔍</div><p>Sin resultados para este filtro.</p></div>`;
+    return;
+  }
+
+  body.innerHTML = `
+    <div class="filter-result-count" style="margin-top:12px">${filtered.length} pedido${filtered.length!==1?'s':''} encontrado${filtered.length!==1?'s':''}</div>
+    <div class="admin-orders-grid">${filtered.map(orderCardHTML).join('')}</div>`;
 }
 
 function orderCardHTML(o){
