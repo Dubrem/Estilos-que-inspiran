@@ -1350,9 +1350,10 @@
       <button class="btn-admin-close" onclick="closeAdmin()">✕</button>
       <div class="admin-logo">DUB<span>REM</span> — <em style="font-weight:400;font-style:normal;font-size:.95rem;opacity:.7">Admin</em></div>
     </div>
-    <div style="display:flex;align-items:center;gap:10px">
+    <div style="display:flex;align-items:center;gap:8px">
       <button class="btn-refresh" onclick="syncAdminOrders().then(renderAdminOrders)" style="display:none" id="btnRefreshOrders">↺ Actualizar</button>
       <button class="btn-admin-close" onclick="closeAdmin()" style="font-size:.75rem;padding:7px 18px;border-radius:50px">⬅ Cerrar</button>
+      <button onclick="logoutAdmin()" style="font-size:.68rem;padding:7px 14px;border-radius:50px;border:1px solid rgba(255,255,255,.2);background:transparent;color:rgba(255,255,255,.5);cursor:pointer;font-family:var(--ff-body)">Cerrar Sesión</button>
     </div>
   </div>
 
@@ -1971,8 +1972,9 @@ async function deleteProduct() {
 /* ──────────────────────────────────────────────────────
    PERSISTENCIA (localStorage — caché local)
 ────────────────────────────────────────────────────── */
-const LS_USERS   = 'be_users_v1';
-const LS_SESSION = 'be_session_v1';
+const LS_USERS        = 'be_users_v1';
+const LS_SESSION      = 'be_session_v1';
+const LS_ADMIN_SESSION= 'be_admin_v1';
 
 function saveUsers(){
   try { localStorage.setItem(LS_USERS, JSON.stringify(S.users)); } catch(e){}
@@ -1986,6 +1988,8 @@ function loadUsers(){
     }
   } catch(e){}
 }
+
+/* Sesión cliente — se guarda y se restaura sin requerir que esté en S.users */
 function saveSession(){
   try {
     if(S.user) localStorage.setItem(LS_SESSION, JSON.stringify(S.user));
@@ -1995,11 +1999,24 @@ function saveSession(){
 function loadSession(){
   try {
     const raw = localStorage.getItem(LS_SESSION);
-    if(raw){
-      const u = JSON.parse(raw);
-      if(u && S.users.find(x=>x.email===u.email)) S.user = u;
-    }
+    if(raw){ const u = JSON.parse(raw); if(u && u.email) S.user = u; }
   } catch(e){}
+}
+
+/* Sesión admin — persiste entre recargas, solo se borra con logoutAdmin() */
+function saveAdminSession(){
+  try { localStorage.setItem(LS_ADMIN_SESSION, '1'); } catch(e){}
+}
+function clearAdminSession(){
+  try { localStorage.removeItem(LS_ADMIN_SESSION); } catch(e){}
+}
+function hasAdminSession(){
+  try { return localStorage.getItem(LS_ADMIN_SESSION) === '1'; } catch(e){ return false; }
+}
+function logoutAdmin(){
+  clearAdminSession();
+  closeAdmin();
+  toast('Sesión admin cerrada', '');
 }
 
 /* ──────────────────────────────────────────────────────
@@ -2048,20 +2065,14 @@ function fmtMXN(n){ return '$' + n.toLocaleString('es-MX'); }
 function catLabel(c){
   return {mujer:'Mujer',hombre:'Hombre',outerwear:'Outerwear',bottoms:'Bottoms',sets:'Sets'}[c]||c;
 }
-let _savedScrollY = 0;
+let _scrollLockCount = 0;
 function lockScroll() {
-  _savedScrollY = window.scrollY;
-  document.body.style.position = 'fixed';
-  document.body.style.top      = `-${_savedScrollY}px`;
-  document.body.style.left     = '0';
-  document.body.style.right    = '0';
+  _scrollLockCount++;
+  document.body.style.overflow = 'hidden';
 }
 function unlockScroll() {
-  document.body.style.position = '';
-  document.body.style.top      = '';
-  document.body.style.left     = '';
-  document.body.style.right    = '';
-  window.scrollTo(0, _savedScrollY);
+  _scrollLockCount = Math.max(0, _scrollLockCount - 1);
+  if (_scrollLockCount === 0) document.body.style.overflow = '';
 }
 function toggleNav()    { document.getElementById('mobileNav').classList.toggle('open'); }
 function closeMobileNav(){ document.getElementById('mobileNav').classList.remove('open'); }
@@ -2531,6 +2542,8 @@ function doRecovery(){
    PANEL ADMINISTRADOR
 ────────────────────────────────────────────────────── */
 function openAdminLogin(){
+  // Si ya hay sesión guardada, entrar directamente sin pedir credenciales
+  if(hasAdminSession()){ openAdmin(); return; }
   document.getElementById('adminEmail').value='';
   document.getElementById('adminPass').value='';
   document.getElementById('adminErr').classList.remove('show');
@@ -2545,6 +2558,7 @@ function doAdminLogin(){
   const em = document.getElementById('adminEmail').value.trim().toLowerCase();
   const pw = document.getElementById('adminPass').value;
   if(em === ADMIN_CRED.email && pw === ADMIN_CRED.pass){
+    saveAdminSession();   // guardar sesión para no pedir credenciales de nuevo
     closeAdminLogin();
     openAdmin();
   } else {
@@ -2554,7 +2568,6 @@ function doAdminLogin(){
 }
 async function openAdmin(){
   document.getElementById('adminPanel').classList.add('open');
-  lockScroll();
   // reset to orders tab visually
   document.querySelectorAll('.admin-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === 'orders'));
   document.getElementById('adminStats').style.display = '';
@@ -2568,7 +2581,6 @@ async function openAdmin(){
 }
 function closeAdmin(){
   document.getElementById('adminPanel').classList.remove('open');
-  unlockScroll();
 }
 
 function renderAdminOrders(){
@@ -2676,12 +2688,10 @@ function setOrderStatus(orderNum, status){
 ────────────────────────────────────────────────────── */
 function openOrdersPanel(){
   document.getElementById('customerPanel').classList.add('open');
-  lockScroll();
   loadOrdersPanel();
 }
 function closeOrdersPanel(){
   document.getElementById('customerPanel').classList.remove('open');
-  unlockScroll();
 }
 async function loadOrdersPanel(){
   const body = document.getElementById('customerOrdersBody');
