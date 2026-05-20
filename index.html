@@ -2049,8 +2049,21 @@ function fmtMXN(n){ return '$' + n.toLocaleString('es-MX'); }
 function catLabel(c){
   return {mujer:'Mujer',hombre:'Hombre',outerwear:'Outerwear',bottoms:'Bottoms',sets:'Sets'}[c]||c;
 }
-function lockScroll()   { document.body.style.overflow='hidden'; }
-function unlockScroll() { document.body.style.overflow=''; }
+let _savedScrollY = 0;
+function lockScroll() {
+  _savedScrollY = window.scrollY;
+  document.body.style.position = 'fixed';
+  document.body.style.top      = `-${_savedScrollY}px`;
+  document.body.style.left     = '0';
+  document.body.style.right    = '0';
+}
+function unlockScroll() {
+  document.body.style.position = '';
+  document.body.style.top      = '';
+  document.body.style.left     = '';
+  document.body.style.right    = '';
+  window.scrollTo(0, _savedScrollY);
+}
 function toggleNav()    { document.getElementById('mobileNav').classList.toggle('open'); }
 function closeMobileNav(){ document.getElementById('mobileNav').classList.remove('open'); }
 
