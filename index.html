@@ -1157,13 +1157,22 @@
 
     /* ── Header compacto en móvil — todo en una sola fila ── */
     @media(max-width:600px){
+      /* Hero: logo centrado, hamburger izq, carrito der */
       .header-inner {
         height:48px; padding:0 .8rem;
-        display:flex; flex-direction:row;
-        justify-content:flex-start; align-items:center; gap:4px;
+        display:grid; grid-template-columns:1fr auto 1fr;
+        align-items:center;
       }
-      .logo { justify-self:unset; gap:6px; }
-      .header-actions { margin-left:auto; }
+      .menu-btn  { justify-self:start; }
+      .logo      { justify-self:center; gap:6px; }
+      .header-actions { justify-self:end; }
+      /* Catálogo: logo a la izquierda junto al hamburger */
+      .header.catalog-open .header-inner {
+        display:flex; justify-content:flex-start; gap:4px;
+      }
+      .header.catalog-open .logo { justify-self:unset; }
+      .header.catalog-open .header-actions { margin-left:auto; justify-self:unset; }
+      #cartLabel { display:none; }
       .logo-icon { width:18px; height:18px; }
       .logo-text { font-size:.95rem; letter-spacing:.14em; }
       .header-actions {
