@@ -2937,8 +2937,10 @@ function orderCardHTML(o){
 
   // Botones de estado — se bloquean si ya está completado
   const canComplete = st==='listo' || st==='enviado' || st==='despachado';
+  const deleteBtnHtml = `<button onclick="deleteOrder('${o.num}')" style="margin-top:8px;width:100%;padding:9px;border:1.5px solid #fcc;background:transparent;color:#c0392b;border-radius:50px;font-size:.7rem;font-weight:700;cursor:pointer;letter-spacing:.06em;text-transform:uppercase">🗑 Eliminar pedido</button>`;
+
   const footHtml = st==='completado'
-    ? `<div class="completado-badge">🎉 Pedido completado satisfactoriamente</div>`
+    ? `<div class="completado-badge">🎉 Pedido completado satisfactoriamente</div>${deleteBtnHtml}`
     : `<div class="order-card-foot" style="flex-wrap:wrap">
         <button class="btn-status btn-status-pendiente" onclick="setOrderStatus('${o.num}','pendiente')"
           style="${st==='pendiente'?'outline:2px solid #856404':''}">🕐 Pendiente</button>
@@ -2949,7 +2951,7 @@ function orderCardHTML(o){
         <button class="btn-status btn-status-despachado" onclick="setOrderStatus('${o.num}','enviado')"
           style="${st==='enviado'||st==='despachado'?'outline:2px solid #084298':''}">🚚 Enviado</button>
         ${canComplete ? `<button class="btn-completar" onclick="setOrderStatus('${o.num}','completado')">🎉 Marcar como Completado</button>` : ''}
-      </div>`;
+      </div>${deleteBtnHtml}`;
 
   return `
     <div class="order-card" id="oc-${o.num}">
@@ -2990,6 +2992,17 @@ function setOrderStatus(orderNum, status){
   fbUpdateOrderStatus(orderNum, status); // sync Firebase
   renderAdminOrders();
   toast(`Pedido ${orderNum} → ${status}`, 'ok');
+}
+
+async function deleteOrder(orderNum){
+  if(!confirm(`¿Eliminar el pedido ${orderNum}? Esta acción no se puede deshacer.`)) return;
+  S.orders = S.orders.filter(o => o.num !== orderNum);
+  try {
+    if(FIREBASE_DB_URL)
+      await fetch(`${FIREBASE_DB_URL}/orders/${orderKey(orderNum)}.json`, { method:'DELETE' });
+  } catch(e){}
+  renderAdminOrders();
+  toast('Pedido eliminado', 'ok');
 }
 
 /* ──────────────────────────────────────────────────────
