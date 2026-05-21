@@ -435,7 +435,12 @@
     .lb-overlay { position:absolute; inset:0; background:rgba(44,26,30,.65); backdrop-filter:blur(8px); }
     .lb-box { position:relative; z-index:1; background:#fff; border-radius:20px; overflow:hidden; max-width:720px; width:100%; display:flex; box-shadow:0 40px 80px rgba(196,86,106,.2); animation:popIn .3s ease; }
     @keyframes popIn { from{opacity:0;transform:scale(.95) translateY(22px)} to{opacity:1;transform:scale(1) translateY(0)} }
-    .lb-img { width:45%; flex-shrink:0; object-fit:cover; aspect-ratio:3/4; background:var(--blush-light); }
+    .lb-img { width:45%; flex-shrink:0; object-fit:cover; aspect-ratio:3/4; background:var(--blush-light); cursor:zoom-in; }
+    .img-zoom-overlay { display:none; position:fixed; inset:0; z-index:600; background:rgba(0,0,0,.92); align-items:center; justify-content:center; cursor:zoom-out; }
+    .img-zoom-overlay.open { display:flex; }
+    .img-zoom-overlay img { max-width:95vw; max-height:95vh; object-fit:contain; border-radius:6px; user-select:none; pointer-events:none; }
+    .img-zoom-close { position:absolute; top:16px; right:16px; width:36px; height:36px; border-radius:50%; border:none; background:rgba(255,255,255,.15); color:#fff; font-size:16px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background .15s; }
+    .img-zoom-close:hover { background:rgba(255,255,255,.3); }
     .lb-info { padding:36px 30px; display:flex; flex-direction:column; justify-content:center; flex:1; }
     .lb-cat {
       display:inline-block; background:var(--rose-pale); color:var(--rose);
@@ -1205,10 +1210,15 @@
 </section>
 
 <!-- ========== LIGHTBOX ========== -->
+<div class="img-zoom-overlay" id="imgZoomOverlay" onclick="closeImgZoom()">
+  <button class="img-zoom-close" onclick="closeImgZoom()">✕</button>
+  <img id="imgZoomImg" src="" alt="">
+</div>
+
 <div class="lightbox" id="lightbox">
   <div class="lb-overlay" onclick="closeLightbox()"></div>
   <div class="lb-box">
-    <img class="lb-img" id="lbImg" src="" alt="" onerror="imgErr(this)">
+    <img class="lb-img" id="lbImg" src="" alt="" onerror="imgErr(this)" onclick="openImgZoom(this.src)"  title="Toca para ampliar">
     <div class="lb-info">
       <span class="lb-cat" id="lbCat"></span>
       <h2 class="lb-name" id="lbName"></h2>
@@ -2317,6 +2327,8 @@ function updateLbStock(p) {
   btn.textContent= p.stock===0 ? 'Agotado' : 'Añadir al Carrito';
 }
 function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); unlockScroll(); S.lbId=null; }
+function openImgZoom(src) { document.getElementById('imgZoomImg').src=src; document.getElementById('imgZoomOverlay').classList.add('open'); }
+function closeImgZoom() { document.getElementById('imgZoomOverlay').classList.remove('open'); }
 function addFromLightbox(){
   if(S.lbId===null) return;
   const p = getMergedProducts().find(x=>x.id===S.lbId);
