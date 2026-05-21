@@ -1005,6 +1005,17 @@
     .btn-refresh:hover { background:rgba(255,255,255,.15); }
 
     /* ============================
+       CATALOG — oculto hasta que el usuario elige categoría
+    ============================ */
+    #tickerEl,
+    .filter-bar,
+    .products-section { display: none; }
+
+    #tickerEl.catalog-visible { display: block; }
+    .filter-bar.catalog-visible { display: block; }
+    .products-section.catalog-visible { display: block; }
+
+    /* ============================
        RESPONSIVE
     ============================ */
     @media(max-width:860px){
@@ -1043,11 +1054,11 @@
       <div class="logo-text">DUB<span>REM</span></div>
     </a>
     <nav class="nav">
-      <a href="#catalogo" onclick="filterBy('mujer',null)">Mujer</a>
-      <a href="#catalogo" onclick="filterBy('hombre',null)">Hombre</a>
-      <a href="#catalogo" onclick="filterBy('ninos',null)">Niños</a>
-      <a href="#catalogo" onclick="filterBy('outerwear',null)">Outerwear</a>
-      <a href="#catalogo" onclick="filterBy('bottoms',null)">Bottoms</a>
+      <a href="#catalogo" onclick="showCatalog('mujer')">Mujer</a>
+      <a href="#catalogo" onclick="showCatalog('hombre')">Hombre</a>
+      <a href="#catalogo" onclick="showCatalog('ninos')">Niños</a>
+      <a href="#catalogo" onclick="showCatalog('outerwear')">Outerwear</a>
+      <a href="#catalogo" onclick="showCatalog('bottoms')">Bottoms</a>
     </nav>
     <div class="header-actions">
       <div id="loginArea">
@@ -1062,11 +1073,11 @@
     <button class="hamburger" onclick="toggleNav()"><span></span><span></span><span></span></button>
   </div>
   <nav class="mobile-nav" id="mobileNav">
-    <a href="#catalogo" onclick="filterBy('mujer',null);closeMobileNav()">Mujer</a>
-    <a href="#catalogo" onclick="filterBy('hombre',null);closeMobileNav()">Hombre</a>
-    <a href="#catalogo" onclick="filterBy('ninos',null);closeMobileNav()">Niños</a>
-    <a href="#catalogo" onclick="filterBy('outerwear',null);closeMobileNav()">Outerwear</a>
-    <a href="#catalogo" onclick="filterBy('bottoms',null);closeMobileNav()">Bottoms</a>
+    <a href="#catalogo" onclick="showCatalog('mujer');closeMobileNav()">Mujer</a>
+    <a href="#catalogo" onclick="showCatalog('hombre');closeMobileNav()">Hombre</a>
+    <a href="#catalogo" onclick="showCatalog('ninos');closeMobileNav()">Niños</a>
+    <a href="#catalogo" onclick="showCatalog('outerwear');closeMobileNav()">Outerwear</a>
+    <a href="#catalogo" onclick="showCatalog('bottoms');closeMobileNav()">Bottoms</a>
   </nav>
 </header>
 
@@ -1074,7 +1085,7 @@
 <section class="hero" id="inicio">
 
   <!-- Panel Mujer -->
-  <div class="hero-panel" onclick="filterBy('mujer',null);document.getElementById('catalogo').scrollIntoView({behavior:'smooth'})">
+  <div class="hero-panel" onclick="showCatalog('mujer')">
     <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=2560&q=95" alt="Colección Mujer" loading="eager">
     <div class="hero-panel-info">
       <span class="hero-panel-label">Mujer</span>
@@ -1083,7 +1094,7 @@
   </div>
 
   <!-- Panel Hombre -->
-  <div class="hero-panel" onclick="filterBy('hombre',null);document.getElementById('catalogo').scrollIntoView({behavior:'smooth'})">
+  <div class="hero-panel" onclick="showCatalog('hombre')">
     <img src="https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&w=1400&h=2100&q=95" alt="Colección Hombre" loading="eager" style="object-position:center top;">
     <div class="hero-panel-info">
       <span class="hero-panel-label">Hombre</span>
@@ -1092,7 +1103,7 @@
   </div>
 
   <!-- Panel Niños -->
-  <div class="hero-panel" onclick="filterBy('ninos',null);document.getElementById('catalogo').scrollIntoView({behavior:'smooth'})">
+  <div class="hero-panel" onclick="showCatalog('ninos')">
     <img src="https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?auto=format&fit=crop&w=2560&q=95" alt="Colección Niños" loading="eager">
     <div class="hero-panel-info">
       <span class="hero-panel-label">Niños</span>
@@ -1107,7 +1118,7 @@
 </section>
 
 <!-- ========== TICKER ========== -->
-<div class="hero-ticker" aria-hidden="true">
+<div class="hero-ticker" id="tickerEl" aria-hidden="true">
   <div class="hero-ticker-track">
     <span class="hero-ticker-item">Nueva Colección</span>
     <span class="hero-ticker-item">Moda Femenina</span>
@@ -2130,7 +2141,6 @@ document.addEventListener('DOMContentLoaded', () => {
   loadUsers();
   loadSession();
   renderLoginArea();
-  renderGrid('all');
   spawnParticles();
   syncUsers();
 
@@ -2190,6 +2200,21 @@ function closeMobileNav(){ document.getElementById('mobileNav').classList.remove
 /* ──────────────────────────────────────────────────────
    GRID
 ────────────────────────────────────────────────────── */
+function showCatalog(cat) {
+  // Mostrar las secciones ocultas
+  document.getElementById('tickerEl').classList.add('catalog-visible');
+  document.querySelector('.filter-bar').classList.add('catalog-visible');
+  document.querySelector('.products-section').classList.add('catalog-visible');
+  // Activar el tab correcto y renderizar
+  const tabs = document.querySelectorAll('.tab-btn');
+  tabs.forEach(b => b.classList.remove('active'));
+  const match = Array.from(tabs).find(b => b.getAttribute('onclick') && b.getAttribute('onclick').includes(`'${cat}'`));
+  if (match) match.classList.add('active');
+  _currentFilter = cat;
+  renderGrid(cat);
+  setTimeout(() => document.getElementById('catalogo').scrollIntoView({behavior:'smooth'}), 50);
+}
+
 function filterBy(cat, btn) {
   _currentFilter = cat;
   if (btn) { document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
