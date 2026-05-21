@@ -830,12 +830,24 @@
       .admin-header { padding:0 1rem; }
       .admin-logo   { font-size:1.1rem; }
       .admin-tabs   { padding:0 1rem; }
-      .admin-stats  { padding:14px 1rem 0; gap:8px; }
-      .stat-card    { padding:10px 14px; min-width:90px; }
-      .stat-val     { font-size:1.4rem; }
-      .admin-body   { padding:12px .8rem 32px; flex:1; min-height:0; overflow-y:auto; }
-      .admin-stats  { max-height:none; }
-      .admin-orders-grid { grid-template-columns:1fr; gap:10px; margin-top:12px; width:100%; }
+      /* Stats: una sola fila horizontal scrolleable */
+      .admin-stats  {
+        padding:8px 1rem; gap:6px;
+        flex-wrap:nowrap; overflow-x:auto;
+        -webkit-overflow-scrolling:touch;
+      }
+      .stat-card    {
+        padding:7px 12px; min-width:72px; flex-shrink:0;
+        border-radius:8px;
+      }
+      .stat-val     { font-size:1.1rem; }
+      .stat-lbl     { font-size:.54rem; }
+      /* Filtros más compactos */
+      .admin-filters { padding:6px 1rem 0; gap:6px; }
+      .filter-pill  { padding:4px 10px; font-size:.58rem; }
+      .filter-search{ padding:5px 10px; font-size:.65rem; min-width:120px; }
+      .admin-body   { padding:8px .8rem 24px; flex:1; min-height:0; overflow-y:auto; }
+      .admin-orders-grid { grid-template-columns:1fr; gap:10px; margin-top:8px; width:100%; }
       .order-card-head  { padding:10px 12px; flex-wrap:wrap; gap:6px; }
       .order-card-body  { padding:12px 12px; }
       .order-card-foot  { padding:10px 12px; flex-wrap:wrap; gap:6px; }
