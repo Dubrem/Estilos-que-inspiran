@@ -50,13 +50,12 @@
     ============================ */
     .header {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      background: rgba(8,4,6,.88);
-      border-bottom: 1px solid rgba(255,255,255,.07);
-      backdrop-filter: blur(12px);
+      background: transparent;
+      border-bottom: none;
       transition: background .3s, border-color .3s;
     }
     .header.scrolled {
-      background: rgba(8,4,6,.97); backdrop-filter: blur(16px);
+      background: rgba(8,4,6,.95); backdrop-filter: blur(16px);
       border-bottom: 1px solid rgba(255,255,255,.07);
     }
     .header-inner {
@@ -75,14 +74,16 @@
       font-family: var(--ff-display);
       font-size: 1.65rem; letter-spacing: 0.28em;
       color: #fff; line-height: 1; text-transform: uppercase;
+      text-shadow: 0 1px 8px rgba(0,0,0,.7);
     }
     .logo-text span { color: var(--rose); }
     /* Nav centrado */
     .nav { display: flex; gap: 2.4rem; justify-self: center; }
     .nav a {
-      text-decoration: none; color: rgba(255,255,255,.45); font-size: .64rem;
-      font-weight: 500; letter-spacing: .18em; text-transform: uppercase;
+      text-decoration: none; color: #fff; font-size: .64rem;
+      font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
       position: relative; padding-bottom: 3px; transition: color .2s;
+      text-shadow: 0 1px 8px rgba(0,0,0,.7);
     }
     .nav a::after {
       content: ''; position: absolute; bottom: 0; left: 0; right: 0;
