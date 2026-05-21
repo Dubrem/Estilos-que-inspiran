@@ -64,7 +64,12 @@
       padding: 0 2.5rem; height: 64px;
       transition: justify-content .3s;
     }
-    /* Cuando el catálogo está activo, distribuir logo-izq y acciones-der */
+    /* Cuando el catálogo está activo: fondo negro fijo y distribuir elementos */
+    .header.catalog-open {
+      background: rgba(8,4,6,.97) !important;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      backdrop-filter: blur(16px);
+    }
     .header.catalog-open .header-inner {
       justify-content: space-between;
     }
