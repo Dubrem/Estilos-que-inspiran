@@ -1838,6 +1838,69 @@ async function fbDeleteProductOverride(fbKey){
   } catch(e){}
 }
 
+/* ──────────────────────────────────────────────────────
+   RESERVAS DE CARRITO — 15 min, sincronizadas en Firebase
+────────────────────────────────────────────────────── */
+const SESSION_ID = (() => {
+  let id = localStorage.getItem('be_sess_id');
+  if (!id) { id = 'sess_' + Date.now() + '_' + Math.random().toString(36).slice(2,8); localStorage.setItem('be_sess_id', id); }
+  return id;
+})();
+let ALL_RESERVATIONS = {};
+const RESERVE_TTL = 15 * 60 * 1000; // 15 minutos
+
+function pKey(id) { return typeof id === 'number' ? `p${id}` : String(id); }
+
+function getEffectiveStock(p) {
+  const key = pKey(p.id), now = Date.now();
+  let reserved = 0;
+  for (const [sid, items] of Object.entries(ALL_RESERVATIONS)) {
+    if (sid === SESSION_ID) continue;
+    const r = (items || {})[key];
+    if (r && r.expiresAt > now) reserved += r.qty;
+  }
+  return Math.max(0, p.stock - reserved);
+}
+
+async function fbSetReservation(productId, qty) {
+  if (!FIREBASE_DB_URL) return;
+  const key = pKey(productId);
+  if (!ALL_RESERVATIONS[SESSION_ID]) ALL_RESERVATIONS[SESSION_ID] = {};
+  const path = `${FIREBASE_DB_URL}/reservations/${SESSION_ID}/${key}.json`;
+  try {
+    if (qty > 0) {
+      const data = { qty, expiresAt: Date.now() + RESERVE_TTL };
+      ALL_RESERVATIONS[SESSION_ID][key] = data;
+      await fetch(path, { method:'PUT', body:JSON.stringify(data), headers:{'Content-Type':'application/json'} });
+    } else {
+      delete (ALL_RESERVATIONS[SESSION_ID] || {})[key];
+      await fetch(path, { method:'DELETE' });
+    }
+  } catch(e) {}
+}
+
+async function fbClearMyReservations() {
+  if (!FIREBASE_DB_URL) return;
+  ALL_RESERVATIONS[SESSION_ID] = {};
+  try { await fetch(`${FIREBASE_DB_URL}/reservations/${SESSION_ID}.json`, { method:'DELETE' }); } catch(e) {}
+}
+
+async function fbLoadReservations() {
+  try {
+    const data = await fbFetch('reservations');
+    ALL_RESERVATIONS = (data && typeof data === 'object') ? data : {};
+    const now = Date.now();
+    for (const [sid, items] of Object.entries(ALL_RESERVATIONS)) {
+      for (const [key, r] of Object.entries(items || {})) {
+        if (r.expiresAt <= now) {
+          delete ALL_RESERVATIONS[sid][key];
+          try { await fetch(`${FIREBASE_DB_URL}/reservations/${sid}/${key}.json`, { method:'DELETE' }); } catch(e) {}
+        }
+      }
+    }
+  } catch(e) { ALL_RESERVATIONS = {}; }
+}
+
 /** Mezcla PRODUCTS hardcoded con overrides de Firebase */
 function getMergedProducts(){
   // 1. Copiar base con posibles overrides
@@ -2175,6 +2238,16 @@ document.addEventListener('DOMContentLoaded', () => {
   spawnParticles();
   syncUsers();
 
+  // Limpiar reservas antiguas (carrito vacío en carga) y cargar reservas activas
+  fbClearMyReservations().then(() => fbLoadReservations());
+  // Refrescar reservas cada minuto y actualizar catálogo si está visible
+  setInterval(() => {
+    fbLoadReservations().then(() => {
+      if (document.querySelector('.products-section.catalog-visible'))
+        renderGrid(_currentFilter);
+    });
+  }, 60000);
+
   // Header transparente sobre el hero, opaco al bajar
   const header = document.querySelector('.header');
   const onScroll = () => header.classList.toggle('scrolled', window.scrollY > 40);
@@ -2264,21 +2337,22 @@ function renderGrid(cat) {
   grid.innerHTML = list.map(cardHTML).join('');
 }
 function cardHTML(p) {
-  const stkTxt = p.stock===0 ? 'Agotado' : p.stock<=5 ? `Solo ${p.stock} disponibles` : `${p.stock} disponibles`;
-  const quickLbl = p.stock===0 ? 'Agotado' : 'Añadir al Carrito';
+  const eff = getEffectiveStock(p);
+  const stkTxt = eff===0 ? 'Agotado' : eff<=5 ? `Solo ${eff} disponibles` : `${eff} disponibles`;
+  const quickLbl = eff===0 ? 'Agotado' : 'Añadir al Carrito';
   const idArg = typeof p.id === 'number' ? p.id : `'${p.id}'`;
   return `
     <div class="product-card" id="card${p.id}">
       <div class="product-img-wrap" onclick="openLightbox(${idArg})">
         <img src="${p.img||''}" alt="${p.name}" loading="lazy" onerror="imgErr(this)">
         <span class="cat-badge">${catLabel(p.cat)}</span>
-        <button class="card-quick-add" id="badd${p.id}" onclick="event.stopPropagation();addToCart(${idArg})" ${p.stock===0?'disabled':''}>${quickLbl}</button>
+        <button class="card-quick-add" id="badd${p.id}" onclick="event.stopPropagation();addToCart(${idArg})" ${eff===0?'disabled':''}>${quickLbl}</button>
       </div>
       <div class="product-info">
         <h3 class="product-name">${p.name}</h3>
         <div class="product-footer">
           <div class="product-price">${fmtMXN(p.price)} <sup>MXN</sup></div>
-          <div class="product-stock ${p.stock<=5?'low':''}" id="stk${p.id}">${stkTxt}</div>
+          <div class="product-stock ${eff<=5?'low':''}" id="stk${p.id}">${stkTxt}</div>
         </div>
       </div>
     </div>`;
@@ -2319,12 +2393,13 @@ function selectSize(size, btn) {
   btn.classList.add('selected');
 }
 function updateLbStock(p) {
+  const eff = getEffectiveStock(p);
   const el  = document.getElementById('lbStock');
   const btn = document.getElementById('lbAddBtn');
-  el.textContent = p.stock>0 ? `${p.stock} disponibles` : 'Sin stock';
-  el.style.color = p.stock===0 ? '#c0392b' : '';
-  btn.disabled   = p.stock===0;
-  btn.textContent= p.stock===0 ? 'Agotado' : 'Añadir al Carrito';
+  el.textContent = eff>0 ? `${eff} disponibles` : 'Sin stock';
+  el.style.color = eff===0 ? '#c0392b' : '';
+  btn.disabled   = eff===0;
+  btn.textContent= eff===0 ? 'Agotado' : 'Añadir al Carrito';
 }
 function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); unlockScroll(); S.lbId=null; }
 function openImgZoom(src) { document.getElementById('imgZoomImg').src=src; document.getElementById('imgZoomOverlay').classList.add('open'); }
@@ -2342,10 +2417,11 @@ function addFromLightbox(){
    CARRITO
 ────────────────────────────────────────────────────── */
 function addToCart(id, size) {
-  const p = findProduct(id); if(!p||p.stock===0) return;
+  const p = findProduct(id); if(!p || getEffectiveStock(p) === 0) return;
   const item = S.cart.find(x=>x.id===id && x.size===(size||null));
   if(item) item.qty++; else S.cart.push({id, qty:1, size: size||null});
   p.stock--;
+  fbSetReservation(id, S.cart.filter(x=>x.id===id).reduce((s,x)=>s+x.qty, 0));
   refreshStockUI(p); refreshCartUI();
   toast(`✓ ${p.name} agregado`, 'ok');
 }
@@ -2354,6 +2430,7 @@ function removeFromCart(id) {
   const p = findProduct(id);
   if(p){ p.stock+=item.qty; refreshStockUI(p); }
   S.cart = S.cart.filter(x=>x.id!==id);
+  fbSetReservation(id, 0);
   refreshCartUI();
 }
 function changeQty(id, delta) {
@@ -2361,18 +2438,20 @@ function changeQty(id, delta) {
   const p    = findProduct(id);
   if(!item||!p) return;
   if(delta===-1 && item.qty===1){ removeFromCart(id); return; }
-  if(delta===1 && p.stock===0){ toast('Sin stock disponible','err'); return; }
+  if(delta===1 && getEffectiveStock(p)===0){ toast('Sin stock disponible','err'); return; }
   item.qty+=delta; p.stock-=delta;
+  fbSetReservation(id, S.cart.filter(x=>x.id===id).reduce((s,x)=>s+x.qty, 0));
   refreshStockUI(p); refreshCartUI();
 }
 function cartSubtotal(){ return S.cart.reduce((s,i)=>{ const p=findProduct(i.id); return s+(p?p.price*i.qty:0); },0); }
 function cartItemCount(){ return S.cart.reduce((s,i)=>s+i.qty,0); }
 
 function refreshStockUI(p) {
+  const eff  = getEffectiveStock(p);
   const stk  = document.getElementById(`stk${p.id}`);
   const badd = document.getElementById(`badd${p.id}`);
-  if(stk){ stk.textContent = p.stock===0?'Agotado':p.stock<=5?`Solo ${p.stock} disponibles`:`${p.stock} disponibles`; stk.className=`product-stock ${p.stock<=5?'low':''}`; }
-  if(badd){ badd.disabled=p.stock===0; badd.textContent=p.stock===0?'Agotado':'Añadir al Carrito'; }
+  if(stk){ stk.textContent = eff===0?'Agotado':eff<=5?`Solo ${eff} disponibles`:`${eff} disponibles`; stk.className=`product-stock ${eff<=5?'low':''}`; }
+  if(badd){ badd.disabled=eff===0; badd.textContent=eff===0?'Agotado':'Añadir al Carrito'; }
   if(S.lbId===p.id) updateLbStock(p);
 }
 function refreshCartUI() {
@@ -2627,6 +2706,7 @@ function confirmOrder(){
   document.getElementById('orderModal').classList.add('open');
   lockScroll();
   S.cart=[]; refreshCartUI();
+  fbClearMyReservations();
 }
 function closeOrderModal(){ document.getElementById('orderModal').classList.remove('open'); unlockScroll(); }
 
