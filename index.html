@@ -1043,17 +1043,25 @@
     }
     @media(max-width:380px){ .products-grid{grid-template-columns:1fr} }
 
-    /* ── Header compacto en móvil ── */
+    /* ── Header compacto en móvil — todo en una sola fila ── */
     @media(max-width:600px){
-      .header-inner { height:48px; padding:0 1rem; gap:.6rem; }
-      .logo-icon { width:20px; height:20px; }
-      .logo-text { font-size:1.1rem; letter-spacing:.18em; }
-      .btn-login { padding:5px 10px; font-size:.55rem; letter-spacing:.08em; }
-      .btn-orders { padding:4px 10px; font-size:.55rem; letter-spacing:.06em; }
-      .user-chip { padding:4px 8px; font-size:.55rem; gap:5px; }
-      .user-avatar { width:16px; height:16px; font-size:7px; }
-      .user-logout { font-size:.5rem; }
-      .header-actions { gap:.5rem; }
+      .header-inner {
+        height:48px; padding:0 .8rem;
+        display:flex; flex-direction:row; flex-wrap:nowrap;
+        justify-content:space-between; align-items:center; gap:.5rem;
+      }
+      .logo { flex-shrink:0; gap:6px; }
+      .logo-icon { width:18px; height:18px; }
+      .logo-text { font-size:.95rem; letter-spacing:.14em; }
+      .header-actions {
+        display:flex; flex-direction:row; flex-wrap:nowrap;
+        align-items:center; gap:.4rem; flex-shrink:0;
+      }
+      .btn-login  { padding:4px 9px; font-size:.52rem; letter-spacing:.06em; white-space:nowrap; }
+      .btn-orders { padding:4px 9px; font-size:.52rem; letter-spacing:.05em; white-space:nowrap; }
+      .user-chip  { padding:4px 8px; font-size:.52rem; gap:4px; white-space:nowrap; }
+      .user-avatar { width:15px; height:15px; font-size:7px; }
+      .user-logout { font-size:.48rem; }
     }
   </style>
 </head>
