@@ -2267,13 +2267,15 @@ function closeMobileNav(){ document.getElementById('mobileNav').classList.remove
    GRID
 ────────────────────────────────────────────────────── */
 function showCatalog(cat) {
-  // Mostrar las secciones ocultas
+  // Ocultar hero y mostrar catálogo a pantalla completa
+  document.getElementById('inicio').style.display = 'none';
   document.getElementById('tickerEl').classList.add('catalog-visible');
   document.querySelector('.filter-bar').classList.add('catalog-visible');
   document.querySelector('.products-section').classList.add('catalog-visible');
   document.querySelector('.footer').classList.add('catalog-visible');
   document.getElementById('headerActions').style.display = 'flex';
   document.querySelector('.header').classList.add('catalog-open');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
   // Activar el tab correcto y renderizar
   const tabs = document.querySelectorAll('.tab-btn');
   tabs.forEach(b => b.classList.remove('active'));
