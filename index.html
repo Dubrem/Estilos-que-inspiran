@@ -1143,8 +1143,6 @@
     <a href="#catalogo" onclick="showCatalog('mujer');closeMobileNav()">Mujer</a>
     <a href="#catalogo" onclick="showCatalog('hombre');closeMobileNav()">Hombre</a>
     <a href="#catalogo" onclick="showCatalog('ninos');closeMobileNav()">Niños</a>
-    <a href="#catalogo" onclick="showCatalog('outerwear');closeMobileNav()">Outerwear</a>
-    <a href="#catalogo" onclick="showCatalog('bottoms');closeMobileNav()">Bottoms</a>
   </nav>
 </header>
 
@@ -1194,12 +1192,7 @@
     <h2 class="section-title">Colección</h2>
     <p class="section-sub">Envíos a todo México · Tula de Allende, Hidalgo</p>
     <div class="filter-tabs" id="filterTabs">
-      <button class="tab-btn active" onclick="filterBy('all',this)">✦ Todo</button>
-      <button class="tab-btn" onclick="filterBy('mujer',this)">Mujer</button>
-      <button class="tab-btn" onclick="filterBy('hombre',this)">Hombre</button>
-      <button class="tab-btn" onclick="filterBy('ninos',this)">Niños</button>
-      <button class="tab-btn" onclick="filterBy('outerwear',this)">Outerwear</button>
-      <button class="tab-btn" onclick="filterBy('bottoms',this)">Bottoms</button>
+      <button class="tab-btn active" onclick="filterBy('all',this)">✦ Todos</button>
     </div>
   </div>
 </section>
@@ -1599,14 +1592,17 @@
 
     <!-- Categoría -->
     <div class="form-group">
-      <label class="form-label">Categoría</label>
-      <select class="form-input" id="prodEditCat">
+      <label class="form-label">Sección</label>
+      <select class="form-input" id="prodEditCat" onchange="updateSubcatOptions(this.value)">
         <option value="mujer">Mujer</option>
         <option value="hombre">Hombre</option>
         <option value="ninos">Niños</option>
-        <option value="outerwear">Outerwear / Chamarras</option>
-        <option value="bottoms">Bottoms / Pantalones</option>
       </select>
+    </div>
+    <!-- Sub-categoría -->
+    <div class="form-group">
+      <label class="form-label">Sub-categoría</label>
+      <select class="form-input" id="prodEditSubcat"></select>
     </div>
 
     <!-- Tallas -->
@@ -1656,10 +1652,9 @@
     <div class="footer-col">
       <h4>Categorías</h4>
       <ul>
-        <li><a href="#catalogo" onclick="filterBy('mujer',null)">Mujer</a></li>
-        <li><a href="#catalogo" onclick="filterBy('hombre',null)">Hombre</a></li>
-        <li><a href="#catalogo" onclick="filterBy('outerwear',null)">Outerwear</a></li>
-        <li><a href="#catalogo" onclick="filterBy('bottoms',null)">Bottoms</a></li>
+        <li><a href="#catalogo" onclick="showCatalog('mujer')">Mujer</a></li>
+        <li><a href="#catalogo" onclick="showCatalog('hombre')">Hombre</a></li>
+        <li><a href="#catalogo" onclick="showCatalog('ninos')">Niños</a></li>
       </ul>
     </div>
     <div class="footer-col">
@@ -1820,7 +1815,33 @@ async function fbGetUserOrders(email){
    FIREBASE — PRODUCTOS (subir fotos / editar / agregar)
 ────────────────────────────────────────────────────── */
 let PRODUCT_OVERRIDES = {};   // { fbKey: { name, price, stock, cat, desc, img } }
-let _currentFilter = 'all';  // filtro activo en la tienda
+let _currentFilter  = 'all';   // subcat activa
+let _currentSection = null;    // mujer | hombre | ninos | null
+
+const SECTION_TABS = {
+  mujer:  [['all','✦ Todos'],['vestido','Vestidos'],['blusa','Blusas'],['pantalon','Pantalones'],['chamarra','Chamarras']],
+  hombre: [['all','✦ Todos'],['chamarra','Chamarras'],['pantalon','Pantalones'],['sueter','Suéteres'],['playera','Playeras']],
+  ninos:  [['all','✦ Todos'],['playera','Playeras'],['chamarra','Chamarras'],['pantalon','Pantalones'],['vestido','Vestidos']],
+};
+const SUBCATS = {
+  mujer:  [['vestido','Vestido'],['blusa','Blusa'],['pantalon','Pantalón'],['chamarra','Chamarra']],
+  hombre: [['chamarra','Chamarra'],['pantalon','Pantalón'],['sueter','Suéter'],['playera','Playera']],
+  ninos:  [['playera','Playera'],['chamarra','Chamarra'],['pantalon','Pantalón'],['vestido','Vestido']],
+};
+
+function renderSectionTabs(section) {
+  const tabs = SECTION_TABS[section] || [['all','✦ Todos']];
+  document.getElementById('filterTabs').innerHTML = tabs.map(([val,lbl], i) =>
+    `<button class="tab-btn${i===0?' active':''}" onclick="filterBy('${val}',this)">${lbl}</button>`
+  ).join('');
+}
+
+function updateSubcatOptions(cat, selected) {
+  const opts = SUBCATS[cat] || [];
+  document.getElementById('prodEditSubcat').innerHTML =
+    `<option value="">— Sin sub-categoría —</option>` +
+    opts.map(([v,l]) => `<option value="${v}"${v===selected?' selected':''}>${l}</option>`).join('');
+}
 
 async function fbLoadProductOverrides(){
   try {
@@ -1993,7 +2014,9 @@ function openProductEditModal(id) {
   document.getElementById('prodEditName').value  = p ? p.name  : '';
   document.getElementById('prodEditPrice').value = p ? p.price : '';
   document.getElementById('prodEditStock').value = p ? p.stock : '';
-  document.getElementById('prodEditCat').value   = p ? (p.cat || 'mujer') : 'mujer';
+  const editCat = p ? (p.cat || 'mujer') : 'mujer';
+  document.getElementById('prodEditCat').value = editCat;
+  updateSubcatOptions(editCat, p ? (p.subcat || '') : '');
   document.getElementById('prodEditDesc').value  = p ? (p.desc || '') : '';
   document.getElementById('prodImgUrl').value    = (p && p.img && !p.img.startsWith('data:')) ? p.img : '';
   document.getElementById('prodImgStatus').textContent = '';
@@ -2016,7 +2039,8 @@ function openNewProductModal() {
   document.getElementById('prodEditName').value  = '';
   document.getElementById('prodEditPrice').value = '';
   document.getElementById('prodEditStock').value = '';
-  document.getElementById('prodEditCat').value   = 'mujer';
+  document.getElementById('prodEditCat').value = 'mujer';
+  updateSubcatOptions('mujer', '');
   document.getElementById('prodEditDesc').value  = '';
   document.getElementById('prodImgUrl').value    = '';
   document.getElementById('prodImgStatus').textContent = '';
@@ -2099,8 +2123,9 @@ async function saveProductEdit() {
   const name  = document.getElementById('prodEditName').value.trim();
   const price = parseFloat(document.getElementById('prodEditPrice').value) || 0;
   const stock = parseInt(document.getElementById('prodEditStock').value)   || 0;
-  const cat   = document.getElementById('prodEditCat').value;
-  const desc  = document.getElementById('prodEditDesc').value.trim();
+  const cat    = document.getElementById('prodEditCat').value;
+  const subcat = document.getElementById('prodEditSubcat').value;
+  const desc   = document.getElementById('prodEditDesc').value.trim();
   const sizes = Array.from(document.querySelectorAll('.size-check:checked')).map(c=>c.value);
 
   // Resolve image: prefer uploaded b64, then URL field, then existing
@@ -2117,7 +2142,7 @@ async function saveProductEdit() {
 
   if (!name) { toast('El nombre es obligatorio', 'err'); btn.textContent = 'Guardar'; btn.disabled = false; return; }
 
-  const data = { name, price, stock, cat, desc, img, sizes };
+  const data = { name, price, stock, cat, subcat, desc, img, sizes };
 
   if (_editingProductId === null) {
     // Nuevo producto
@@ -2287,7 +2312,10 @@ function spawnParticles() {
 
 function fmtMXN(n){ return '$' + n.toLocaleString('es-MX'); }
 function catLabel(c){
-  return {mujer:'Mujer',hombre:'Hombre',ninos:'Niños',outerwear:'Outerwear',bottoms:'Bottoms',sets:'Sets'}[c]||c;
+  return {
+    mujer:'Mujer',hombre:'Hombre',ninos:'Niños',outerwear:'Outerwear',bottoms:'Bottoms',sets:'Sets',
+    chamarra:'Chamarra',pantalon:'Pantalón',sueter:'Suéter',playera:'Playera',vestido:'Vestido',blusa:'Blusa'
+  }[c]||c;
 }
 let _scrollLockCount = 0;
 function lockScroll() {
@@ -2304,8 +2332,7 @@ function closeMobileNav(){ document.getElementById('mobileNav').classList.remove
 /* ──────────────────────────────────────────────────────
    GRID
 ────────────────────────────────────────────────────── */
-function showCatalog(cat) {
-  // Ocultar hero y mostrar catálogo a pantalla completa
+function showCatalog(section) {
   document.getElementById('inicio').style.display = 'none';
   document.querySelector('.filter-bar').classList.add('catalog-visible');
   document.querySelector('.products-section').classList.add('catalog-visible');
@@ -2313,26 +2340,24 @@ function showCatalog(cat) {
   document.getElementById('headerActions').style.display = 'flex';
   document.querySelector('.header').classList.add('catalog-open');
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  // Activar el tab correcto y renderizar
-  const tabs = document.querySelectorAll('.tab-btn');
-  tabs.forEach(b => b.classList.remove('active'));
-  const match = Array.from(tabs).find(b => b.getAttribute('onclick') && b.getAttribute('onclick').includes(`'${cat}'`));
-  if (match) match.classList.add('active');
-  _currentFilter = cat;
-  renderGrid(cat);
+  _currentSection = section;
+  _currentFilter  = 'all';
+  renderSectionTabs(section);
+  renderGrid('all');
   setTimeout(() => document.getElementById('catalogo').scrollIntoView({behavior:'smooth'}), 50);
 }
 
-function filterBy(cat, btn) {
-  _currentFilter = cat;
+function filterBy(subcat, btn) {
+  _currentFilter = subcat;
   if (btn) { document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
-  renderGrid(cat);
+  renderGrid(subcat);
   document.getElementById('catalogo').scrollIntoView({behavior:'smooth'});
 }
-function renderGrid(cat) {
+function renderGrid(subcat) {
   const grid = document.getElementById('grid');
-  const all  = getMergedProducts().filter(p => !p.hidden);
-  const list = (cat === 'all') ? all : all.filter(p => p.cat === cat);
+  let all = getMergedProducts().filter(p => !p.hidden);
+  if (_currentSection) all = all.filter(p => p.cat === _currentSection);
+  const list = (subcat === 'all') ? all : all.filter(p => p.subcat === subcat);
   if (!list.length) { grid.innerHTML='<p class="no-products">No hay productos en esta categoría.</p>'; return; }
   grid.innerHTML = list.map(cardHTML).join('');
 }
@@ -2345,7 +2370,7 @@ function cardHTML(p) {
     <div class="product-card" id="card${p.id}">
       <div class="product-img-wrap" onclick="openLightbox(${idArg})">
         <img src="${p.img||''}" alt="${p.name}" loading="lazy" onerror="imgErr(this)">
-        <span class="cat-badge">${catLabel(p.cat)}</span>
+        <span class="cat-badge">${catLabel(p.subcat || p.cat)}</span>
         <button class="card-quick-add" id="badd${p.id}" onclick="event.stopPropagation();addToCart(${idArg})" ${eff===0?'disabled':''}>${quickLbl}</button>
       </div>
       <div class="product-info">
