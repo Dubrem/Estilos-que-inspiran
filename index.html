@@ -2103,6 +2103,7 @@ function renderAdminProducts() {
           <div class="prod-admin-name">${p.name}</div>
           <div class="prod-admin-meta">${fmtMXN(p.price)}</div>
           <div class="prod-admin-stock" style="${stkColor}">${p.stock} en stock</div>
+          <div style="font-size:.58rem;margin-top:3px;${p.subcat?'color:#5a9e5a':'color:#c0392b;font-weight:700'}">${p.subcat ? catLabel(p.subcat) : '⚠ Sin sub-cat'}</div>
         </div>
       </div>`;
   }).join('');
