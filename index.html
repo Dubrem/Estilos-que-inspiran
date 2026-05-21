@@ -441,7 +441,18 @@
     .lb-name { font-family:var(--ff-head); font-style:italic; font-size:1.7rem; font-weight:400; line-height:1.1; margin-bottom:10px; color:var(--text-dark); }
     .lb-desc { font-size:.8rem; color:var(--text-med); line-height:1.7; margin-bottom:18px; }
     .lb-price { font-size:1.5rem; font-weight:600; color:var(--rose); margin-bottom:4px; }
-    .lb-stock { font-size:.7rem; color:var(--text-light); margin-bottom:22px; }
+    .lb-stock { font-size:.7rem; color:var(--text-light); margin-bottom:14px; }
+    /* Selector de tallas */
+    .lb-sizes-label { font-size:.62rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--text-med); margin-bottom:8px; }
+    .lb-sizes { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px; }
+    .size-btn {
+      padding:6px 14px; border:1.5px solid var(--border); border-radius:4px;
+      background:#fff; color:var(--text-dark); font-size:.72rem; font-weight:600;
+      cursor:pointer; transition:all .18s; letter-spacing:.06em;
+    }
+    .size-btn:hover { border-color:var(--rose); color:var(--rose); }
+    .size-btn.selected { background:var(--rose); border-color:var(--rose); color:#fff; }
+    .size-btn.disabled { opacity:.35; cursor:not-allowed; text-decoration:line-through; }
     .lb-add-btn {
       padding:13px 28px; border:none; border-radius:50px;
       align-self:flex-start; background:var(--rose); color:#fff;
@@ -811,10 +822,17 @@
 
     @media(max-width:640px){
       .admin-header { padding:0 1rem; }
+      .admin-logo   { font-size:1.1rem; }
       .admin-tabs   { padding:0 1rem; }
-      .admin-stats  { padding:14px 1rem 0; }
-      .admin-body   { padding:12px 1rem 32px; }
-      .admin-orders-grid { grid-template-columns:1fr; }
+      .admin-stats  { padding:14px 1rem 0; gap:8px; }
+      .stat-card    { padding:10px 14px; min-width:90px; }
+      .stat-val     { font-size:1.4rem; }
+      .admin-body   { padding:12px .8rem 32px; }
+      .admin-orders-grid { grid-template-columns:1fr; gap:10px; margin-top:12px; }
+      .order-card-head  { padding:10px 12px; flex-wrap:wrap; gap:6px; }
+      .order-card-body  { padding:12px 12px; }
+      .order-card-foot  { padding:10px 12px; flex-wrap:wrap; gap:6px; }
+      .order-code       { font-size:.9rem; }
       .admin-prods-section { padding:14px 1rem 32px; }
       .admin-prods-grid { grid-template-columns:repeat(2,1fr); gap:10px; }
     }
@@ -1196,6 +1214,10 @@
       <p class="lb-desc" id="lbDesc"></p>
       <div class="lb-price" id="lbPrice"></div>
       <div class="lb-stock" id="lbStock"></div>
+      <div id="lbSizesWrap" style="display:none">
+        <div class="lb-sizes-label">Talla</div>
+        <div class="lb-sizes" id="lbSizes"></div>
+      </div>
       <button class="lb-add-btn" id="lbAddBtn" onclick="addFromLightbox()">Añadir al Carrito</button>
     </div>
     <button class="lb-close" onclick="closeLightbox()">✕</button>
@@ -1576,10 +1598,24 @@
       </select>
     </div>
 
+    <!-- Tallas -->
+    <div class="form-group">
+      <label class="form-label">Tallas disponibles</label>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px" id="sizesCheckboxes">
+        <label style="display:flex;align-items:center;gap:5px;font-size:.75rem;cursor:pointer"><input type="checkbox" value="XS" class="size-check"> XS</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:.75rem;cursor:pointer"><input type="checkbox" value="S"  class="size-check"> S</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:.75rem;cursor:pointer"><input type="checkbox" value="M"  class="size-check"> M</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:.75rem;cursor:pointer"><input type="checkbox" value="L"  class="size-check"> L</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:.75rem;cursor:pointer"><input type="checkbox" value="XL" class="size-check"> XL</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:.75rem;cursor:pointer"><input type="checkbox" value="XXL" class="size-check"> XXL</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:.75rem;cursor:pointer"><input type="checkbox" value="Única" class="size-check"> Única</label>
+      </div>
+    </div>
+
     <!-- Descripción -->
     <div class="form-group">
       <label class="form-label">Descripción</label>
-      <textarea class="form-input" id="prodEditDesc" rows="3" placeholder="Describe materiales, tallas disponibles, colores…"></textarea>
+      <textarea class="form-input" id="prodEditDesc" rows="3" placeholder="Describe materiales, colores…"></textarea>
     </div>
 
     <!-- Botones -->
@@ -1933,6 +1969,9 @@ function openProductEditModal(id) {
   document.getElementById('prodEditDesc').value  = p ? (p.desc || '') : '';
   document.getElementById('prodImgUrl').value    = (p && p.img && !p.img.startsWith('data:')) ? p.img : '';
   document.getElementById('prodImgStatus').textContent = '';
+  // Cargar tallas
+  const savedSizes = (p && p.sizes) ? p.sizes : [];
+  document.querySelectorAll('.size-check').forEach(cb => { cb.checked = savedSizes.includes(cb.value); });
   // preview
   const preview = document.getElementById('prodEditImgPreview');
   if (p && p.img) { preview.src = p.img; preview.style.display = 'block'; }
@@ -1953,6 +1992,7 @@ function openNewProductModal() {
   document.getElementById('prodEditDesc').value  = '';
   document.getElementById('prodImgUrl').value    = '';
   document.getElementById('prodImgStatus').textContent = '';
+  document.querySelectorAll('.size-check').forEach(cb => { cb.checked = false; });
   document.getElementById('prodEditImgPreview').src = '';
   document.getElementById('prodEditImgPreview').style.display = 'none';
   document.getElementById('prodDeleteBtn').style.display = 'none';
@@ -2033,6 +2073,7 @@ async function saveProductEdit() {
   const stock = parseInt(document.getElementById('prodEditStock').value)   || 0;
   const cat   = document.getElementById('prodEditCat').value;
   const desc  = document.getElementById('prodEditDesc').value.trim();
+  const sizes = Array.from(document.querySelectorAll('.size-check:checked')).map(c=>c.value);
 
   // Resolve image: prefer uploaded b64, then URL field, then existing
   const fileInput = document.getElementById('prodImgFile');
@@ -2048,7 +2089,7 @@ async function saveProductEdit() {
 
   if (!name) { toast('El nombre es obligatorio', 'err'); btn.textContent = 'Guardar'; btn.disabled = false; return; }
 
-  const data = { name, price, stock, cat, desc, img };
+  const data = { name, price, stock, cat, desc, img, sizes };
 
   if (_editingProductId === null) {
     // Nuevo producto
@@ -2283,6 +2324,7 @@ function cardHTML(p) {
 function openLightbox(id) {
   const p = getMergedProducts().find(x=>x.id===id); if(!p) return;
   S.lbId = id;
+  S.lbSize = null;
   document.getElementById('lbImg').src   = p.img;
   document.getElementById('lbImg').alt   = p.name;
   document.getElementById('lbCat').textContent   = catLabel(p.cat);
@@ -2290,8 +2332,25 @@ function openLightbox(id) {
   document.getElementById('lbDesc').textContent  = p.desc;
   document.getElementById('lbPrice').textContent = fmtMXN(p.price) + ' MXN';
   updateLbStock(p);
+  // Renderizar tallas
+  const wrap  = document.getElementById('lbSizesWrap');
+  const sizes = p.sizes && p.sizes.length ? p.sizes : [];
+  if (sizes.length) {
+    wrap.style.display = 'block';
+    document.getElementById('lbSizes').innerHTML = sizes.map(s =>
+      `<button class="size-btn" onclick="selectSize('${s}',this)">${s}</button>`
+    ).join('');
+  } else {
+    wrap.style.display = 'none';
+    document.getElementById('lbSizes').innerHTML = '';
+  }
   document.getElementById('lightbox').classList.add('open');
   lockScroll();
+}
+function selectSize(size, btn) {
+  S.lbSize = size;
+  document.querySelectorAll('#lbSizes .size-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
 }
 function updateLbStock(p) {
   const el  = document.getElementById('lbStock');
@@ -2302,15 +2361,22 @@ function updateLbStock(p) {
   btn.textContent= p.stock===0 ? 'Agotado' : 'Añadir al Carrito';
 }
 function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); unlockScroll(); S.lbId=null; }
-function addFromLightbox(){ if(S.lbId!==null){ addToCart(S.lbId); closeLightbox(); } }
+function addFromLightbox(){
+  if(S.lbId===null) return;
+  const p = getMergedProducts().find(x=>x.id===S.lbId);
+  const hasSizes = p && p.sizes && p.sizes.length;
+  if(hasSizes && !S.lbSize){ toast('Selecciona una talla','err'); return; }
+  addToCart(S.lbId, S.lbSize);
+  closeLightbox();
+}
 
 /* ──────────────────────────────────────────────────────
    CARRITO
 ────────────────────────────────────────────────────── */
-function addToCart(id) {
+function addToCart(id, size) {
   const p = findProduct(id); if(!p||p.stock===0) return;
-  const item = S.cart.find(x=>x.id===id);
-  if(item) item.qty++; else S.cart.push({id, qty:1});
+  const item = S.cart.find(x=>x.id===id && x.size===(size||null));
+  if(item) item.qty++; else S.cart.push({id, qty:1, size: size||null});
   p.stock--;
   refreshStockUI(p); refreshCartUI();
   toast(`✓ ${p.name} agregado`, 'ok');
@@ -2365,6 +2431,7 @@ function renderCartBody() {
         <img class="cart-item-img" src="${p.img||''}" alt="${p.name}" onerror="imgErr(this)">
         <div class="cart-item-info">
           <div class="cart-item-name">${p.name}</div>
+          ${item.size ? `<div class="cart-item-unit" style="color:var(--rose);font-weight:700">Talla: ${item.size}</div>` : ''}
           <div class="cart-item-unit">${fmtMXN(p.price)} c/u</div>
           <div class="cart-item-price">${fmtMXN(p.price*item.qty)}</div>
           <div class="qty-controls">
