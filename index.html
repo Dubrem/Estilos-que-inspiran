@@ -50,12 +50,13 @@
     ============================ */
     .header {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      background: transparent;
-      border-bottom: none;
+      background: rgba(8,4,6,.88);
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      backdrop-filter: blur(12px);
       transition: background .3s, border-color .3s;
     }
     .header.scrolled {
-      background: rgba(8,4,6,.95); backdrop-filter: blur(16px);
+      background: rgba(8,4,6,.97); backdrop-filter: blur(16px);
       border-bottom: 1px solid rgba(255,255,255,.07);
     }
     .header-inner {
