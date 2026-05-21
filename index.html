@@ -93,12 +93,13 @@
     .nav a:hover { color: #fff; }
     .nav a:hover::after { transform: scaleX(1); }
     /* Acciones derecha */
-    .header-actions { display: flex; align-items: center; gap: .9rem; justify-self: end; }
+    .header-actions { display: flex; align-items: center; gap: .9rem; justify-self: start; }
     .btn-login {
-      padding: 7px 20px; border: 1px solid rgba(196,86,106,.6);
-      background: transparent; color: rgba(255,255,255,.8);
-      border-radius: 2px; font-size: .62rem; font-weight: 600;
+      padding: 7px 20px; border: 1px solid rgba(255,255,255,.8);
+      background: transparent; color: #fff;
+      border-radius: 2px; font-size: .62rem; font-weight: 700;
       letter-spacing: .14em; text-transform: uppercase; transition: all .22s;
+      text-shadow: 0 1px 6px rgba(0,0,0,.6);
     }
     .btn-login:hover { background: var(--rose); border-color: var(--rose); color: #fff; }
     .cart-btn {
@@ -1068,11 +1069,6 @@
       <div id="loginArea">
         <button class="btn-login" onclick="openLoginModal()">Iniciar Sesión</button>
       </div>
-      <button class="cart-btn" onclick="openCart()" aria-label="Carrito">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
-        <span id="cartBadge" class="cart-badge"></span>
-        <span id="cartLabel">Carrito</span>
-      </button>
     </div>
     <button class="hamburger" onclick="toggleNav()"><span></span><span></span><span></span></button>
   </div>
