@@ -2832,6 +2832,15 @@ function setOrderSearch(val){
   _orderSearch = val.toLowerCase().trim();
   renderAdminOrders();
 }
+function clearAdminFilters(){
+  _orderStatusFilter = 'all';
+  _orderDateFilter   = 'all';
+  _orderSearch       = '';
+  renderAdminOrders();
+}
+function _isFilterActive(){
+  return _orderStatusFilter !== 'all' || _orderDateFilter !== 'all' || _orderSearch !== '';
+}
 
 function _filterOrders(){
   let list = [...S.orders];
@@ -2905,42 +2914,53 @@ function renderAdminOrders(){
     <div class="stat-card" style="cursor:pointer" onclick="setOrderStatusFilter('completado')"  title="Filtrar completados"><div class="stat-val">${complet}</div><div class="stat-lbl">Completados</div></div>
     <div class="stat-card"><div class="stat-val">${fmtMXN(revenue)}</div><div class="stat-lbl">Ingresos</div></div>`;
 
-  /* — barra de filtros — */
   const sf = _orderStatusFilter, df = _orderDateFilter;
-  filtersEl.style.display = '';
-  filtersEl.innerHTML = `
-    <div class="admin-filter-row">
-      <button class="filter-pill ${sf==='all'?'active':''}"        onclick="setOrderStatusFilter('all')">Todos</button>
-      <button class="filter-pill ${sf==='pendiente'?'active':''}"  onclick="setOrderStatusFilter('pendiente')">🕐 Pendiente</button>
-      <button class="filter-pill ${sf==='pagado'?'active':''}"     onclick="setOrderStatusFilter('pagado')">✅ Pagado</button>
-      <button class="filter-pill ${sf==='listo'?'active':''}"      onclick="setOrderStatusFilter('listo')">🏪 Listo</button>
-      <button class="filter-pill ${sf==='enviado'?'active':''}"    onclick="setOrderStatusFilter('enviado')">🚚 Enviado</button>
-      <button class="filter-pill ${sf==='completado'?'active':''}" onclick="setOrderStatusFilter('completado')">🎉 Completado</button>
-    </div>
-    <div class="admin-filter-row">
-      <button class="filter-pill ${df==='all'?'active':''}"   onclick="setOrderDateFilter('all')">Todas las fechas</button>
-      <button class="filter-pill ${df==='today'?'active':''}" onclick="setOrderDateFilter('today')">Hoy</button>
-      <button class="filter-pill ${df==='week'?'active':''}"  onclick="setOrderDateFilter('week')">Esta semana</button>
-      <button class="filter-pill ${df==='month'?'active':''}" onclick="setOrderDateFilter('month')">Este mes</button>
-      <input class="filter-search" type="text" placeholder="🔍 Buscar cliente, # pedido, teléfono…"
-             value="${_orderSearch}" oninput="setOrderSearch(this.value)">
-    </div>`;
+  const filterActive = _isFilterActive();
 
-  /* — lista filtrada — */
-  const filtered = _filterOrders();
-
-  if(!total){
-    body.innerHTML=`<div class="admin-empty"><div class="admin-empty-icon">📋</div><p>No hay pedidos aún.</p></div>`;
-    return;
+  if(filterActive){
+    /* — filtro activo: ocultar stats y filtros, mostrar barra compacta — */
+    stats.style.display   = 'none';
+    filtersEl.style.display = 'none';
+    const statusLabels = { pendiente:'🕐 Pendiente', pagado:'✅ Pagado', listo:'🏪 Listo', enviado:'🚚 Enviado', completado:'🎉 Completado' };
+    const activeLabel  = sf !== 'all' ? statusLabels[sf] : df !== 'all' ? {today:'Hoy',week:'Esta semana',month:'Este mes'}[df] : `"${_orderSearch}"`;
+    const filtered = _filterOrders();
+    body.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0 14px;flex-wrap:wrap;gap:8px">
+        <span style="font-size:.78rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--rose)">${activeLabel} — ${filtered.length} pedido${filtered.length!==1?'s':''}</span>
+        <button onclick="clearAdminFilters()" style="padding:6px 16px;border:1.5px solid var(--rose);background:transparent;color:var(--rose);border-radius:50px;font-size:.65rem;font-weight:700;cursor:pointer;letter-spacing:.08em;text-transform:uppercase">← Ver todos</button>
+      </div>
+      ${filtered.length ? `<div class="admin-orders-grid">${filtered.map(orderCardHTML).join('')}</div>`
+        : `<div class="admin-empty"><div class="admin-empty-icon">🔍</div><p>Sin resultados.</p></div>`}`;
+  } else {
+    /* — sin filtro: mostrar stats y filtros completos — */
+    stats.style.display   = '';
+    filtersEl.style.display = '';
+    filtersEl.innerHTML = `
+      <div class="admin-filter-row">
+        <button class="filter-pill active" onclick="setOrderStatusFilter('all')">Todos</button>
+        <button class="filter-pill" onclick="setOrderStatusFilter('pendiente')">🕐 Pendiente</button>
+        <button class="filter-pill" onclick="setOrderStatusFilter('pagado')">✅ Pagado</button>
+        <button class="filter-pill" onclick="setOrderStatusFilter('listo')">🏪 Listo</button>
+        <button class="filter-pill" onclick="setOrderStatusFilter('enviado')">🚚 Enviado</button>
+        <button class="filter-pill" onclick="setOrderStatusFilter('completado')">🎉 Completado</button>
+      </div>
+      <div class="admin-filter-row">
+        <button class="filter-pill active" onclick="setOrderDateFilter('all')">Todas las fechas</button>
+        <button class="filter-pill" onclick="setOrderDateFilter('today')">Hoy</button>
+        <button class="filter-pill" onclick="setOrderDateFilter('week')">Esta semana</button>
+        <button class="filter-pill" onclick="setOrderDateFilter('month')">Este mes</button>
+        <input class="filter-search" type="text" placeholder="🔍 Buscar cliente, # pedido, teléfono…"
+               value="${_orderSearch}" oninput="setOrderSearch(this.value)">
+      </div>`;
+    if(!total){
+      body.innerHTML=`<div class="admin-empty"><div class="admin-empty-icon">📋</div><p>No hay pedidos aún.</p></div>`;
+      return;
+    }
+    const filtered = _filterOrders();
+    body.innerHTML = `
+      <div class="filter-result-count" style="margin-top:12px">${filtered.length} pedido${filtered.length!==1?'s':''} encontrado${filtered.length!==1?'s':''}</div>
+      <div class="admin-orders-grid">${filtered.map(orderCardHTML).join('')}</div>`;
   }
-  if(!filtered.length){
-    body.innerHTML=`<div class="admin-empty"><div class="admin-empty-icon">🔍</div><p>Sin resultados para este filtro.</p></div>`;
-    return;
-  }
-
-  body.innerHTML = `
-    <div class="filter-result-count" style="margin-top:12px">${filtered.length} pedido${filtered.length!==1?'s':''} encontrado${filtered.length!==1?'s':''}</div>
-    <div class="admin-orders-grid">${filtered.map(orderCardHTML).join('')}</div>`;
 }
 
 function orderCardHTML(o){
