@@ -60,21 +60,18 @@
     }
     .header-inner {
       max-width: 1440px; margin: 0 auto;
-      display: flex; justify-content: center; align-items: center;
+      display: grid; grid-template-columns: 1fr auto 1fr;
+      align-items: center;
       padding: 0 2.5rem; height: 64px;
-      transition: justify-content .3s;
     }
-    /* Cuando el catálogo está activo: fondo negro fijo y distribuir elementos */
+    /* Cuando el catálogo está activo: fondo negro fijo */
     .header.catalog-open {
       background: rgba(8,4,6,.97) !important;
       border-bottom: 1px solid rgba(255,255,255,.07);
       backdrop-filter: blur(16px);
     }
-    .header.catalog-open .header-inner {
-      justify-content: space-between;
-    }
     /* Logo — mark geométrico + wordmark */
-    .logo { text-decoration: none; justify-self: start; display: flex; align-items: center; gap: 10px; }
+    .logo { text-decoration: none; justify-self: center; display: flex; align-items: center; gap: 10px; }
     .logo-icon {
       display: flex; align-items: center; justify-content: center;
       width: 30px; height: 30px; flex-shrink: 0;
@@ -103,7 +100,7 @@
     .nav a:hover { color: #fff; }
     .nav a:hover::after { transform: scaleX(1); }
     /* Acciones derecha */
-    .header-actions { display: flex; align-items: center; gap: .9rem; justify-self: start; }
+    .header-actions { display: flex; align-items: center; gap: .9rem; justify-self: end; }
     #loginArea { display: flex; align-items: center; gap: .6rem; flex-wrap: nowrap; }
     .btn-login {
       padding: 7px 20px; border: 1px solid rgba(255,255,255,.8);
@@ -164,10 +161,10 @@
        MENÚ HAMBURGER + SIDEBAR
     ============================ */
     .menu-btn {
-      position:absolute; left:1.4rem; top:50%; transform:translateY(-50%);
+      justify-self:start;
       background:none; border:none; cursor:pointer;
       display:flex; flex-direction:column; justify-content:center; gap:5px;
-      padding:8px; z-index:10;
+      padding:8px;
     }
     .menu-btn span {
       display:block; width:22px; height:2px;
@@ -1162,11 +1159,11 @@
     @media(max-width:600px){
       .header-inner {
         height:48px; padding:0 .8rem;
-        display:flex; flex-direction:row; flex-wrap:nowrap;
-        justify-content:center; align-items:center; gap:.5rem;
+        display:grid; grid-template-columns: 1fr auto 1fr;
+        align-items:center;
       }
-      .header.catalog-open .header-inner { justify-content:space-between; }
-      .logo { flex-shrink:0; gap:6px; }
+      #cartLabel { display:none; }
+      .logo { gap:6px; }
       .logo-icon { width:18px; height:18px; }
       .logo-text { font-size:.95rem; letter-spacing:.14em; }
       .header-actions {
@@ -1235,7 +1232,7 @@
 
 <!-- ========== HEADER ========== -->
 <header class="header">
-  <div class="header-inner" style="position:relative">
+  <div class="header-inner">
     <button class="menu-btn" onclick="openSidebar()" aria-label="Menú">
       <span></span><span></span><span></span>
     </button>
