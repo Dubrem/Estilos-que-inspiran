@@ -1220,7 +1220,7 @@
         <a onclick="goToSection('hombre','chamarra')">Chamarras</a>
         <a onclick="goToSection('hombre','pantalon')">Pantalones</a>
         <a onclick="goToSection('hombre','sueter')">Suéteres</a>
-        <a onclick="goToSection('hombre','playera')">Playera</a>
+        <a onclick="goToSection('hombre','playera')">Playeras</a>
       </div>
     </div>
     <!-- Niños -->
@@ -1946,7 +1946,7 @@ let _currentSection = null;    // mujer | hombre | ninos | null
 
 const SECTION_TABS = {
   mujer:  [['all','✦ Todos'],['vestido','Vestidos'],['blusa','Blusas'],['pantalon','Pantalones'],['chamarra','Chamarras']],
-  hombre: [['all','✦ Todos'],['chamarra','Chamarras'],['pantalon','Pantalones'],['sueter','Suéteres'],['playera','Playera']],
+  hombre: [['all','✦ Todos'],['chamarra','Chamarras'],['pantalon','Pantalones'],['sueter','Suéteres'],['playera','Playeras']],
   ninos:  [['all','✦ Todos'],['playera','Playeras'],['chamarra','Chamarras'],['pantalon','Pantalones'],['vestido','Vestidos']],
 };
 const SUBCATS = {
@@ -2390,11 +2390,13 @@ document.addEventListener('DOMContentLoaded', () => {
   spawnParticles();
   syncUsers();
 
+  // Cargar productos de Firebase al iniciar (necesario para el catálogo)
+  fbLoadProductOverrides();
   // Limpiar reservas antiguas (carrito vacío en carga) y cargar reservas activas
   fbClearMyReservations().then(() => fbLoadReservations());
-  // Refrescar reservas cada minuto y actualizar catálogo si está visible
+  // Refrescar productos y reservas cada minuto si el catálogo está visible
   setInterval(() => {
-    fbLoadReservations().then(() => {
+    Promise.all([fbLoadProductOverrides(), fbLoadReservations()]).then(() => {
       if (document.querySelector('.products-section.catalog-visible'))
         renderGrid(_currentFilter);
     });
@@ -2470,7 +2472,8 @@ function showCatalog(section) {
   _currentSection = section;
   _currentFilter  = 'all';
   renderSectionTabs(section);
-  renderGrid('all');
+  // Cargar productos frescos de Firebase y luego renderizar
+  fbLoadProductOverrides().then(() => renderGrid('all'));
   setTimeout(() => document.getElementById('catalogo').scrollIntoView({behavior:'smooth'}), 50);
 }
 
