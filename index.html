@@ -1009,11 +1009,13 @@
     ============================ */
     #tickerEl,
     .filter-bar,
-    .products-section { display: none; }
+    .products-section,
+    .footer { display: none; }
 
     #tickerEl.catalog-visible { display: block; }
     .filter-bar.catalog-visible { display: block; }
     .products-section.catalog-visible { display: block; }
+    .footer.catalog-visible { display: block; }
 
     /* ============================
        RESPONSIVE
@@ -2205,6 +2207,7 @@ function showCatalog(cat) {
   document.getElementById('tickerEl').classList.add('catalog-visible');
   document.querySelector('.filter-bar').classList.add('catalog-visible');
   document.querySelector('.products-section').classList.add('catalog-visible');
+  document.querySelector('.footer').classList.add('catalog-visible');
   // Activar el tab correcto y renderizar
   const tabs = document.querySelectorAll('.tab-btn');
   tabs.forEach(b => b.classList.remove('active'));
