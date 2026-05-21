@@ -60,8 +60,8 @@
     }
     .header-inner {
       max-width: 1440px; margin: 0 auto;
-      display: grid; grid-template-columns: 1fr auto 1fr;
-      align-items: center; padding: 0 2.5rem; height: 64px;
+      display: flex; justify-content: center; align-items: center;
+      padding: 0 2.5rem; height: 64px;
     }
     /* Logo — mark geométrico + wordmark */
     .logo { text-decoration: none; justify-self: start; display: flex; align-items: center; gap: 10px; }
@@ -1058,15 +1058,7 @@
       </div>
       <div class="logo-text">DUB<span>REM</span></div>
     </a>
-    <nav class="nav">
-      <a href="#catalogo" onclick="showCatalog('mujer')">Mujer</a>
-      <a href="#catalogo" onclick="showCatalog('hombre')">Hombre</a>
-      <a href="#catalogo" onclick="showCatalog('ninos')">Niños</a>
-      <a href="#catalogo" onclick="showCatalog('outerwear')">Outerwear</a>
-      <a href="#catalogo" onclick="showCatalog('bottoms')">Bottoms</a>
-    </nav>
     <div class="header-actions"></div>
-    <button class="hamburger" onclick="toggleNav()"><span></span><span></span><span></span></button>
   </div>
   <nav class="mobile-nav" id="mobileNav">
     <a href="#catalogo" onclick="showCatalog('mujer');closeMobileNav()">Mujer</a>
