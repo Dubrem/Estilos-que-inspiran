@@ -62,6 +62,11 @@
       max-width: 1440px; margin: 0 auto;
       display: flex; justify-content: center; align-items: center;
       padding: 0 2.5rem; height: 64px;
+      transition: justify-content .3s;
+    }
+    /* Cuando el catálogo está activo, distribuir logo-izq y acciones-der */
+    .header.catalog-open .header-inner {
+      justify-content: space-between;
     }
     /* Logo — mark geométrico + wordmark */
     .logo { text-decoration: none; justify-self: start; display: flex; align-items: center; gap: 10px; }
@@ -1049,8 +1054,9 @@
       .header-inner {
         height:48px; padding:0 .8rem;
         display:flex; flex-direction:row; flex-wrap:nowrap;
-        justify-content:space-between; align-items:center; gap:.5rem;
+        justify-content:center; align-items:center; gap:.5rem;
       }
+      .header.catalog-open .header-inner { justify-content:space-between; }
       .logo { flex-shrink:0; gap:6px; }
       .logo-icon { width:18px; height:18px; }
       .logo-text { font-size:.95rem; letter-spacing:.14em; }
@@ -2221,6 +2227,7 @@ function showCatalog(cat) {
   document.querySelector('.products-section').classList.add('catalog-visible');
   document.querySelector('.footer').classList.add('catalog-visible');
   document.getElementById('headerActions').style.display = 'flex';
+  document.querySelector('.header').classList.add('catalog-open');
   // Activar el tab correcto y renderizar
   const tabs = document.querySelectorAll('.tab-btn');
   tabs.forEach(b => b.classList.remove('active'));
