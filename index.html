@@ -1878,12 +1878,12 @@ function switchAdminTab(tab) {
 
 function renderAdminProducts() {
   const sec  = document.getElementById('adminProdsSection');
-  const all  = getMergedProducts();
+  const all  = getMergedProducts().filter(p => !p.hidden);
   const cards = all.map(p => {
     const imgSrc = p.img || '';
     const stkColor = p.stock === 0 ? 'color:#c0392b' : p.stock <= 5 ? 'color:#856404' : '';
     return `
-      <div class="prod-admin-card" onclick="openProductEditModal(${JSON.stringify(p.id)})">
+      <div class="prod-admin-card" onclick='openProductEditModal(${JSON.stringify(p.id)})'>
         <img class="prod-admin-img" src="${imgSrc}" alt="${p.name}" onerror="this.style.background='var(--blush)'">
         <div class="prod-admin-info">
           <div class="prod-admin-name">${p.name}</div>
