@@ -1533,13 +1533,23 @@
       <div class="delivery-opts">
         <label class="delivery-opt selected" id="dOpt1">
           <input type="radio" name="dv" value="pickup" checked onchange="setDelivery('pickup')">
-          <div class="delivery-opt-body"><h4>🏪 Recoger en Tienda</h4><p>Tula de Allende, Hgo. · Lun–Sáb 10–19 h</p></div>
+          <div class="delivery-opt-body"><h4>🏪 Recoger en Tienda</h4><p>H Colegio Militar 2, Centro, 42800 Tula de Allende, Hgo. · Lun–Sáb 10–19 h</p></div>
           <span class="delivery-opt-price">Gratis</span>
         </label>
         <label class="delivery-opt" id="dOpt2">
-          <input type="radio" name="dv" value="home" onchange="setDelivery('home')">
-          <div class="delivery-opt-body"><h4>🚚 Envío a Domicilio</h4><p>Entrega 2–4 días hábiles a todo México</p></div>
-          <span class="delivery-opt-price">$110</span>
+          <input type="radio" name="dv" value="tepeji" onchange="setDelivery('tepeji')">
+          <div class="delivery-opt-body"><h4>🛵 Envío a Tepeji</h4><p>Entrega a domicilio en Tepeji del Río</p></div>
+          <span class="delivery-opt-price">$20</span>
+        </label>
+        <label class="delivery-opt" id="dOpt3">
+          <input type="radio" name="dv" value="tlahue" onchange="setDelivery('tlahue')">
+          <div class="delivery-opt-body"><h4>🛵 Envío a Tlahuelilpan</h4><p>Entrega a domicilio en Tlahuelilpan</p></div>
+          <span class="delivery-opt-price">$20</span>
+        </label>
+        <label class="delivery-opt" id="dOpt4">
+          <input type="radio" name="dv" value="ixmiquilpan" onchange="setDelivery('ixmiquilpan')">
+          <div class="delivery-opt-body"><h4>🛵 Envío a Ixmiquilpan</h4><p>Entrega a domicilio en Ixmiquilpan</p></div>
+          <span class="delivery-opt-price">$20</span>
         </label>
       </div>
       <div class="summary-box" id="sum1"></div>
@@ -1858,10 +1868,17 @@ const SHIP_COST  = 110;
 const WA_NUMBER  = '5214421052174';
 const ADMIN_CRED = { email:'admin@dubrem.com', pass:'dubrem2026' };
 // ← Cambia esta dirección por la real de tu tienda
+const SHIP_LOCAL = 20;
 const STORE_LOCATION = {
-  address: 'Tula de Allende, Hidalgo, México',
+  address: 'H Colegio Militar 2, Centro, 42800 Tula de Allende, Hgo.',
   hours:   'Lun–Sáb 10:00–19:00 h',
-  maps:    'https://maps.google.com/?q=Tula+de+Allende+Hidalgo+Mexico',
+  maps:    'https://maps.google.com/?q=H+Colegio+Militar+2+Centro+Tula+de+Allende+Hidalgo',
+};
+const DELIVERY_LABELS = {
+  pickup:      '🏪 Recoger en tienda',
+  tepeji:      '🛵 Envío a Tepeji',
+  tlahue:      '🛵 Envío a Tlahuelilpan',
+  ixmiquilpan: '🛵 Envío a Ixmiquilpan',
 };
 
 /* ──────────────────────────────────────────────────────
@@ -2842,17 +2859,20 @@ function startCheckout(){
   closeCart();
   S.step=1; S.delivery='pickup'; S.shipCost=0;
   document.querySelector('input[name="dv"][value="pickup"]').checked=true;
+  ['dOpt1','dOpt2','dOpt3','dOpt4'].forEach(id=>{ const el=document.getElementById(id); if(el) el.classList.remove('selected'); });
   document.getElementById('dOpt1').classList.add('selected');
-  document.getElementById('dOpt2').classList.remove('selected');
   goStep(1);
   document.getElementById('checkoutModal').classList.add('open');
   lockScroll();
 }
 function closeCheckoutModal(){ document.getElementById('checkoutModal').classList.remove('open'); unlockScroll(); }
 function setDelivery(opt){
-  S.delivery=opt; S.shipCost=opt==='home'?SHIP_COST:0;
+  S.delivery=opt;
+  S.shipCost = opt==='pickup' ? 0 : SHIP_LOCAL;
   document.getElementById('dOpt1').classList.toggle('selected',opt==='pickup');
-  document.getElementById('dOpt2').classList.toggle('selected',opt==='home');
+  document.getElementById('dOpt2').classList.toggle('selected',opt==='tepeji');
+  document.getElementById('dOpt3').classList.toggle('selected',opt==='tlahue');
+  document.getElementById('dOpt4').classList.toggle('selected',opt==='ixmiquilpan');
   buildSummaries();
 }
 function goStep(n){
@@ -2868,7 +2888,8 @@ function goStep(n){
 function summaryHTML(){
   const sub=cartSubtotal(), total=sub+S.shipCost;
   const lines=S.cart.map(item=>{ const p=findProduct(item.id); return p?`<div class="summary-line"><span>${p.name} × ${item.qty}</span><span>${fmtMXN(p.price*item.qty)}</span></div>`:''; }).join('');
-  return `<div class="summary-hdr">Resumen del Pedido</div>${lines}<div class="summary-line"><span>Subtotal</span><span>${fmtMXN(sub)}</span></div><div class="summary-line"><span>Envío (${S.delivery==='pickup'?'Recoger en tienda':'Envío a domicilio'})</span><span>${S.shipCost===0?'Gratis':fmtMXN(S.shipCost)}</span></div><div class="summary-total"><span>Total</span><span>${fmtMXN(total)} MXN</span></div>`;
+  const deliveryLbl = DELIVERY_LABELS[S.delivery] || '🏪 Recoger en tienda';
+  return `<div class="summary-hdr">Resumen del Pedido</div>${lines}<div class="summary-line"><span>Subtotal</span><span>${fmtMXN(sub)}</span></div><div class="summary-line"><span>Envío (${deliveryLbl})</span><span>${S.shipCost===0?'Gratis':fmtMXN(S.shipCost)}</span></div><div class="summary-total"><span>Total</span><span>${fmtMXN(total)} MXN</span></div>`;
 }
 function buildSummaries(){
   const h=summaryHTML();
@@ -3225,7 +3246,7 @@ function orderCardHTML(o){
       <span>${it.name} × ${it.qty} <em style="opacity:.6">(${fmtMXN(it.price*it.qty)})</em></span>
     </label>`).join('');
 
-  const deliveryTxt = o.delivery==='home' ? '🚚 Envío a domicilio' : '🏪 Recoger en tienda';
+  const deliveryTxt = DELIVERY_LABELS[o.delivery] || '🏪 Recoger en tienda';
   const allDone = o.items.every(it=>it.done);
   const st = o.status || 'pendiente';
   const phoneHtml = o.phone
@@ -3372,7 +3393,7 @@ function customerOrderCard(o){
     </div>`).join('');
 
   // Bloque de ubicación (solo si es pickup y status = listo o completado)
-  const showLocation = o.delivery!=='home' && ['listo','completado'].includes(st);
+  const showLocation = o.delivery==='pickup' && ['listo','completado'].includes(st);
   const locationHtml = showLocation ? `
     <div class="corder-location">
       <div class="corder-location-icon">📍</div>
@@ -3390,7 +3411,7 @@ function customerOrderCard(o){
       <span class="corder-item-price">${fmtMXN(it.price*it.qty)}</span>
     </div>`).join('');
 
-  const deliveryTxt = o.delivery==='home' ? '🚚 Envío a domicilio' : '🏪 Recoger en tienda';
+  const deliveryTxt = DELIVERY_LABELS[o.delivery] || '🏪 Recoger en tienda';
 
   return `
     <div class="corder-card">
