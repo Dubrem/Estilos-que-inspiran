@@ -2921,16 +2921,32 @@ async function confirmOrder(){
   S.orders.push(newOrder);
   fbSaveOrder(newOrder); // guardar en Firebase
 
-  // Descontar stock de cada producto comprado
+  // Descontar stock de cada producto comprado directamente en Firebase
   for (const item of S.cart) {
     const prod = PRODUCT_OVERRIDES[item.id];
-    if (prod) {
-      prod.stock = Math.max(0, (prod.stock || 0) - item.qty);
-      if (prod.stock <= 0) prod.hidden = true;
-      await fbSaveProductOverride(item.id, prod);
+    if (prod && FIREBASE_DB_URL) {
+      const newStock = Math.max(0, (prod.stock || 0) - item.qty);
+      // Actualizar solo el campo stock
+      await fetch(`${FIREBASE_DB_URL}/products/${item.id}/stock.json`, {
+        method: 'PUT',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(newStock)
+      }).catch(()=>{});
+      // Si llegó a 0, ocultarlo también
+      if (newStock <= 0) {
+        await fetch(`${FIREBASE_DB_URL}/products/${item.id}/hidden.json`, {
+          method: 'PUT',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify(true)
+        }).catch(()=>{});
+      }
+      // Actualizar local también
+      prod.stock = newStock;
+      if (newStock <= 0) prod.hidden = true;
     }
   }
-  // Refrescar catálogo si está visible
+  // Recargar productos desde Firebase y refrescar catálogo
+  await fbLoadProductOverrides();
   if (document.querySelector('.products-section.catalog-visible')) renderGrid(_currentFilter);
 
   // Armar enlace de WhatsApp con número de orden y monto total
