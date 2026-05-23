@@ -2895,7 +2895,7 @@ function buildSummaries(){
   const h=summaryHTML();
   ['sum1','sum2','sum3'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=h; });
 }
-function confirmOrder(){
+async function confirmOrder(){
   const num='BE-'+String(Date.now()).slice(-6)+'-'+String(Math.floor(Math.random()*900)+100);
   document.getElementById('orderNum').textContent=num;
 
@@ -2920,6 +2920,18 @@ function confirmOrder(){
   };
   S.orders.push(newOrder);
   fbSaveOrder(newOrder); // guardar en Firebase
+
+  // Descontar stock de cada producto comprado
+  for (const item of S.cart) {
+    const prod = PRODUCT_OVERRIDES[item.id];
+    if (prod) {
+      prod.stock = Math.max(0, (prod.stock || 0) - item.qty);
+      if (prod.stock <= 0) prod.hidden = true;
+      await fbSaveProductOverride(item.id, prod);
+    }
+  }
+  // Refrescar catálogo si está visible
+  if (document.querySelector('.products-section.catalog-visible')) renderGrid(_currentFilter);
 
   // Armar enlace de WhatsApp con número de orden y monto total
   const msg = `¡Hola! 🖤 Ya realicé la transferencia bancaria de *${fmtMXN(total)} MXN* para mi pedido *${num}*. `
