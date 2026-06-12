@@ -2013,7 +2013,15 @@ async function fbLoadProductOverrides(){
   } catch(e){ PRODUCT_OVERRIDES = {}; }
 }
 async function fbSaveProductOverride(fbKey, data){
-  try { await fbSet(`products/${fbKey}`, data); } catch(e){}
+  if (!FIREBASE_DB_URL) return false;
+  try {
+    const r = await fetch(`${FIREBASE_DB_URL}/products/${fbKey}.json`, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(data)
+    });
+    return r.ok;
+  } catch(e) { return false; }
 }
 async function fbDeleteProductOverride(fbKey){
   try {
@@ -2311,9 +2319,23 @@ async function saveProductEdit() {
   if (_editingProductId === null) {
     // Nuevo producto
     const fbKey = `new_${Date.now()}`;
-    PRODUCT_OVERRIDES[fbKey] = { ...data, id: fbKey };
-    await fbSaveProductOverride(fbKey, PRODUCT_OVERRIDES[fbKey]);
-    toast(`✓ "${name}" agregado al catálogo`, 'ok');
+    const productData = { ...data, id: fbKey };
+    PRODUCT_OVERRIDES[fbKey] = productData;
+    const ok = await fbSaveProductOverride(fbKey, productData);
+    if (ok) {
+      toast(`✓ "${name}" agregado al catálogo`, 'ok');
+    } else {
+      // Reintentar una vez más
+      const ok2 = await fbSaveProductOverride(fbKey, productData);
+      if (ok2) {
+        toast(`✓ "${name}" agregado al catálogo`, 'ok');
+      } else {
+        toast(`⚠️ Error al guardar en Firebase. Verifica tu conexión.`, 'err');
+        delete PRODUCT_OVERRIDES[fbKey]; // revertir local
+        btn.textContent = 'Guardar'; btn.disabled = false;
+        return;
+      }
+    }
   } else {
     // Editar producto existente
     const id = _editingProductId;
@@ -2321,14 +2343,16 @@ async function saveProductEdit() {
       // base product override
       const fbKey = `p${id}`;
       PRODUCT_OVERRIDES[fbKey] = { ...data };
-      await fbSaveProductOverride(fbKey, PRODUCT_OVERRIDES[fbKey]);
+      const ok = await fbSaveProductOverride(fbKey, PRODUCT_OVERRIDES[fbKey]);
+      if (!ok) { toast('⚠️ Error al actualizar en Firebase', 'err'); btn.textContent = 'Guardar'; btn.disabled = false; return; }
       // also update in-memory PRODUCTS
       const bp = PRODUCTS.find(x => x.id === id);
       if (bp) { bp.name = name; bp.price = price; bp.stock = stock; bp.cat = cat; bp.desc = desc; if (img) bp.img = img; }
     } else {
       // new_ product
       PRODUCT_OVERRIDES[id] = { ...data, id };
-      await fbSaveProductOverride(id, PRODUCT_OVERRIDES[id]);
+      const ok = await fbSaveProductOverride(id, PRODUCT_OVERRIDES[id]);
+      if (!ok) { toast('⚠️ Error al actualizar en Firebase', 'err'); btn.textContent = 'Guardar'; btn.disabled = false; return; }
     }
     toast(`✓ "${name}" actualizado`, 'ok');
   }
