@@ -1579,7 +1579,7 @@
       <p class="pay-note" style="margin-bottom:18px">📋 Al confirmar, tu pedido quedará registrado y recibirás instrucciones de pago.</p>
       <div class="checkout-nav">
         <button class="btn-back" onclick="goStep(2)">← Atrás</button>
-        <button class="btn-next btn-confirm" onclick="confirmOrder()">✓ Confirmar Pedido</button>
+        <button class="btn-next btn-confirm" id="btnConfirmarPedido" onclick="confirmOrder()">✓ Confirmar Pedido</button>
       </div>
     </div>
   </div>
@@ -2885,6 +2885,9 @@ function startCheckout(){
   document.querySelector('input[name="dv"][value="pickup"]').checked=true;
   ['dOpt1','dOpt2','dOpt3','dOpt4'].forEach(id=>{ const el=document.getElementById(id); if(el) el.classList.remove('selected'); });
   document.getElementById('dOpt1').classList.add('selected');
+  // Resetear botón confirmar
+  const cb = document.getElementById('btnConfirmarPedido');
+  if (cb) { cb.disabled = false; cb.textContent = '✓ Confirmar Pedido'; }
   goStep(1);
   document.getElementById('checkoutModal').classList.add('open');
   lockScroll();
@@ -2920,6 +2923,12 @@ function buildSummaries(){
   ['sum1','sum2','sum3'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=h; });
 }
 async function confirmOrder(){
+  // Evitar doble ejecución
+  const confirmBtn = document.getElementById('btnConfirmarPedido');
+  if (confirmBtn.disabled) return;
+  confirmBtn.disabled = true;
+  confirmBtn.textContent = '⏳ Procesando…';
+
   const num='BE-'+String(Date.now()).slice(-6)+'-'+String(Math.floor(Math.random()*900)+100);
   document.getElementById('orderNum').textContent=num;
 
