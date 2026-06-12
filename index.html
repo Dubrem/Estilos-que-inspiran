@@ -1979,14 +1979,14 @@ let _currentFilter  = 'all';   // subcat activa
 let _currentSection = null;    // mujer | hombre | ninos | null
 
 const SECTION_TABS = {
-  mujer:  [['all','✦ Todos'],['vestido','Vestidos'],['blusa','Blusas'],['pantalon','Pantalones'],['chamarra','Chamarras']],
-  hombre: [['all','✦ Todos'],['chamarra','Chamarras'],['pantalon','Pantalones'],['sueter','Suéteres'],['playera','Playeras']],
-  ninos:  [['all','✦ Todos'],['playera','Playeras'],['chamarra','Chamarras'],['pantalon','Pantalones'],['vestido','Vestidos']],
+  mujer:  [['all','✦ Todos'],['vestido','Vestidos'],['blusa','Blusas'],['pantalon','Pantalones'],['chamarra','Chamarras'],['deportiva','Deportivas'],['sudadera','Sudaderas'],['marca','Marca Exclusiva']],
+  hombre: [['all','✦ Todos'],['chamarra','Chamarras'],['pantalon','Pantalones'],['sueter','Suéteres'],['playera','Playeras'],['deportiva','Deportivas'],['sudadera','Sudaderas'],['marca','Marca Exclusiva']],
+  ninos:  [['all','✦ Todos'],['playera','Playeras'],['chamarra','Chamarras'],['pantalon','Pantalones'],['vestido','Vestidos'],['deportiva','Deportivas'],['sudadera','Sudaderas'],['marca','Marca Exclusiva']],
 };
 const SUBCATS = {
-  mujer:  [['vestido','Vestido'],['blusa','Blusa'],['pantalon','Pantalón'],['chamarra','Chamarra']],
-  hombre: [['chamarra','Chamarra'],['pantalon','Pantalón'],['sueter','Suéter'],['playera','Playera']],
-  ninos:  [['playera','Playera'],['chamarra','Chamarra'],['pantalon','Pantalón'],['vestido','Vestido']],
+  mujer:  [['vestido','Vestido'],['blusa','Blusa'],['pantalon','Pantalón'],['chamarra','Chamarra'],['deportiva','Deportiva'],['sudadera','Sudadera'],['marca','Marca Exclusiva']],
+  hombre: [['chamarra','Chamarra'],['pantalon','Pantalón'],['sueter','Suéter'],['playera','Playera'],['deportiva','Deportiva'],['sudadera','Sudadera'],['marca','Marca Exclusiva']],
+  ninos:  [['playera','Playera'],['chamarra','Chamarra'],['pantalon','Pantalón'],['vestido','Vestido'],['deportiva','Deportiva'],['sudadera','Sudadera'],['marca','Marca Exclusiva']],
 };
 
 function renderSectionTabs(section) {
