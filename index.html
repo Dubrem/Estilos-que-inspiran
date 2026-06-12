@@ -409,6 +409,20 @@
 
     /* FILTER BAR — femenino con punto activo */
     .filter-bar { padding: 80px 2.5rem 20px; }
+    /* ── BARRA DE BÚSQUEDA ── */
+    .search-bar-wrap { position:relative; max-width:480px; margin:0 auto 22px; }
+    .search-bar-input {
+      width:100%; padding:12px 44px 12px 18px;
+      border:1.5px solid var(--border); border-radius:50px;
+      font-family:var(--ff-body); font-size:.85rem; color:var(--text-dark);
+      background:#fff; outline:none; transition:border-color .2s, box-shadow .2s;
+      box-sizing:border-box;
+    }
+    .search-bar-input:focus { border-color:var(--rose); box-shadow:0 0 0 3px rgba(196,86,106,.12); }
+    .search-bar-icon { position:absolute; right:15px; top:50%; transform:translateY(-50%); font-size:1.1rem; pointer-events:none; opacity:.5; }
+    .search-bar-clear { position:absolute; right:15px; top:50%; transform:translateY(-50%); font-size:1rem; cursor:pointer; opacity:.4; display:none; background:none; border:none; padding:0; line-height:1; }
+    .search-bar-clear:hover { opacity:.8; }
+    .search-results-info { font-size:.72rem; color:var(--text-light); text-align:center; margin-bottom:10px; letter-spacing:.05em; min-height:1.2em; }
     .filter-tabs { display:flex; justify-content:center; gap:6px; flex-wrap:wrap; }
     .tab-btn {
       padding: 8px 22px; border: 1.5px solid var(--border);
@@ -1202,6 +1216,7 @@
       .user-logout { font-size:.48rem; }
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js"></script>
 </head>
 <body>
 
@@ -1334,6 +1349,14 @@
     <h2 class="section-title">Colección</h2>
     <p class="section-sub">Envíos a todo México · Tula de Allende, Hidalgo</p>
     <p class="section-gender-label" id="sectionGenderLabel"></p>
+    <div class="search-bar-wrap">
+      <input class="search-bar-input" id="searchInput" type="text"
+        placeholder="🔍 Busca una prenda... (ej: chamarra, vestido rojo, deportiva)"
+        oninput="handleSearch(this.value)"
+        autocomplete="off" autocorrect="off" spellcheck="false">
+      <button class="search-bar-clear" id="searchClear" onclick="clearSearch()">✕</button>
+    </div>
+    <div class="search-results-info" id="searchInfo"></div>
     <div class="filter-tabs" id="filterTabs">
       <button class="tab-btn active" onclick="filterBy('all',this)">✦ Todos</button>
     </div>
@@ -2532,19 +2555,123 @@ function showCatalog(section) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
   _currentSection = section;
   _currentFilter  = 'all';
+  // Limpiar buscador al cambiar sección
+  const si = document.getElementById('searchInput');
+  if (si) si.value = '';
+  _searchQuery = '';
+  const sc = document.getElementById('searchClear');
+  if (sc) sc.style.display = 'none';
+  const sinfo = document.getElementById('searchInfo');
+  if (sinfo) sinfo.textContent = '';
   renderSectionTabs(section);
   // Cargar productos frescos de Firebase y luego renderizar
   fbLoadProductOverrides().then(() => renderGrid('all'));
   setTimeout(() => document.getElementById('catalogo').scrollIntoView({behavior:'smooth'}), 50);
 }
 
+/* ── BÚSQUEDA INTELIGENTE ── */
+const SEARCH_SYNONYMS = {
+  // Español/Inglés → clave interna
+  'jacket':'chamarra','chaqueta':'chamarra','abrigo':'chamarra','coat':'chamarra',
+  'pants':'pantalon','jeans':'pantalon','pantalones':'pantalon','trousers':'pantalon',
+  'dress':'vestido','dresses':'vestido','vestidos':'vestido',
+  'blouse':'blusa','blusas':'blusa','top':'blusa',
+  'sweater':'sueter','suéter':'sueter','suéteres':'sueter','sweatshirt':'sueter','jersey':'sueter',
+  'shirt':'playera','tshirt':'playera','playeras':'playera','camiseta':'playera','tee':'playera',
+  'hoodie':'sudadera','sudaderas':'sudadera','hoodies':'sudadera',
+  'sports':'deportiva','deportes':'deportiva','gym':'deportiva','atletico':'deportiva','atletica':'deportiva','sport':'deportiva','deportivas':'deportiva',
+  'brand':'marca','exclusive':'marca','exclusiva':'marca','marcas':'marca',
+  'kids':'ninos','niño':'ninos','niña':'ninos','children':'ninos',
+  'women':'mujer','woman':'mujer','dama':'mujer','damas':'mujer','femenina':'mujer',
+  'men':'hombre','man':'hombre','caballero':'hombre','masculino':'hombre',
+};
+
+let _searchQuery = '';
+let _fuseInstance = null;
+
+function buildFuse() {
+  const products = getMergedProducts().filter(p => !p.hidden);
+  _fuseInstance = new Fuse(products, {
+    keys: [
+      { name: 'name',   weight: 0.5 },
+      { name: 'desc',   weight: 0.25 },
+      { name: 'subcat', weight: 0.15 },
+      { name: 'cat',    weight: 0.1  },
+    ],
+    threshold: 0.45,
+    includeScore: true,
+    ignoreLocation: true,
+    minMatchCharLength: 2,
+  });
+}
+
+function normalizeQuery(q) {
+  const words = q.toLowerCase().trim().split(/\s+/);
+  return words.map(w => SEARCH_SYNONYMS[w] || w).join(' ');
+}
+
+function handleSearch(val) {
+  _searchQuery = val.trim();
+  const clearBtn = document.getElementById('searchClear');
+  if (clearBtn) clearBtn.style.display = _searchQuery ? 'block' : 'none';
+
+  if (!_searchQuery) {
+    document.getElementById('searchInfo').textContent = '';
+    renderGrid(_currentFilter);
+    return;
+  }
+  // Desactivar tabs de filtro mientras se busca
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  renderSearchResults(_searchQuery);
+}
+
+function clearSearch() {
+  const inp = document.getElementById('searchInput');
+  if (inp) inp.value = '';
+  _searchQuery = '';
+  document.getElementById('searchClear').style.display = 'none';
+  document.getElementById('searchInfo').textContent = '';
+  // Restaurar tab activo
+  const firstTab = document.querySelector('#filterTabs .tab-btn');
+  if (firstTab) firstTab.classList.add('active');
+  renderGrid('all');
+  _currentFilter = 'all';
+}
+
+function renderSearchResults(query) {
+  if (!_fuseInstance) buildFuse();
+  const grid = document.getElementById('grid');
+  const info = document.getElementById('searchInfo');
+
+  const normalized = normalizeQuery(query);
+  let results = _fuseInstance.search(normalized);
+
+  // Filtrar por sección actual si hay una
+  if (_currentSection) {
+    results = results.filter(r => r.item.cat === _currentSection);
+  }
+
+  if (!results.length) {
+    grid.innerHTML = `<p class="no-products">No encontramos "${query}" 😕<br><small>Intenta con otro término o revisa el catálogo completo.</small></p>`;
+    info.textContent = '';
+    return;
+  }
+
+  info.textContent = `${results.length} resultado${results.length !== 1 ? 's' : ''} para "${query}"`;
+  grid.innerHTML = results.map(r => cardHTML(r.item)).join('');
+}
+
 function filterBy(subcat, btn) {
   _currentFilter = subcat;
+  // Limpiar búsqueda al cambiar filtro
+  clearSearch();
   if (btn) { document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
   renderGrid(subcat);
   document.getElementById('catalogo').scrollIntoView({behavior:'smooth'});
 }
 function renderGrid(subcat) {
+  // Reconstruir índice de búsqueda con datos frescos
+  _fuseInstance = null;
   const grid = document.getElementById('grid');
   let all = getMergedProducts().filter(p => !p.hidden);
   if (_currentSection) all = all.filter(p => p.cat === _currentSection);
