@@ -252,6 +252,7 @@
     /* Panel */
     .hero-panel {
       flex: 1; position: relative; overflow: hidden; cursor: pointer;
+      transition: transform .55s cubic-bezier(.16,1,.3,1), filter .55s ease;
     }
     .hero-panel + .hero-panel { border-left: 2px solid #fff; }
     .hero-panel img {
@@ -259,6 +260,7 @@
       transition: transform .8s cubic-bezier(.25,.46,.45,.94);
     }
     .hero-panel:hover img { transform: scale(1.04); }
+    .hero-panel:active { transform: scale(.97); }
     /* Bottom gradient for text readability */
     .hero-panel::after {
       content: ''; position: absolute; inset: 0; pointer-events: none;
@@ -268,6 +270,60 @@
         transparent 65%
       );
     }
+
+    /* ── Cinematic transition overlay ── */
+    #heroOverlay {
+      position: fixed; inset: 0; z-index: 9000;
+      display: none; align-items: center; justify-content: center;
+      background: #0c0608; overflow: hidden;
+      clip-path: circle(0% at 50% 50%);
+    }
+    #heroOverlay.expanding {
+      display: flex;
+      clip-path: circle(0% at var(--ox,50%) var(--oy,50%));
+      transition: clip-path .75s cubic-bezier(.16,1,.3,1);
+    }
+    #heroOverlay.expanding.go {
+      clip-path: circle(160% at var(--ox,50%) var(--oy,50%));
+    }
+    #heroOverlay.fading { transition: opacity .45s ease; opacity: 0; }
+    #heroOverlay img {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      object-fit: cover;
+      filter: brightness(.38) saturate(1.1);
+      transform: scale(1.08);
+      transition: transform .75s cubic-bezier(.16,1,.3,1);
+    }
+    #heroOverlay.go img { transform: scale(1); }
+    #heroOverlayText {
+      position: relative; text-align: center; color: #fff;
+      opacity: 0; transform: translateY(24px) scale(.96);
+      transition: opacity .55s .18s ease, transform .55s .18s cubic-bezier(.16,1,.3,1);
+    }
+    #heroOverlay.go #heroOverlayText { opacity: 1; transform: none; }
+    #heroOverlayLabel {
+      font-family: var(--ff-display);
+      font-size: clamp(3.5rem, 14vw, 9rem);
+      letter-spacing: .32em; line-height: 1;
+      text-transform: uppercase;
+    }
+    #heroOverlayScript {
+      font-family: var(--ff-script);
+      font-size: clamp(1.2rem, 4vw, 2rem);
+      opacity: .55; display: block; margin-top: .2em;
+    }
+    #heroOverlayLine {
+      width: 48px; height: 1px; background: rgba(255,255,255,.4);
+      margin: 14px auto 0; transform: scaleX(0);
+      transition: transform .5s .35s ease;
+    }
+    #heroOverlay.go #heroOverlayLine { transform: scaleX(1); }
+
+    @keyframes catalogEntry {
+      from { opacity:0; transform: perspective(900px) rotateX(4deg) translateY(28px); }
+      to   { opacity:1; transform: none; }
+    }
+    .catalog-entering { animation: catalogEntry .65s cubic-bezier(.16,1,.3,1) both; }
     /* Category label */
     .hero-panel-info {
       position: absolute; bottom: 0; left: 0; right: 0;
@@ -1318,7 +1374,7 @@
 <section class="hero" id="inicio">
 
   <!-- Panel Mujer -->
-  <div class="hero-panel" onclick="showCatalog('mujer')">
+  <div class="hero-panel" onclick="heroTransitionTo('mujer',event,this)">
     <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=2560&q=95" alt="Colección Mujer" loading="eager">
     <div class="hero-panel-info">
       <span class="hero-panel-label">Mujer</span>
@@ -1327,7 +1383,7 @@
   </div>
 
   <!-- Panel Hombre -->
-  <div class="hero-panel" onclick="showCatalog('hombre')">
+  <div class="hero-panel" onclick="heroTransitionTo('hombre',event,this)">
     <img src="https://images.unsplash.com/photo-1488161628813-04466f872be2?auto=format&fit=crop&w=1400&h=2100&q=95" alt="Colección Hombre" loading="eager" style="object-position:center top;">
     <div class="hero-panel-info">
       <span class="hero-panel-label">Hombre</span>
@@ -1336,11 +1392,21 @@
   </div>
 
   <!-- Panel Niños -->
-  <div class="hero-panel" onclick="showCatalog('ninos')">
+  <div class="hero-panel" onclick="heroTransitionTo('ninos',event,this)">
     <img src="https://images.unsplash.com/photo-1618325521029-dbf6d9708035?auto=format&fit=crop&w=2560&q=95" alt="Colección Niños" loading="eager">
     <div class="hero-panel-info">
       <span class="hero-panel-label">Niños</span>
       <button class="hero-panel-cta">Ver Colección</button>
+    </div>
+  </div>
+
+  <!-- Cinematic transition overlay -->
+  <div id="heroOverlay">
+    <img id="heroOverlayImg" src="" alt="">
+    <div id="heroOverlayText">
+      <div id="heroOverlayLabel"></div>
+      <span id="heroOverlayScript">Colección</span>
+      <div id="heroOverlayLine"></div>
     </div>
   </div>
 
@@ -2383,6 +2449,51 @@ const INFO_CONTENT = {
       </details>
     </div>`
 };
+
+function heroTransitionTo(cat, evt, panel) {
+  const overlay   = document.getElementById('heroOverlay');
+  const overlayImg= document.getElementById('heroOverlayImg');
+  const label     = document.getElementById('heroOverlayLabel');
+  const labels    = { mujer:'Mujer', hombre:'Hombre', ninos:'Niños' };
+
+  // Origin point for the circle reveal
+  const x = evt ? `${evt.clientX}px` : '50%';
+  const y = evt ? `${evt.clientY}px` : '50%';
+  overlay.style.setProperty('--ox', x);
+  overlay.style.setProperty('--oy', y);
+
+  // Copy image from the panel
+  overlayImg.src = panel.querySelector('img').src;
+  label.textContent = labels[cat] || cat;
+
+  // Phase 1: expand circle
+  overlay.classList.add('expanding');
+  overlay.offsetHeight; // reflow
+  overlay.classList.add('go');
+
+  // Phase 2: after cover complete → navigate & fade out
+  setTimeout(() => {
+    showCatalog(cat);
+    const filterBar = document.getElementById('catalogo');
+    if (filterBar) filterBar.scrollIntoView({ behavior: 'instant' });
+
+    // Animate catalog entry
+    const wrap = document.querySelector('.section-wrap');
+    if (wrap) {
+      wrap.classList.remove('catalog-entering');
+      wrap.offsetHeight;
+      wrap.classList.add('catalog-entering');
+    }
+
+    // Phase 3: fade out overlay
+    overlay.classList.add('fading');
+    setTimeout(() => {
+      overlay.classList.remove('expanding', 'go', 'fading');
+      overlay.style.display = 'none';
+      overlayImg.src = '';
+    }, 460);
+  }, 680);
+}
 
 function showInfoModal(type) {
   document.getElementById('infoModalContent').innerHTML = INFO_CONTENT[type] || '';
