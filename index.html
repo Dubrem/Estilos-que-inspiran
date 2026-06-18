@@ -3847,7 +3847,7 @@ function sendWhatsAppNotification(order, status){
   const name  = (order.customer||'cliente').split(' ')[0];
   const msgs  = {
     pagado: `Hola ${name} 🌸, tu pago del pedido *${order.num}* ha sido confirmado. ¡Gracias por tu compra en DUBREM! Te avisamos en cuanto esté listo para recoger. 💕`,
-    listo:  `Hola ${name} 🌸, tu pedido *${order.num}* ya está listo para recoger. 📦\n\n📍 H Colegio Militar 2, Centro, Tula de Allende, Hgo.\n🕐 Lun–Sáb 10:00–19:00 h\n\n¡Te esperamos en DUBREM! 💕`
+    listo:  `Hola ${name} 🌸, tu pedido *${order.num}* ya está listo para recoger. 📦\n\nPresenta tu número de pedido *${order.num}* al momento de recogerlo.\n\n📍 H Colegio Militar 2, Centro, Tula de Allende, Hgo.\n🕐 Lun–Sáb 10:00–19:00 h\n\n¡Te esperamos en DUBREM! 💕`
   };
   const msg = msgs[status];
   if(!msg) return;
