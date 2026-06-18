@@ -818,6 +818,7 @@
     .status-enviado    { background:#cfe2ff; color:#084298; }
     .status-despachado { background:#cfe2ff; color:#084298; }
     .status-completado { background:#d4edda; color:#155724; }
+    .status-cancelado  { background:#fde2e2; color:#8b0000; }
     .order-card-body { padding:16px 18px; }
     .order-meta { display:flex; flex-direction:column; gap:5px; margin-bottom:14px; }
     .order-meta-row { font-size:.76rem; color:var(--text-med); display:flex; align-items:center; gap:6px; }
@@ -3364,11 +3365,7 @@ function _filterOrders(){
 
   /* filtro de estado */
   if(_orderStatusFilter !== 'all'){
-    if(_orderStatusFilter === 'enviado'){
-      list = list.filter(o => o.status==='enviado' || o.status==='despachado');
-    } else {
-      list = list.filter(o => o.status === _orderStatusFilter);
-    }
+    list = list.filter(o => o.status === _orderStatusFilter);
   }
 
   /* filtro de fecha */
@@ -3415,11 +3412,11 @@ function renderAdminOrders(){
 
   /* — stats generales siempre sobre todos los pedidos — */
   const total    = S.orders.length;
-  const pendient = S.orders.filter(o=>o.status==='pendiente').length;
-  const pagados  = S.orders.filter(o=>o.status==='pagado').length;
-  const listos   = S.orders.filter(o=>o.status==='listo').length;
-  const enviados = S.orders.filter(o=>o.status==='enviado'||o.status==='despachado').length;
-  const complet  = S.orders.filter(o=>o.status==='completado').length;
+  const pendient  = S.orders.filter(o=>o.status==='pendiente').length;
+  const pagados   = S.orders.filter(o=>o.status==='pagado').length;
+  const listos    = S.orders.filter(o=>o.status==='listo').length;
+  const cancelados= S.orders.filter(o=>o.status==='cancelado').length;
+  const complet   = S.orders.filter(o=>o.status==='completado').length;
   const revenue  = S.orders.reduce((s,o)=>s+o.total,0);
 
   stats.innerHTML = `
@@ -3427,7 +3424,7 @@ function renderAdminOrders(){
     <div class="stat-card" style="cursor:pointer" onclick="setOrderStatusFilter('pendiente')"   title="Filtrar pendientes"><div class="stat-val">${pendient}</div><div class="stat-lbl">Pendientes</div></div>
     <div class="stat-card" style="cursor:pointer" onclick="setOrderStatusFilter('pagado')"      title="Filtrar pagados"><div class="stat-val">${pagados}</div><div class="stat-lbl">Pagados</div></div>
     <div class="stat-card" style="cursor:pointer" onclick="setOrderStatusFilter('listo')"       title="Filtrar listos"><div class="stat-val">${listos}</div><div class="stat-lbl">Listos</div></div>
-    <div class="stat-card" style="cursor:pointer" onclick="setOrderStatusFilter('enviado')"     title="Filtrar enviados"><div class="stat-val">${enviados}</div><div class="stat-lbl">Enviados</div></div>
+    <div class="stat-card" style="cursor:pointer" onclick="setOrderStatusFilter('cancelado')"  title="Filtrar cancelados"><div class="stat-val">${cancelados}</div><div class="stat-lbl">Cancelados</div></div>
     <div class="stat-card" style="cursor:pointer" onclick="setOrderStatusFilter('completado')"  title="Filtrar completados"><div class="stat-val">${complet}</div><div class="stat-lbl">Completados</div></div>
     <div class="stat-card"><div class="stat-val">${fmtMXN(revenue)}</div><div class="stat-lbl">Ingresos</div></div>`;
 
@@ -3438,7 +3435,7 @@ function renderAdminOrders(){
     /* — filtro activo: ocultar stats y filtros, mostrar barra compacta — */
     stats.style.display   = 'none';
     filtersEl.style.display = 'none';
-    const statusLabels = { pendiente:'🕐 Pendiente', pagado:'✅ Pagado', listo:'🏪 Listo', enviado:'🚚 Enviado', completado:'🎉 Completado' };
+    const statusLabels = { pendiente:'🕐 Pendiente', pagado:'✅ Pagado', listo:'🏪 Listo', cancelado:'❌ Cancelado', completado:'🎉 Completado' };
     const activeLabel  = sf !== 'all' ? statusLabels[sf] : df !== 'all' ? {today:'Hoy',week:'Esta semana',month:'Este mes'}[df] : `"${_orderSearch}"`;
     const filtered = _filterOrders();
     body.innerHTML = `
@@ -3458,7 +3455,7 @@ function renderAdminOrders(){
         <button class="filter-pill" onclick="setOrderStatusFilter('pendiente')">🕐 Pendiente</button>
         <button class="filter-pill" onclick="setOrderStatusFilter('pagado')">✅ Pagado</button>
         <button class="filter-pill" onclick="setOrderStatusFilter('listo')">🏪 Listo</button>
-        <button class="filter-pill" onclick="setOrderStatusFilter('enviado')">🚚 Enviado</button>
+        <button class="filter-pill" onclick="setOrderStatusFilter('cancelado')">❌ Cancelado</button>
         <button class="filter-pill" onclick="setOrderStatusFilter('completado')">🎉 Completado</button>
       </div>
       <div class="admin-filter-row">
@@ -3484,7 +3481,8 @@ function orderCardHTML(o){
   const statusMap = {
     pendiente:'🕐 Pendiente', pagado:'✅ Pagado',
     listo:'🏪 Listo p/recoger', enviado:'🚚 Enviado',
-    despachado:'🚚 Enviado',   completado:'🎉 Completado'
+    despachado:'🚚 Enviado',   completado:'🎉 Completado',
+    cancelado:'❌ Cancelado'
   };
   const checkItems = o.items.map((it,idx)=>{
     const prod = findProduct(it.id);
@@ -3510,20 +3508,22 @@ function orderCardHTML(o){
     ? `<div style="font-size:.75rem;color:var(--text-light)">📱 ${o.phone}</div>` : '';
 
   // Botones de estado — se bloquean si ya está completado
-  const canComplete = st==='listo' || st==='enviado' || st==='despachado';
+  const canComplete = st==='listo';
   const deleteBtnHtml = `<button onclick="deleteOrder('${o.num}')" style="margin-top:8px;width:100%;padding:9px;border:1.5px solid #fcc;background:transparent;color:#c0392b;border-radius:50px;font-size:.7rem;font-weight:700;cursor:pointer;letter-spacing:.06em;text-transform:uppercase">🗑 Eliminar pedido</button>`;
 
   const footHtml = st==='completado'
     ? `<div class="completado-badge">🎉 Pedido completado satisfactoriamente</div>${deleteBtnHtml}`
+    : st==='cancelado'
+    ? `<div style="background:#fde2e2;border-radius:10px;padding:12px 16px;text-align:center;font-size:.8rem;font-weight:600;color:#8b0000">❌ Pedido cancelado — stock liberado al catálogo</div>${deleteBtnHtml}`
     : `<div class="order-card-foot" style="flex-wrap:wrap">
         <button class="btn-status btn-status-pendiente" onclick="setOrderStatus('${o.num}','pendiente')"
           style="${st==='pendiente'?'outline:2px solid #856404':''}">🕐 Pendiente</button>
-        <button class="btn-status btn-status-pagado" onclick="setOrderStatus('${o.num}','pagado')"
+        <button class="btn-status btn-status-pagado" onclick="confirmSetStatus('${o.num}','pagado')"
           style="${st==='pagado'?'outline:2px solid #0a5931':''}">✅ Pagado</button>
-        <button class="btn-status" onclick="setOrderStatus('${o.num}','listo')"
+        <button class="btn-status" onclick="confirmSetStatus('${o.num}','listo')"
           style="${st==='listo'?'outline:2px solid #0d4f6c':''}; background:#cff4fc;color:#0d4f6c">🏪 Listo p/recoger</button>
-        <button class="btn-status btn-status-despachado" onclick="setOrderStatus('${o.num}','enviado')"
-          style="${st==='enviado'||st==='despachado'?'outline:2px solid #084298':''}">🚚 Enviado</button>
+        <button class="btn-status" onclick="confirmSetStatus('${o.num}','cancelado')"
+          style="background:#fde2e2;color:#8b0000${st==='cancelado'?';outline:2px solid #8b0000':''}">❌ Cancelar</button>
         ${canComplete ? `<button class="btn-completar" onclick="setOrderStatus('${o.num}','completado')">🎉 Marcar como Completado</button>` : ''}
       </div>${deleteBtnHtml}`;
 
@@ -3563,9 +3563,44 @@ function setOrderStatus(orderNum, status){
   const order = S.orders.find(o=>o.num===orderNum);
   if(!order) return;
   order.status = status;
-  fbUpdateOrderStatus(orderNum, status); // sync Firebase
+  fbUpdateOrderStatus(orderNum, status);
   renderAdminOrders();
   toast(`Pedido ${orderNum} → ${status}`, 'ok');
+}
+
+function confirmSetStatus(orderNum, status){
+  const msgs = {
+    pagado:   '¿Estás seguro de que el pago ya fue completado?',
+    listo:    '¿Estás seguro de que el pedido está listo para recoger?',
+    cancelado:'¿Seguro que vas a cancelar este pedido? El stock se liberará de nuevo al catálogo.'
+  };
+  if(!confirm(msgs[status] || `¿Cambiar estado?`)) return;
+  if(status === 'cancelado') cancelOrder(orderNum);
+  else setOrderStatus(orderNum, status);
+}
+
+async function cancelOrder(orderNum){
+  const order = S.orders.find(o=>o.num===orderNum);
+  if(!order) return;
+  for(const item of order.items){
+    const prod = PRODUCT_OVERRIDES[item.id];
+    if(prod && FIREBASE_DB_URL){
+      const newStock = (prod.stock || 0) + item.qty;
+      await fetch(`${FIREBASE_DB_URL}/products/${item.id}/stock.json`,{
+        method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newStock)
+      }).catch(()=>{});
+      await fetch(`${FIREBASE_DB_URL}/products/${item.id}/hidden.json`,{
+        method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(false)
+      }).catch(()=>{});
+      prod.stock = newStock;
+      prod.hidden = false;
+    }
+  }
+  await fbLoadProductOverrides();
+  order.status = 'cancelado';
+  await fbUpdateOrderStatus(orderNum, 'cancelado');
+  renderAdminOrders();
+  toast(`Pedido ${orderNum} cancelado — stock liberado`, 'ok');
 }
 
 async function deleteOrder(orderNum){
