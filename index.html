@@ -1806,6 +1806,13 @@
       </div>
     </div>
 
+    <!-- SKU -->
+    <div class="form-group" id="skuGroup" style="display:none">
+      <label class="form-label">SKU <span style="font-size:.65rem;color:var(--text-light);font-weight:400">(código único del producto)</span></label>
+      <input class="form-input" id="prodEditSku" type="text" readonly
+        style="background:var(--nude-light);color:var(--rose);font-weight:700;letter-spacing:.08em;cursor:default">
+    </div>
+
     <!-- Descripción -->
     <div class="form-group">
       <label class="form-label">Descripción</label>
@@ -2189,6 +2196,7 @@ function renderAdminProducts() {
           <div class="prod-admin-meta">${fmtMXN(p.price)}</div>
           <div class="prod-admin-stock" style="${stkColor}">${p.stock} en stock</div>
           <div style="font-size:.58rem;margin-top:3px;${p.subcat?'color:#5a9e5a':'color:#c0392b;font-weight:700'}">${p.subcat ? catLabel(p.subcat) : '⚠ Sin sub-cat'}</div>
+          ${p.sku ? `<div style="font-size:.55rem;margin-top:2px;color:var(--rose);letter-spacing:.06em;font-weight:600">${p.sku}</div>` : ''}
         </div>
       </div>`;
   }).join('');
@@ -2212,6 +2220,23 @@ function renderAdminProducts() {
   `;
 }
 
+function generateSKU(cat, subcat) {
+  const catMap  = { mujer:'MUJ', hombre:'HOM', ninos:'NIN' };
+  const subMap  = { vestido:'VES', blusa:'BLU', pantalon:'PAN', chamarra:'CAM',
+                    sueter:'SUE', playera:'PLA', deportiva:'DEP', sudadera:'SUD', marca:'MRC' };
+  const c = catMap[cat]   || cat.slice(0,3).toUpperCase();
+  const s = subMap[subcat] || (subcat ? subcat.slice(0,3).toUpperCase() : 'GEN');
+  const n = String(Math.floor(1000 + Math.random() * 9000));
+  return `DBR-${c}${s}-${n}`;
+}
+
+function showSkuField(sku) {
+  const grp = document.getElementById('skuGroup');
+  const inp = document.getElementById('prodEditSku');
+  if (sku) { grp.style.display = ''; inp.value = sku; }
+  else      { grp.style.display = 'none'; inp.value = ''; }
+}
+
 function openProductEditModal(id) {
   _editingProductId = id;
   const p = findProduct(id);
@@ -2226,6 +2251,8 @@ function openProductEditModal(id) {
   document.getElementById('prodEditDesc').value  = p ? (p.desc || '') : '';
   document.getElementById('prodImgUrl').value    = (p && p.img && !p.img.startsWith('data:')) ? p.img : '';
   document.getElementById('prodImgStatus').textContent = '';
+  // SKU
+  showSkuField(p ? (p.sku || '') : '');
   // Cargar tallas
   const savedSizes = (p && p.sizes) ? p.sizes : [];
   document.querySelectorAll('.size-check').forEach(cb => { cb.checked = savedSizes.includes(cb.value); });
@@ -2250,6 +2277,7 @@ function openNewProductModal() {
   document.getElementById('prodEditDesc').value  = '';
   document.getElementById('prodImgUrl').value    = '';
   document.getElementById('prodImgStatus').textContent = '';
+  showSkuField('');
   document.querySelectorAll('.size-check').forEach(cb => { cb.checked = false; });
   document.getElementById('prodEditImgPreview').src = '';
   document.getElementById('prodEditImgPreview').style.display = 'none';
@@ -2351,21 +2379,23 @@ async function saveProductEdit() {
   const data = { name, price, stock, cat, subcat, desc, img, sizes };
 
   if (_editingProductId === null) {
-    // Nuevo producto
+    // Nuevo producto — generar SKU automático
+    const sku = generateSKU(cat, subcat);
     const fbKey = `new_${Date.now()}`;
-    const productData = { ...data, id: fbKey };
+    const productData = { ...data, id: fbKey, sku };
     PRODUCT_OVERRIDES[fbKey] = productData;
     const ok = await fbSaveProductOverride(fbKey, productData);
     if (ok) {
-      toast(`✓ "${name}" agregado al catálogo`, 'ok');
+      showSkuField(sku);
+      toast(`✓ "${name}" agregado · SKU: ${sku}`, 'ok');
     } else {
-      // Reintentar una vez más
       const ok2 = await fbSaveProductOverride(fbKey, productData);
       if (ok2) {
-        toast(`✓ "${name}" agregado al catálogo`, 'ok');
+        showSkuField(sku);
+        toast(`✓ "${name}" agregado · SKU: ${sku}`, 'ok');
       } else {
         toast(`⚠️ Error al guardar en Firebase. Verifica tu conexión.`, 'err');
-        delete PRODUCT_OVERRIDES[fbKey]; // revertir local
+        delete PRODUCT_OVERRIDES[fbKey];
         btn.textContent = 'Guardar'; btn.disabled = false;
         return;
       }
@@ -3450,6 +3480,7 @@ function orderCardHTML(o){
       <div class="check-item-info">
         <span class="check-item-name">${it.name}${it.qty>1?' <em style=\'font-weight:400\'>× '+it.qty+'</em>':''}</span>
         ${sub ? `<span class="check-item-sub">${sub}</span>` : ''}
+        ${prod && prod.sku ? `<span style="font-size:.62rem;color:var(--text-light);letter-spacing:.06em">${prod.sku}</span>` : ''}
       </div>
       <span class="check-qty">${fmtMXN(it.price*it.qty)}</span>
     </label>`;
