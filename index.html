@@ -373,10 +373,11 @@
     .look-card-btn:hover { background: var(--rose); color: #fff; }
 
     @media(max-width:768px){
-      .hero { height: 100svh; }
+      .hero { height: 58vh; min-height: 280px; }
+      .hero-scroll { display:none; }
       .hero-panel + .hero-panel { border-left: 1px solid rgba(255,255,255,.4); }
-      .hero-panel-info { padding: 20px 18px; }
-      .hero-panel-label { font-size: clamp(1.4rem, 6vw, 2.2rem); }
+      .hero-panel-info { padding: 14px 10px; justify-content:flex-end; }
+      .hero-panel-label { font-size: clamp(1.1rem, 5vw, 1.8rem); }
       .hero-panel-cta { display:none; }
       .lookbook { grid-template-columns: 1fr 1fr; }
       .look-card:nth-child(3) { grid-column: 1 / -1; aspect-ratio: 16/9; }
