@@ -3840,6 +3840,20 @@ function setOrderStatus(orderNum, status){
   toast(`Pedido ${orderNum} → ${status}`, 'ok');
 }
 
+function sendWhatsAppNotification(order, status){
+  if(!order.phone) return;
+  const phone = order.phone.replace(/[\s\-\(\)\+]/g,'');
+  const full  = phone.startsWith('52') ? phone : '52' + phone;
+  const name  = (order.customer||'cliente').split(' ')[0];
+  const msgs  = {
+    pagado: `Hola ${name} 🌸, tu pago del pedido *${order.num}* ha sido confirmado. ¡Gracias por tu compra en DUBREM! Te avisamos en cuanto esté listo para recoger. 💕`,
+    listo:  `Hola ${name} 🌸, tu pedido *${order.num}* ya está listo para recoger. 📦\n\n📍 H Colegio Militar 2, Centro, Tula de Allende, Hgo.\n🕐 Lun–Sáb 10:00–19:00 h\n\n¡Te esperamos en DUBREM! 💕`
+  };
+  const msg = msgs[status];
+  if(!msg) return;
+  window.open(`https://wa.me/${full}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
 function confirmSetStatus(orderNum, status){
   const msgs = {
     pagado:   '¿Estás seguro de que el pago ya fue completado?',
@@ -3847,8 +3861,15 @@ function confirmSetStatus(orderNum, status){
     cancelado:'¿Seguro que vas a cancelar este pedido? El stock se liberará de nuevo al catálogo.'
   };
   if(!confirm(msgs[status] || `¿Cambiar estado?`)) return;
-  if(status === 'cancelado') cancelOrder(orderNum);
-  else setOrderStatus(orderNum, status);
+  if(status === 'cancelado'){
+    cancelOrder(orderNum);
+  } else {
+    setOrderStatus(orderNum, status);
+    const order = S.orders.find(o=>o.num===orderNum);
+    if(order && order.phone && (status==='pagado' || status==='listo')){
+      sendWhatsAppNotification(order, status);
+    }
+  }
 }
 
 async function cancelOrder(orderNum){
