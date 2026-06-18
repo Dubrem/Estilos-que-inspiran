@@ -1855,10 +1855,10 @@
     <div class="footer-col">
       <h4>Ayuda</h4>
       <ul>
-        <li><a href="#">Políticas de envío</a></li>
-        <li><a href="#">Devoluciones</a></li>
-        <li><a href="#">Contacto</a></li>
-        <li><a href="#">FAQ</a></li>
+        <li><a href="#" onclick="showInfoModal('envio');return false">Políticas de envío</a></li>
+        <li><a href="#" onclick="showInfoModal('devolucion');return false">Devoluciones</a></li>
+        <li><a href="#" onclick="showInfoModal('contacto');return false">Contacto</a></li>
+        <li><a href="#" onclick="showInfoModal('faq');return false">Preguntas frecuentes</a></li>
       </ul>
     </div>
   </div>
@@ -1872,6 +1872,15 @@
 </footer>
 
 <div class="toast" id="toast"></div>
+
+<!-- Modal de información (envío / devoluciones / contacto / FAQ) -->
+<div class="modal" id="infoModal" style="z-index:800">
+  <div class="modal-overlay" onclick="closeInfoModal()"></div>
+  <div class="modal-box" style="max-width:480px">
+    <button class="modal-x" onclick="closeInfoModal()">✕</button>
+    <div id="infoModalContent"></div>
+  </div>
+</div>
 
 <!-- ======================================================
      JAVASCRIPT
@@ -2305,6 +2314,82 @@ function openNewProductModal() {
 
 function closeProductModal() {
   document.getElementById('productEditModal').classList.remove('open');
+}
+
+const INFO_CONTENT = {
+  envio: `
+    <h2 class="auth-title" style="margin-bottom:6px">🚚 Políticas de Envío</h2>
+    <p class="auth-sub" style="margin-bottom:22px">Lee con atención antes de realizar tu pedido</p>
+    <div style="display:flex;flex-direction:column;gap:14px;font-size:.84rem;line-height:1.7;color:var(--text-med)">
+      <div style="background:var(--blush-light);border-radius:12px;padding:14px 16px">
+        <strong style="color:var(--text-dark)">💳 Pago completo obligatorio</strong><br>
+        Solo se procesan pedidos pagados en su totalidad. El comprobante de transferencia bancaria debe enviarse al momento de realizar el pedido. Sin comprobante, el pedido no se procesa.
+      </div>
+      <div style="background:var(--blush-light);border-radius:12px;padding:14px 16px">
+        <strong style="color:var(--text-dark)">🚫 Sin sistema de apartado</strong><br>
+        No manejamos apartados. El producto se reserva únicamente cuando el pago ha sido confirmado en su totalidad.
+      </div>
+      <div style="background:var(--blush-light);border-radius:12px;padding:14px 16px">
+        <strong style="color:var(--text-dark)">🚫 Sin pagos en partes</strong><br>
+        No aceptamos pagos fraccionados ni abonos. El monto total debe liquidarse antes de la entrega.
+      </div>
+    </div>`,
+  devolucion: `
+    <h2 class="auth-title" style="margin-bottom:6px">↩️ Devoluciones</h2>
+    <p class="auth-sub" style="margin-bottom:22px">Política de devoluciones DUBREM</p>
+    <div style="background:#fde2e2;border-radius:12px;padding:16px 18px;font-size:.84rem;line-height:1.7;color:#8b0000">
+      <strong>No se aceptan devoluciones.</strong><br><br>
+      Te recomendamos revisar bien la descripción, talla y fotos del producto antes de realizar tu compra. Si tienes dudas, contáctanos antes de pagar.
+    </div>
+    <p style="margin-top:16px;font-size:.78rem;color:var(--text-light);line-height:1.6">
+      En caso de recibir un producto con defecto de fábrica, toma una fotografía y envíala a nuestro número de contacto a la brevedad.
+    </p>`,
+  contacto: `
+    <h2 class="auth-title" style="margin-bottom:6px">📞 Contacto</h2>
+    <p class="auth-sub" style="margin-bottom:22px">Estamos para ayudarte</p>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <a href="tel:+525563723284" style="display:flex;align-items:center;gap:14px;background:var(--blush-light);border-radius:12px;padding:16px 18px;text-decoration:none;color:var(--text-dark)">
+        <span style="font-size:1.6rem">📱</span>
+        <div>
+          <div style="font-weight:700;font-size:.9rem">+52 55 6372 3284</div>
+          <div style="font-size:.72rem;color:var(--text-light)">Llamadas y WhatsApp</div>
+        </div>
+      </a>
+      <div style="background:var(--blush-light);border-radius:12px;padding:14px 18px;font-size:.82rem;color:var(--text-med);line-height:1.6">
+        <strong style="color:var(--text-dark)">🕐 Horario de atención</strong><br>
+        Lunes a viernes · 9:00 am – 5:00 pm<br>
+        <span style="color:var(--rose)">Sábado y domingo no se labora</span>
+      </div>
+    </div>`,
+  faq: `
+    <h2 class="auth-title" style="margin-bottom:6px">❓ Preguntas Frecuentes</h2>
+    <p class="auth-sub" style="margin-bottom:22px">Respuestas a las dudas más comunes</p>
+    <div style="display:flex;flex-direction:column;gap:12px;font-size:.82rem;line-height:1.7;color:var(--text-med)">
+      <details style="background:var(--blush-light);border-radius:12px;padding:14px 16px">
+        <summary style="font-weight:700;color:var(--text-dark);cursor:pointer">¿Cuál es el horario de atención?</summary>
+        <p style="margin-top:8px">Atendemos de lunes a viernes de 9:00 am a 5:00 pm. Sábado y domingo no laboramos.</p>
+      </details>
+      <details style="background:var(--blush-light);border-radius:12px;padding:14px 16px">
+        <summary style="font-weight:700;color:var(--text-dark);cursor:pointer">¿Qué pasa si no me avisan que está listo para recoger?</summary>
+        <p style="margin-top:8px">Si no recibes notificación en el tiempo esperado, comunícate directamente a nuestro número de contacto: <strong>+52 55 6372 3284</strong>.</p>
+      </details>
+      <details style="background:var(--blush-light);border-radius:12px;padding:14px 16px">
+        <summary style="font-weight:700;color:var(--text-dark);cursor:pointer">¿Qué hago si el producto llega en mal estado?</summary>
+        <p style="margin-top:8px">Toma fotografías del defecto inmediatamente y envíalas a nuestro número de contacto. Atenderemos tu caso a la brevedad.</p>
+      </details>
+      <details style="background:var(--blush-light);border-radius:12px;padding:14px 16px">
+        <summary style="font-weight:700;color:var(--text-dark);cursor:pointer">¿Qué pasa si no envío el comprobante de pago?</summary>
+        <p style="margin-top:8px">El pedido <strong>no se procesará</strong>. Sin comprobante de transferencia no podemos confirmar el pago, por lo que el pedido quedará en espera hasta recibirlo.</p>
+      </details>
+    </div>`
+};
+
+function showInfoModal(type) {
+  document.getElementById('infoModalContent').innerHTML = INFO_CONTENT[type] || '';
+  document.getElementById('infoModal').classList.add('open');
+}
+function closeInfoModal() {
+  document.getElementById('infoModal').classList.remove('open');
 }
 
 function triggerImgPicker() {
