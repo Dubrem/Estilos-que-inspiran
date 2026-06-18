@@ -2220,14 +2220,31 @@ function renderAdminProducts() {
   `;
 }
 
-function generateSKU(cat, subcat) {
-  const catMap  = { mujer:'MUJ', hombre:'HOM', ninos:'NIN' };
-  const subMap  = { vestido:'VES', blusa:'BLU', pantalon:'PAN', chamarra:'CAM',
-                    sueter:'SUE', playera:'PLA', deportiva:'DEP', sudadera:'SUD', marca:'MRC' };
-  const c = catMap[cat]   || cat.slice(0,3).toUpperCase();
-  const s = subMap[subcat] || (subcat ? subcat.slice(0,3).toUpperCase() : 'GEN');
-  const n = String(Math.floor(1000 + Math.random() * 9000));
-  return `DBR-${c}${s}-${n}`;
+function skuLetters(idx) {
+  let result = '';
+  idx++;
+  while (idx > 0) {
+    idx--;
+    result = String.fromCharCode(65 + (idx % 26)) + result;
+    idx = Math.floor(idx / 26);
+  }
+  return result;
+}
+
+async function getNextSKU() {
+  let counter = 0;
+  try {
+    const data = await fbFetch('meta/skuCounter');
+    counter = (typeof data === 'number') ? data : 0;
+  } catch(e) { counter = 0; }
+  const newCounter = counter + 1;
+  await fbFetch('meta/skuCounter', {
+    method: 'PUT',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(newCounter)
+  });
+  const idx = newCounter - 1;
+  return `${skuLetters(Math.floor(idx / 100))}${(idx % 100) + 1}`;
 }
 
 function showSkuField(sku) {
@@ -2379,8 +2396,8 @@ async function saveProductEdit() {
   const data = { name, price, stock, cat, subcat, desc, img, sizes };
 
   if (_editingProductId === null) {
-    // Nuevo producto — generar SKU automático
-    const sku = generateSKU(cat, subcat);
+    // Nuevo producto — generar SKU automático secuencial
+    const sku = await getNextSKU();
     const fbKey = `new_${Date.now()}`;
     const productData = { ...data, id: fbKey, sku };
     PRODUCT_OVERRIDES[fbKey] = productData;
