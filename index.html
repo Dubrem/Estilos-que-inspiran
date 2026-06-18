@@ -827,15 +827,25 @@
     }
     .check-item {
       display:flex; align-items:center; gap:10px;
-      padding:7px 10px; border-radius:0; cursor:pointer;
+      padding:9px 10px; border-radius:8px; cursor:pointer;
       transition:background .15s; font-size:.8rem; color:var(--text-dark);
+      border-bottom:1px solid var(--border);
     }
+    .check-item:last-child { border-bottom:none; }
     .check-item:hover { background:var(--nude-light); }
     .check-item input[type="checkbox"] {
       width:15px; height:15px; accent-color:var(--text-dark);
       flex-shrink:0; cursor:pointer;
     }
-    .check-item.checked { color:var(--text-light); text-decoration:line-through; }
+    .check-item-img {
+      width:48px; height:48px; object-fit:cover; border-radius:8px;
+      flex-shrink:0; background:var(--blush); border:1px solid var(--border);
+    }
+    .check-item-info { display:flex; flex-direction:column; gap:2px; flex:1; min-width:0; }
+    .check-item-name { font-weight:600; font-size:.8rem; color:var(--text-dark); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .check-item-sub  { font-size:.68rem; color:var(--rose); font-weight:500; text-transform:uppercase; letter-spacing:.05em; }
+    .check-item.checked .check-item-name { color:var(--text-light); text-decoration:line-through; }
+    .check-item.checked { opacity:.6; }
     .check-qty { font-weight:700; color:var(--rose); margin-left:auto; white-space:nowrap; }
     .order-card-foot {
       padding:12px 18px; border-top:1px solid var(--border);
@@ -3428,11 +3438,21 @@ function orderCardHTML(o){
     listo:'🏪 Listo p/recoger', enviado:'🚚 Enviado',
     despachado:'🚚 Enviado',   completado:'🎉 Completado'
   };
-  const checkItems = o.items.map((it,idx)=>`
-    <label class="check-item">
+  const checkItems = o.items.map((it,idx)=>{
+    const prod = findProduct(it.id);
+    const img  = prod ? (prod.img || '') : '';
+    const sub  = prod ? catLabel(prod.subcat || prod.cat) : '';
+    return `
+    <label class="check-item${it.done?' checked':''}">
       <input type="checkbox" ${it.done?'checked':''} onchange="toggleCheck('${o.num}',${idx},this.checked)">
-      <span>${it.name} × ${it.qty} <em style="opacity:.6">(${fmtMXN(it.price*it.qty)})</em></span>
-    </label>`).join('');
+      ${img ? `<img class="check-item-img" src="${img}" alt="${it.name}" onerror="this.style.display='none'">` : ''}
+      <div class="check-item-info">
+        <span class="check-item-name">${it.name}${it.qty>1?' <em style=\'font-weight:400\'>× '+it.qty+'</em>':''}</span>
+        ${sub ? `<span class="check-item-sub">${sub}</span>` : ''}
+      </div>
+      <span class="check-qty">${fmtMXN(it.price*it.qty)}</span>
+    </label>`;
+  }).join('');
 
   const deliveryTxt = DELIVERY_LABELS[o.delivery] || '🏪 Recoger en tienda';
   const allDone = o.items.every(it=>it.done);
