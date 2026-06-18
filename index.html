@@ -1726,8 +1726,11 @@
 <!-- ========== MODAL EDITAR PRODUCTO ========== -->
 <div class="modal" id="productEditModal" style="z-index:700">
   <div class="modal-overlay" onclick="closeProductModal()"></div>
-  <div class="modal-box" style="max-width:500px">
+  <div class="modal-box" style="max-width:500px;display:flex;flex-direction:column;padding:0;overflow:hidden">
     <button class="modal-x" onclick="closeProductModal()">✕</button>
+
+    <!-- Contenido scrollable -->
+    <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:40px 34px 16px">
 
     <!-- Preview + título -->
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:22px">
@@ -1742,7 +1745,7 @@
 
     <!-- Zona de imagen -->
     <div class="form-group">
-      <label class="form-label">📷 Foto del producto</label>
+      <label class="form-label">📷 Foto del producto <span style="font-size:.65rem;color:var(--rose);font-weight:400">· IA sugiere nombre y descripción</span></label>
       <label for="prodImgFile" class="img-upload-zone">
         <div>
           <div class="img-upload-zone-text">📷 Toca aquí para elegir una foto</div>
@@ -1819,8 +1822,10 @@
       <textarea class="form-input" id="prodEditDesc" rows="3" placeholder="Describe materiales, colores…"></textarea>
     </div>
 
-    <!-- Botones -->
-    <div style="display:flex;gap:10px;margin-top:6px">
+    </div><!-- fin scroll -->
+
+    <!-- Botones fijos al fondo -->
+    <div style="display:flex;gap:10px;padding:14px 34px 20px;border-top:1px solid var(--border);background:#fff;flex-shrink:0">
       <button class="btn-primary" id="prodSaveBtn" onclick="saveProductEdit()">Guardar</button>
       <button id="prodDeleteBtn"
         style="padding:13px 18px;border:1.5px solid #fcc;background:transparent;color:#c0392b;border-radius:50px;font-size:.72rem;font-weight:600;cursor:pointer;transition:all .2s;display:none"
@@ -2313,6 +2318,45 @@ function triggerImgPicker() {
   fi.click();
 }
 
+async function analyzeImageWithAI(b64) {
+  let apiKey = localStorage.getItem('dubrem_ai_key');
+  if (!apiKey) {
+    apiKey = prompt('🤖 Ingresa tu API key de Anthropic para activar el análisis de imágenes con IA:\n(Se guarda solo en tu dispositivo)');
+    if (!apiKey || !apiKey.trim()) return null;
+    localStorage.setItem('dubrem_ai_key', apiKey.trim());
+    apiKey = apiKey.trim();
+  }
+  const base64Data = b64.includes(',') ? b64.split(',')[1] : b64;
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 300,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64Data } },
+          { type: 'text', text: 'Eres asistente de tienda de ropa. Analiza esta prenda y responde SOLO con JSON: {"name":"nombre corto en español máx 40 chars","desc":"descripción breve en español mencionando color, material y estilo, máx 120 chars"}. Solo el JSON, nada más.' }
+        ]
+      }]
+    })
+  });
+  if (!resp.ok) {
+    if (resp.status === 401) localStorage.removeItem('dubrem_ai_key');
+    throw new Error(`API ${resp.status}`);
+  }
+  const data = await resp.json();
+  const text = data.content[0].text.trim();
+  const match = text.match(/\{[\s\S]*\}/);
+  return match ? JSON.parse(match[0]) : null;
+}
+
 async function handleProductImageUpload(input) {
   const file = input.files[0]; if (!file) return;
   const status = document.getElementById('prodImgStatus');
@@ -2322,10 +2366,24 @@ async function handleProductImageUpload(input) {
     const b64 = await compressImage(file, 900, 0.78);
     document.getElementById('prodEditImgPreview').src = b64;
     document.getElementById('prodEditImgPreview').style.display = 'block';
-    document.getElementById('prodImgUrl').value = '';      // clear URL field
-    // store in dataset for saveProductEdit to pick up
+    document.getElementById('prodImgUrl').value = '';
     input.dataset.b64 = b64;
-    status.textContent = '✓ Imagen lista';
+    status.textContent = '🤖 Analizando imagen con IA…';
+    status.style.color = 'var(--rose)';
+    try {
+      const ai = await analyzeImageWithAI(b64);
+      if (ai) {
+        const nameField = document.getElementById('prodEditName');
+        const descField = document.getElementById('prodEditDesc');
+        if (!nameField.value.trim()) nameField.value = ai.name || '';
+        if (!descField.value.trim()) descField.value = ai.desc || '';
+        status.textContent = '✓ IA completó nombre y descripción';
+      } else {
+        status.textContent = '✓ Imagen lista';
+      }
+    } catch(aiErr) {
+      status.textContent = '✓ Imagen lista (IA no disponible)';
+    }
     status.style.color = '#2e7d32';
   } catch(e) {
     status.textContent = '✗ Error al cargar la imagen';
