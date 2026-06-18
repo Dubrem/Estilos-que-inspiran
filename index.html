@@ -1773,7 +1773,11 @@
       <button class="btn-admin-close" onclick="closeOrdersPanel()">✕</button>
       <div class="admin-logo">📦 Mis <span>Pedidos</span></div>
     </div>
-    <button class="btn-refresh" onclick="loadOrdersPanel()">↻ Actualizar</button>
+    <div style="display:flex;align-items:center;gap:6px">
+      <button onclick="openEditProfile()" style="font-size:.65rem;padding:6px 12px;border-radius:50px;border:1px solid rgba(255,255,255,.2);background:transparent;color:rgba(255,255,255,.75);cursor:pointer;font-family:var(--ff-body);letter-spacing:.06em;white-space:nowrap">👤 Mis Datos</button>
+      <button onclick="openChangePassword()" style="font-size:.65rem;padding:6px 12px;border-radius:50px;border:1px solid rgba(255,255,255,.2);background:transparent;color:rgba(255,255,255,.75);cursor:pointer;font-family:var(--ff-body);letter-spacing:.06em;white-space:nowrap">🔑 Contraseña</button>
+      <button class="btn-refresh" onclick="loadOrdersPanel()">↻</button>
+    </div>
   </div>
   <div class="customer-orders-body" id="customerOrdersBody">
     <div class="customer-empty"><div class="customer-empty-icon">⏳</div><p>Cargando pedidos…</p></div>
@@ -2015,6 +2019,94 @@
 </footer>
 
 <div class="toast" id="toast"></div>
+
+<!-- ========== CAMBIAR CONTRASEÑA (3 pasos) ========== -->
+<div class="modal" id="changePassModal" style="z-index:800">
+  <div class="modal-overlay" onclick="closeChangePassword()"></div>
+  <div class="modal-box" style="max-width:420px">
+    <button class="modal-x" onclick="closeChangePassword()">✕</button>
+
+    <!-- Paso 1: solicitar código -->
+    <div id="cp-step1">
+      <div class="auth-icon-wrap">
+        <div class="auth-icon" style="font-family:var(--ff-display);font-size:.85rem;letter-spacing:.04em;color:#fff">WA</div>
+        <h2 class="auth-title">Cambiar Contraseña</h2>
+        <p class="auth-sub">Te enviaremos un código a tu WhatsApp registrado para verificar tu identidad.</p>
+      </div>
+      <div class="auth-error" id="cp-err1"></div>
+      <button class="btn-primary" style="width:100%;margin-top:8px" onclick="sendChangePassOTP()">📲 Enviar código por WhatsApp</button>
+    </div>
+
+    <!-- Paso 2: verificar código -->
+    <div id="cp-step2" style="display:none">
+      <div class="auth-icon-wrap">
+        <div class="auth-icon" style="font-family:var(--ff-display);font-size:.85rem;letter-spacing:.04em;color:#fff">WA</div>
+        <h2 class="auth-title">Ingresa el Código</h2>
+        <p class="auth-sub" id="cp-hint2">Revisa tu WhatsApp e ingresa el código de 6 dígitos.</p>
+      </div>
+      <div style="background:var(--blush-light);border-radius:10px;padding:10px 14px;font-size:.72rem;color:var(--rose);text-align:center;margin-bottom:14px">⏱ Válido por 10 minutos · El código llegó a tu WhatsApp</div>
+      <div class="auth-error" id="cp-err2"></div>
+      <div class="form-group" style="margin-bottom:18px">
+        <label class="form-label">Código de 6 dígitos</label>
+        <input class="form-input code-input" type="text" id="cp-code" maxlength="6"
+               placeholder="_ _ _ _ _ _" oninput="this.value=this.value.replace(/\D/g,'')"
+               onkeydown="if(event.key==='Enter')verifyChangePassOTP()">
+      </div>
+      <button class="btn-primary" style="width:100%" onclick="verifyChangePassOTP()">✓ Verificar Código</button>
+      <p class="auth-switch" style="margin-top:10px"><a onclick="sendChangePassOTP()">Reenviar código</a></p>
+    </div>
+
+    <!-- Paso 3: nueva contraseña -->
+    <div id="cp-step3" style="display:none">
+      <div class="auth-icon-wrap">
+        <div class="auth-icon" style="background:var(--rose)">🔑</div>
+        <h2 class="auth-title">Nueva Contraseña</h2>
+        <p class="auth-sub">Elige una contraseña segura de al menos 6 caracteres.</p>
+      </div>
+      <div class="auth-error" id="cp-err3"></div>
+      <div class="form-group">
+        <label class="form-label">Nueva contraseña</label>
+        <input class="form-input" type="password" id="cp-pass1" placeholder="Mínimo 6 caracteres">
+      </div>
+      <div class="form-group" style="margin-bottom:18px">
+        <label class="form-label">Confirmar contraseña</label>
+        <input class="form-input" type="password" id="cp-pass2" placeholder="Repite la contraseña"
+               onkeydown="if(event.key==='Enter')doChangePassword()">
+      </div>
+      <button class="btn-primary" style="width:100%" onclick="doChangePassword()">✓ Guardar Nueva Contraseña</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== EDITAR DATOS PERSONALES ========== -->
+<div class="modal" id="editProfileModal" style="z-index:800">
+  <div class="modal-overlay" onclick="closeEditProfile()"></div>
+  <div class="modal-box" style="max-width:420px">
+    <button class="modal-x" onclick="closeEditProfile()">✕</button>
+    <div class="auth-icon-wrap">
+      <div class="auth-icon" style="background:var(--rose)">👤</div>
+      <h2 class="auth-title">Mis Datos</h2>
+      <p class="auth-sub">Actualiza tu información personal.</p>
+    </div>
+    <div class="auth-error" id="ep-err"></div>
+    <div class="form-group">
+      <label class="form-label">Nombre completo</label>
+      <input class="form-input" type="text" id="ep-name" placeholder="Tu nombre">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Teléfono (WhatsApp)</label>
+      <input class="form-input" type="tel" id="ep-phone" placeholder="55 1234 5678">
+    </div>
+    <div class="form-group" style="margin-bottom:18px">
+      <label class="form-label">Correo electrónico</label>
+      <input class="form-input" id="ep-email" type="email" readonly
+             style="background:var(--nude-light);color:var(--text-light);cursor:default"
+             title="El correo no se puede cambiar">
+      <div style="font-size:.65rem;color:var(--text-light);margin-top:4px">El correo es tu identificador y no puede modificarse.</div>
+    </div>
+    <button class="btn-primary" style="width:100%" onclick="saveProfile()">✓ Guardar Cambios</button>
+  </div>
+</div>
 
 <!-- Modal de información (envío / devoluciones / contacto / FAQ) -->
 <div class="modal" id="infoModal" style="z-index:800">
@@ -3518,12 +3610,9 @@ function openRecoveryModal(user, code){
   document.getElementById('recoveryHint').textContent =
     `Se abrió WhatsApp con tu código para ${user.name}`;
 
-  // Mostrar el código en pantalla (para facilidad de uso en app de una sola página)
+  // Código NO se muestra en pantalla — llega solo por WhatsApp
   const box = document.getElementById('recoveryCodeBox');
-  box.innerHTML = `
-    <div class="rc-label">Tu código temporal</div>
-    <div class="rc-num">${code}</div>
-    <div class="rc-exp">⏱ Válido por 10 minutos</div>`;
+  box.innerHTML = `<div class="rc-exp">⏱ Código válido por 10 minutos · Revisa tu WhatsApp</div>`;
   box.classList.add('show');
 
   // Guardar referencia al usuario en recuperación
@@ -3534,6 +3623,103 @@ function openRecoveryModal(user, code){
   setTimeout(()=>document.getElementById('recoveryCode').focus(),200);
 }
 function closeRecoveryModal(){ document.getElementById('recoveryModal').classList.remove('open'); unlockScroll(); }
+
+/* ── Cambiar Contraseña ── */
+function openChangePassword(){
+  if(!S.user){ toast('Inicia sesión primero','err'); return; }
+  const u = S.users.find(u=>u.email===S.user.email);
+  if(!u || !u.phone){ toast('Necesitas tener un teléfono registrado','err'); return; }
+  // reset steps
+  document.getElementById('cp-step1').style.display='';
+  document.getElementById('cp-step2').style.display='none';
+  document.getElementById('cp-step3').style.display='none';
+  document.getElementById('cp-err1').textContent='';
+  document.getElementById('cp-err2').textContent='';
+  document.getElementById('cp-err3').textContent='';
+  document.getElementById('cp-code').value='';
+  document.getElementById('cp-pass1').value='';
+  document.getElementById('cp-pass2').value='';
+  document.getElementById('changePassModal').classList.add('open');
+  lockScroll();
+}
+function closeChangePassword(){ document.getElementById('changePassModal').classList.remove('open'); unlockScroll(); }
+
+function sendChangePassOTP(){
+  const u = S.users.find(u=>u.email===S.user.email);
+  if(!u){ return; }
+  const code = String(Math.floor(100000+Math.random()*900000));
+  u._cpCode = code;
+  u._cpExp  = Date.now() + 10*60*1000;
+  const waPhone = '521'+normalizePhone(u.phone);
+  const msg = `🔑 *DUBREM* — Cambio de contraseña\n\nHola ${u.name}, tu código de verificación es:\n\n*${code}*\n\nVálido por 10 minutos. Si no lo solicitaste, ignora este mensaje.`;
+  window.open(`https://wa.me/${waPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+  document.getElementById('cp-step1').style.display='none';
+  document.getElementById('cp-step2').style.display='';
+  document.getElementById('cp-hint2').textContent=`Código enviado al WhatsApp de ${u.name}`;
+  setTimeout(()=>document.getElementById('cp-code').focus(),150);
+}
+
+function verifyChangePassOTP(){
+  const u    = S.users.find(u=>u.email===S.user.email);
+  const code = document.getElementById('cp-code').value.trim();
+  const err  = document.getElementById('cp-err2');
+  if(!u||!u._cpCode){ err.textContent='Solicita un nuevo código.'; err.classList.add('show'); return; }
+  if(Date.now()>u._cpExp){ err.textContent='El código expiró. Solicita uno nuevo.'; err.classList.add('show'); u._cpCode=null; return; }
+  if(code!==u._cpCode){ err.textContent='Código incorrecto. Revisa tu WhatsApp.'; err.classList.add('show'); return; }
+  u._cpCode=null; u._cpExp=null;
+  document.getElementById('cp-step2').style.display='none';
+  document.getElementById('cp-step3').style.display='';
+  setTimeout(()=>document.getElementById('cp-pass1').focus(),150);
+}
+
+async function doChangePassword(){
+  const pass1 = document.getElementById('cp-pass1').value;
+  const pass2 = document.getElementById('cp-pass2').value;
+  const err   = document.getElementById('cp-err3');
+  if(pass1.length<6){ err.textContent='La contraseña debe tener al menos 6 caracteres.'; err.classList.add('show'); return; }
+  if(pass1!==pass2){ err.textContent='Las contraseñas no coinciden.'; err.classList.add('show'); return; }
+  const u = S.users.find(u=>u.email===S.user.email);
+  if(!u) return;
+  u.pass = pass1;
+  await fbSaveUser(u);
+  try{ const ls=JSON.parse(localStorage.getItem(LS_USERS)||'[]'); const li=ls.findIndex(x=>x.email===u.email); if(li>=0){ls[li].pass=pass1; localStorage.setItem(LS_USERS,JSON.stringify(ls));} }catch(e){}
+  closeChangePassword();
+  toast('✓ Contraseña actualizada correctamente','ok');
+}
+
+/* ── Editar Datos Personales ── */
+function openEditProfile(){
+  if(!S.user){ toast('Inicia sesión primero','err'); return; }
+  const u = S.users.find(u=>u.email===S.user.email);
+  document.getElementById('ep-name').value  = u ? u.name  : S.user.name  || '';
+  document.getElementById('ep-phone').value = u ? u.phone : S.user.phone || '';
+  document.getElementById('ep-email').value = S.user.email || '';
+  document.getElementById('ep-err').textContent='';
+  document.getElementById('editProfileModal').classList.add('open');
+  lockScroll();
+}
+function closeEditProfile(){ document.getElementById('editProfileModal').classList.remove('open'); unlockScroll(); }
+
+async function saveProfile(){
+  const name  = document.getElementById('ep-name').value.trim();
+  const phone = normalizePhone(document.getElementById('ep-phone').value);
+  const err   = document.getElementById('ep-err');
+  if(!name){ err.textContent='El nombre no puede estar vacío.'; err.classList.add('show'); return; }
+  if(phone.length<8){ err.textContent='Ingresa un teléfono válido.'; err.classList.add('show'); return; }
+  // Check phone not taken by another user
+  const dup = S.users.find(u=>u.email!==S.user.email && normalizePhone(u.phone||'')=== phone);
+  if(dup){ err.textContent='Ese teléfono ya está registrado en otra cuenta.'; err.classList.add('show'); return; }
+  const u = S.users.find(u=>u.email===S.user.email);
+  if(!u) return;
+  u.name=name; u.phone=phone;
+  S.user.name=name; S.user.phone=phone;
+  saveSession();
+  await fbSaveUser(u);
+  try{ const ls=JSON.parse(localStorage.getItem(LS_USERS)||'[]'); const li=ls.findIndex(x=>x.email===u.email); if(li>=0){ls[li].name=name;ls[li].phone=phone;localStorage.setItem(LS_USERS,JSON.stringify(ls));} }catch(e){}
+  renderLoginArea();
+  closeEditProfile();
+  toast('✓ Datos actualizados correctamente','ok');
+}
 
 function doRecovery(){
   const code = document.getElementById('recoveryCode').value.trim();
