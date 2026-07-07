@@ -590,8 +590,13 @@
     .img-zoom-overlay { display:none; position:fixed; inset:0; z-index:600; background:rgba(0,0,0,.92); align-items:center; justify-content:center; cursor:zoom-out; }
     .img-zoom-overlay.open { display:flex; }
     .img-zoom-overlay img { max-width:95vw; max-height:95vh; object-fit:contain; border-radius:6px; user-select:none; pointer-events:none; }
-    .img-zoom-close { position:absolute; top:16px; right:16px; width:36px; height:36px; border-radius:50%; border:none; background:rgba(255,255,255,.15); color:#fff; font-size:16px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background .15s; }
+    .img-zoom-close { position:absolute; top:16px; right:16px; width:36px; height:36px; border-radius:50%; border:none; background:rgba(255,255,255,.15); color:#fff; font-size:16px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background .15s; z-index:1; }
     .img-zoom-close:hover { background:rgba(255,255,255,.3); }
+    .img-zoom-arrow { position:absolute; top:50%; transform:translateY(-50%); width:44px; height:44px; border-radius:50%; border:none; background:rgba(255,255,255,.15); color:#fff; font-size:1.8rem; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background .15s; z-index:1; line-height:1; }
+    .img-zoom-arrow:hover { background:rgba(255,255,255,.3); }
+    .img-zoom-arrow.hidden { display:none !important; }
+    .img-zoom-prev { left:16px; }
+    .img-zoom-next { right:16px; }
     .lb-info { padding:36px 30px; display:flex; flex-direction:column; justify-content:center; flex:1; }
     .lb-cat {
       display:inline-block; background:var(--rose-pale); color:var(--rose);
@@ -1550,15 +1555,17 @@
 
 <!-- ========== LIGHTBOX ========== -->
 <div class="img-zoom-overlay" id="imgZoomOverlay" onclick="closeImgZoom()">
-  <button class="img-zoom-close" onclick="closeImgZoom()">✕</button>
-  <img id="imgZoomImg" src="" alt="">
+  <button class="img-zoom-close" onclick="event.stopPropagation();closeImgZoom()">✕</button>
+  <button class="img-zoom-arrow img-zoom-prev hidden" id="imgZoomPrev" onclick="event.stopPropagation();zoomGoto(_lbIdx-1)">&#8249;</button>
+  <img id="imgZoomImg" src="" alt="" onclick="event.stopPropagation()">
+  <button class="img-zoom-arrow img-zoom-next hidden" id="imgZoomNext" onclick="event.stopPropagation();zoomGoto(_lbIdx+1)">&#8250;</button>
 </div>
 
 <div class="lightbox" id="lightbox">
   <div class="lb-overlay" onclick="closeLightbox()"></div>
   <div class="lb-box">
     <div class="lb-img-wrap" id="lbImgWrap">
-      <img class="lb-img" id="lbImg" src="" alt="" onerror="imgErr(this)" onclick="openImgZoom(this.src)" title="Toca para ampliar">
+      <img class="lb-img" id="lbImg" src="" alt="" onerror="imgErr(this)" onclick="openImgZoom()" title="Toca para ampliar">
       <button class="lb-arrow lb-prev hidden" id="lbPrev" onclick="lbGoto(_lbIdx-1)">&#8249;</button>
       <button class="lb-arrow lb-next hidden" id="lbNext" onclick="lbGoto(_lbIdx+1)">&#8250;</button>
       <div class="lb-thumbs hidden" id="lbThumbs"></div>
@@ -2980,6 +2987,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const onScroll = () => header.classList.toggle('scrolled', window.scrollY > 40);
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
+
+  // Swipe para navegar fotos en zoom overlay
+  let _zoomTouchX = null;
+  const zoomEl = document.getElementById('imgZoomOverlay');
+  zoomEl.addEventListener('touchstart', e => { _zoomTouchX = e.touches[0].clientX; }, { passive: true });
+  zoomEl.addEventListener('touchend', e => {
+    if (_zoomTouchX === null) return;
+    const dx = e.changedTouches[0].clientX - _zoomTouchX;
+    _zoomTouchX = null;
+    if (Math.abs(dx) < 40) return;
+    if (dx < 0 && _lbIdx < _lbImgs.length - 1) zoomGoto(_lbIdx + 1);
+    else if (dx > 0 && _lbIdx > 0) zoomGoto(_lbIdx - 1);
+  }, { passive: true });
 });
 
 /* ──────────────────────────────────────────────────────
@@ -3267,8 +3287,27 @@ function updateLbStock(p) {
   btn.textContent= eff===0 ? 'Agotado' : 'Añadir al Carrito';
 }
 function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); unlockScroll(); S.lbId=null; }
-function openImgZoom(src) { document.getElementById('imgZoomImg').src=src; document.getElementById('imgZoomOverlay').classList.add('open'); }
+function openImgZoom() {
+  document.getElementById('imgZoomImg').src = _lbImgs[_lbIdx] || '';
+  _syncZoomArrows();
+  document.getElementById('imgZoomOverlay').classList.add('open');
+}
 function closeImgZoom() { document.getElementById('imgZoomOverlay').classList.remove('open'); }
+function zoomGoto(idx) {
+  if (!_lbImgs.length) return;
+  _lbIdx = Math.max(0, Math.min(_lbImgs.length - 1, idx));
+  document.getElementById('lbImg').src = _lbImgs[_lbIdx];
+  document.getElementById('lbPrev').classList.toggle('hidden', _lbIdx === 0);
+  document.getElementById('lbNext').classList.toggle('hidden', _lbIdx === _lbImgs.length - 1);
+  document.getElementById('lbThumbs').querySelectorAll('.lb-thumb').forEach((t,i) => t.classList.toggle('active', i === _lbIdx));
+  document.getElementById('imgZoomImg').src = _lbImgs[_lbIdx];
+  _syncZoomArrows();
+}
+function _syncZoomArrows() {
+  const multi = _lbImgs.length > 1;
+  document.getElementById('imgZoomPrev').classList.toggle('hidden', !multi || _lbIdx === 0);
+  document.getElementById('imgZoomNext').classList.toggle('hidden', !multi || _lbIdx === _lbImgs.length - 1);
+}
 
 /* ──────────────────────────────────────────────────────
    SIDEBAR — menú lateral de categorías
