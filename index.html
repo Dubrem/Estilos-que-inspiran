@@ -586,7 +586,7 @@
     .lb-overlay { position:absolute; inset:0; background:rgba(44,26,30,.65); backdrop-filter:blur(8px); }
     .lb-box { position:relative; z-index:1; background:#fff; border-radius:20px; overflow:hidden; max-width:720px; width:100%; display:flex; box-shadow:0 40px 80px rgba(196,86,106,.2); animation:popIn .3s ease; }
     @keyframes popIn { from{opacity:0;transform:scale(.95) translateY(22px)} to{opacity:1;transform:scale(1) translateY(0)} }
-    .lb-img { width:45%; flex-shrink:0; object-fit:cover; aspect-ratio:3/4; background:var(--blush-light); cursor:zoom-in; }
+    /* lb-img-wrap and lb-img now defined in multi-image section below */
     .img-zoom-overlay { display:none; position:fixed; inset:0; z-index:600; background:rgba(0,0,0,.92); align-items:center; justify-content:center; cursor:zoom-out; }
     .img-zoom-overlay.open { display:flex; }
     .img-zoom-overlay img { max-width:95vw; max-height:95vh; object-fit:contain; border-radius:6px; user-select:none; pointer-events:none; }
@@ -1294,7 +1294,7 @@
       .products-section{padding-left:1rem;padding-right:1rem}
       .products-grid{grid-template-columns:repeat(2,1fr);gap:12px}
       .product-name{font-size:.84rem} .product-info{padding:12px 12px 14px}
-      .lb-box{flex-direction:column} .lb-img{width:100%;aspect-ratio:4/3}
+      .lb-box{flex-direction:column} .lb-img-wrap{width:100%;} .lb-img{aspect-ratio:4/3;flex:none;}
       .cart-sidebar{width:100%}
       .modal-box{padding:28px 20px;max-height:calc(100svh - 24px)}
       .checkout-modal .modal-box{padding:20px 16px;max-height:calc(100svh - 24px)}
@@ -1336,6 +1336,26 @@
       .user-avatar { width:15px; height:15px; font-size:7px; }
       .user-logout { font-size:.48rem; }
     }
+
+    /* Multi-image admin grid */
+    .admin-img-grid { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; }
+    .admin-img-slot { width:72px; height:90px; border-radius:10px; overflow:hidden; position:relative; flex-shrink:0; }
+    .admin-img-slot img { width:100%; height:100%; object-fit:cover; display:block; }
+    .admin-img-slot .ai-remove { position:absolute; top:3px; right:3px; width:18px; height:18px; border-radius:50%; background:rgba(0,0,0,.55); color:#fff; font-size:10px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1; }
+    .admin-img-add { width:72px; height:90px; border-radius:10px; border:1.5px dashed var(--rose-light); background:var(--blush-light); display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; gap:4px; color:var(--rose); font-size:.6rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; flex-shrink:0; }
+    .admin-img-add span { font-size:1.4rem; line-height:1; }
+
+    /* Lightbox gallery */
+    .lb-img-wrap { width:45%; flex-shrink:0; position:relative; display:flex; flex-direction:column; overflow:hidden; background:var(--blush-light); }
+    .lb-img { width:100%; flex:1; object-fit:cover; min-height:200px; cursor:zoom-in; }
+    .lb-arrow { position:absolute; top:50%; transform:translateY(-50%); width:32px; height:32px; border-radius:50%; background:rgba(0,0,0,.4); color:#fff; border:none; cursor:pointer; font-size:1.1rem; display:flex; align-items:center; justify-content:center; z-index:2; transition:background .15s; }
+    .lb-arrow:hover { background:rgba(0,0,0,.65); }
+    .lb-arrow.lb-prev { left:6px; }
+    .lb-arrow.lb-next { right:6px; }
+    .lb-arrow.hidden { display:none; }
+    .lb-thumbs { display:flex; gap:5px; padding:6px 8px; background:var(--blush-light); overflow-x:auto; flex-shrink:0; }
+    .lb-thumb { width:36px; height:44px; border-radius:5px; object-fit:cover; cursor:pointer; opacity:.55; border:2px solid transparent; transition:all .15s; flex-shrink:0; }
+    .lb-thumb.active { opacity:1; border-color:var(--rose); }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js"></script>
 </head>
@@ -1507,7 +1527,12 @@
 <div class="lightbox" id="lightbox">
   <div class="lb-overlay" onclick="closeLightbox()"></div>
   <div class="lb-box">
-    <img class="lb-img" id="lbImg" src="" alt="" onerror="imgErr(this)" onclick="openImgZoom(this.src)"  title="Toca para ampliar">
+    <div class="lb-img-wrap" id="lbImgWrap">
+      <img class="lb-img" id="lbImg" src="" alt="" onerror="imgErr(this)" onclick="openImgZoom(this.src)" title="Toca para ampliar">
+      <button class="lb-arrow lb-prev hidden" id="lbPrev" onclick="lbGoto(_lbIdx-1)">&#8249;</button>
+      <button class="lb-arrow lb-next hidden" id="lbNext" onclick="lbGoto(_lbIdx+1)">&#8250;</button>
+      <div class="lb-thumbs hidden" id="lbThumbs"></div>
+    </div>
     <div class="lb-info">
       <span class="lb-cat" id="lbCat"></span>
       <h2 class="lb-name" id="lbName"></h2>
@@ -1864,23 +1889,11 @@
       </div>
     </div>
 
-    <!-- Zona de imagen -->
+    <!-- Zona de imágenes múltiples -->
     <div class="form-group">
-      <label class="form-label">📷 Foto del producto</label>
-      <label for="prodImgFile" class="img-upload-zone">
-        <div>
-          <div class="img-upload-zone-text">📷 Toca aquí para elegir una foto</div>
-          <div class="img-upload-zone-sub">JPG, PNG, WEBP · se comprime automáticamente</div>
-        </div>
-      </label>
-      <div style="display:flex;align-items:center;gap:8px;margin:10px 0">
-        <div style="flex:1;height:1px;background:var(--border)"></div>
-        <span style="font-size:.65rem;color:var(--text-light);white-space:nowrap">o pega una URL de imagen</span>
-        <div style="flex:1;height:1px;background:var(--border)"></div>
-      </div>
-      <input class="form-input" id="prodImgUrl" type="url" placeholder="https://ejemplo.com/foto.jpg"
-             oninput="previewFromUrl(this.value)">
-      <div id="prodImgStatus" style="font-size:.7rem;margin-top:5px;color:var(--text-light)"></div>
+      <label class="form-label">📷 Fotos del producto <span style="font-size:.6rem;color:var(--text-light);font-weight:400">(hasta 5 · la 1ª es la principal)</span></label>
+      <div class="admin-img-grid" id="adminImgGrid"></div>
+      <div id="prodImgStatus" style="font-size:.7rem;margin-top:4px;color:var(--text-light)"></div>
     </div>
 
     <!-- Nombre -->
@@ -1955,7 +1968,7 @@
 </div>
 
 <!-- Input de archivo fuera de cualquier modal (fix iOS/Android) -->
-<input type="file" accept="image/*" id="prodImgFile"
+<input type="file" accept="image/*" id="prodImgFile" multiple
        style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0"
        onchange="handleProductImageUpload(this)">
 
@@ -2397,6 +2410,34 @@ function getMergedProducts(){
    PRODUCT MANAGEMENT — ADMIN
 ────────────────────────────────────────────────────── */
 let _editingProductId = null;  // null = nuevo, else id
+let _adminImgs = [];
+
+function renderAdminImgGrid() {
+  const grid = document.getElementById('adminImgGrid');
+  if (!grid) return;
+  const preview = document.getElementById('prodEditImgPreview');
+  let html = _adminImgs.map((src, i) => `
+    <div class="admin-img-slot">
+      <img src="${src}" alt="foto ${i+1}">
+      <button class="ai-remove" onclick="removeAdminImg(${i})" title="Quitar">&#x2715;</button>
+    </div>`).join('');
+  if (_adminImgs.length < 5) {
+    html += `<div class="admin-img-add" onclick="document.getElementById('prodImgFile').click()">
+      <span>+</span>Agregar
+    </div>`;
+  }
+  grid.innerHTML = html;
+  // update header preview
+  if (preview) {
+    if (_adminImgs.length) { preview.src = _adminImgs[0]; preview.style.display = 'block'; }
+    else { preview.src = ''; preview.style.display = 'none'; }
+  }
+}
+
+function removeAdminImg(idx) {
+  _adminImgs.splice(idx, 1);
+  renderAdminImgGrid();
+}
 
 /** Busca producto en PRODUCTS (numérico) o PRODUCT_OVERRIDES (string new_*) */
 function findProduct(id) {
@@ -2511,17 +2552,15 @@ function openProductEditModal(id) {
   document.getElementById('prodEditCat').value = editCat;
   updateSubcatOptions(editCat, p ? (p.subcat || '') : '');
   document.getElementById('prodEditDesc').value  = p ? (p.desc || '') : '';
-  document.getElementById('prodImgUrl').value    = (p && p.img && !p.img.startsWith('data:')) ? p.img : '';
   document.getElementById('prodImgStatus').textContent = '';
+  // Load images array
+  _adminImgs = p ? (p.imgs && p.imgs.length ? [...p.imgs] : (p.img ? [p.img] : [])) : [];
+  renderAdminImgGrid();
   // SKU
   showSkuField(p ? (p.sku || '') : '');
   // Cargar tallas
   const savedSizes = (p && p.sizes) ? p.sizes : [];
   document.querySelectorAll('.size-check').forEach(cb => { cb.checked = savedSizes.includes(cb.value); });
-  // preview
-  const preview = document.getElementById('prodEditImgPreview');
-  if (p && p.img) { preview.src = p.img; preview.style.display = 'block'; }
-  else            { preview.src = ''; preview.style.display = 'none'; }
   // delete btn only for existing
   document.getElementById('prodDeleteBtn').style.display = p ? 'block' : 'none';
   document.getElementById('productEditModal').classList.add('open');
@@ -2537,12 +2576,11 @@ function openNewProductModal() {
   document.getElementById('prodEditCat').value = 'mujer';
   updateSubcatOptions('mujer', '');
   document.getElementById('prodEditDesc').value  = '';
-  document.getElementById('prodImgUrl').value    = '';
   document.getElementById('prodImgStatus').textContent = '';
+  _adminImgs = [];
+  renderAdminImgGrid();
   showSkuField('');
   document.querySelectorAll('.size-check').forEach(cb => { cb.checked = false; });
-  document.getElementById('prodEditImgPreview').src = '';
-  document.getElementById('prodEditImgPreview').style.display = 'none';
   document.getElementById('prodDeleteBtn').style.display = 'none';
   document.getElementById('productEditModal').classList.add('open');
 }
@@ -2680,22 +2718,24 @@ function triggerImgPicker() {
 }
 
 async function handleProductImageUpload(input) {
-  const file = input.files[0]; if (!file) return;
+  const files = Array.from(input.files || []);
+  if (!files.length) return;
   const status = document.getElementById('prodImgStatus');
-  status.textContent = '⏳ Comprimiendo imagen…';
+  status.textContent = '⏳ Comprimiendo imagen(es)…';
   status.style.color = 'var(--text-med)';
-  try {
-    const b64 = await compressImage(file, 900, 0.78);
-    document.getElementById('prodEditImgPreview').src = b64;
-    document.getElementById('prodEditImgPreview').style.display = 'block';
-    document.getElementById('prodImgUrl').value = '';
-    input.dataset.b64 = b64;
-    status.textContent = '✓ Imagen lista';
-    status.style.color = '#2e7d32';
-  } catch(e) {
-    status.textContent = '✗ Error al cargar la imagen';
-    status.style.color = '#c0392b';
+  let added = 0;
+  for (const file of files) {
+    if (_adminImgs.length >= 5) break;
+    try {
+      const b64 = await compressImage(file, 900, 0.78);
+      _adminImgs.push(b64);
+      added++;
+    } catch(e) {}
   }
+  input.value = ''; // reset so same file can be re-added
+  renderAdminImgGrid();
+  status.textContent = added ? `✓ ${added} imagen(es) lista(s)` : '✗ Error al cargar';
+  status.style.color = added ? '#2e7d32' : '#c0392b';
 }
 
 function compressImage(file, maxPx, quality) {
@@ -2744,21 +2784,16 @@ async function saveProductEdit() {
   const desc   = document.getElementById('prodEditDesc').value.trim();
   const sizes = Array.from(document.querySelectorAll('.size-check:checked')).map(c=>c.value);
 
-  // Resolve image: prefer uploaded b64, then URL field, then existing
-  const fileInput = document.getElementById('prodImgFile');
-  const b64 = fileInput && fileInput.dataset.b64 ? fileInput.dataset.b64 : '';
-  const urlField = document.getElementById('prodImgUrl').value.trim();
-  let img = b64 || urlField;
-
-  if (!img && _editingProductId !== null) {
-    // keep existing image
+  // If no new images and editing existing, keep existing
+  if (_adminImgs.length === 0 && _editingProductId !== null) {
     const existing = findProduct(_editingProductId);
-    img = existing ? (existing.img || '') : '';
+    if (existing) _adminImgs = existing.imgs && existing.imgs.length ? [...existing.imgs] : (existing.img ? [existing.img] : []);
   }
+  const img = _adminImgs[0] || '';
 
   if (!name) { toast('El nombre es obligatorio', 'err'); btn.textContent = 'Guardar'; btn.disabled = false; return; }
 
-  const data = { name, price, stock, cat, subcat, desc, img, sizes };
+  const data = { name, price, stock, cat, subcat, desc, img, imgs: [..._adminImgs], sizes };
 
   if (_editingProductId === null) {
     // Nuevo producto — generar SKU automático secuencial
@@ -2802,9 +2837,6 @@ async function saveProductEdit() {
     }
     toast(`✓ "${name}" actualizado`, 'ok');
   }
-
-  // reset file input
-  if (fileInput) { fileInput.value = ''; fileInput.dataset.b64 = ''; }
 
   closeProductModal();
   renderAdminProducts();
@@ -3127,12 +3159,45 @@ function cardHTML(p) {
 /* ──────────────────────────────────────────────────────
    LIGHTBOX
 ────────────────────────────────────────────────────── */
+let _lbImgs = [];
+let _lbIdx  = 0;
+
+function lbGoto(idx) {
+  if (!_lbImgs.length) return;
+  _lbIdx = Math.max(0, Math.min(_lbImgs.length - 1, idx));
+  document.getElementById('lbImg').src = _lbImgs[_lbIdx];
+  // arrows
+  document.getElementById('lbPrev').classList.toggle('hidden', _lbIdx === 0);
+  document.getElementById('lbNext').classList.toggle('hidden', _lbIdx === _lbImgs.length - 1);
+  // thumbnails
+  const thumbs = document.getElementById('lbThumbs');
+  thumbs.querySelectorAll('.lb-thumb').forEach((t, i) => t.classList.toggle('active', i === _lbIdx));
+}
+
 function openLightbox(id) {
   const p = getMergedProducts().find(x=>x.id===id); if(!p) return;
   S.lbId = id;
   S.lbSize = null;
   document.getElementById('lbImg').src   = p.img;
   document.getElementById('lbImg').alt   = p.name;
+  // Set up gallery
+  _lbImgs = p.imgs && p.imgs.length ? p.imgs : (p.img ? [p.img] : []);
+  _lbIdx = 0;
+  const thumbsEl = document.getElementById('lbThumbs');
+  const prevEl = document.getElementById('lbPrev');
+  const nextEl = document.getElementById('lbNext');
+  if (_lbImgs.length > 1) {
+    thumbsEl.innerHTML = _lbImgs.map((src, i) =>
+      `<img class="lb-thumb${i===0?' active':''}" src="${src}" onclick="lbGoto(${i})" alt="">`
+    ).join('');
+    thumbsEl.classList.remove('hidden');
+    prevEl.classList.add('hidden');
+    nextEl.classList.remove('hidden');
+  } else {
+    thumbsEl.classList.add('hidden');
+    prevEl.classList.add('hidden');
+    nextEl.classList.add('hidden');
+  }
   document.getElementById('lbCat').textContent   = catLabel(p.cat);
   document.getElementById('lbName').textContent  = p.name;
   document.getElementById('lbDesc').textContent  = p.desc;
