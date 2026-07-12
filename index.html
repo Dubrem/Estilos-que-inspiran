@@ -2263,8 +2263,8 @@ const DELIVERY_LABELS = {
 const FIREBASE_DB_URL = 'https://bella-esencial-default-rtdb.firebaseio.com';
 
 /* API key de Anthropic para sugerencias IA (se guarda en localStorage del admin) */
-function getAIKey() { return localStorage.getItem('dubrem_ai_key') || ''; }
-function setAIKey(k) { localStorage.setItem('dubrem_ai_key', k); }
+function getAIKey() { return localStorage.getItem('dubrem_gemini_key') || ''; }
+function setAIKey(k) { localStorage.setItem('dubrem_gemini_key', k); }
 
 async function fbFetch(path, opts={}){
   if(!FIREBASE_DB_URL) return null;
@@ -2522,7 +2522,7 @@ async function suggestDescWithAI() {
   }
   let key = getAIKey();
   if (!key) {
-    key = prompt('Ingresa tu API key de Anthropic (se guarda solo en este navegador):');
+    key = prompt('Ingresa tu API key de Google Gemini (aistudio.google.com → Get API key).\nSe guarda solo en este navegador:');
     if (!key || !key.trim()) return;
     setAIKey(key.trim());
     key = key.trim();
@@ -2530,44 +2530,31 @@ async function suggestDescWithAI() {
   const btn = document.getElementById('aiDescBtn');
   btn.disabled = true; btn.textContent = '⏳ Analizando…';
 
-  const imgParts = _adminImgs.slice(0, 3).map(src => {
-    if (src.startsWith('data:')) {
-      const [meta, b64] = src.split(',');
-      const mediaType = (meta.match(/data:([^;]+)/) || [])[1] || 'image/jpeg';
-      return { type:'image', source:{ type:'base64', media_type:mediaType, data:b64 } };
-    }
-    return { type:'image', source:{ type:'url', url:src } };
+  const parts = _adminImgs.slice(0, 3).map(src => {
+    const [meta, b64] = src.startsWith('data:') ? src.split(',') : ['data:image/jpeg', src];
+    const mimeType = (meta.match(/data:([^;]+)/) || [])[1] || 'image/jpeg';
+    return { inline_data: { mime_type: mimeType, data: b64 } };
   });
+  parts.push({ text: 'Eres experto en e-commerce de moda. Analiza la imagen y escribe una descripción atractiva en español para la tienda DUBREM. Menciona: tipo de prenda, material o tela si se ve, colores, estilo y ocasión de uso. Máximo 2 oraciones cortas y directas. Solo escribe la descripción, sin prefijos.' });
 
   try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': key,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-        'content-type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 200,
-        messages: [{
-          role: 'user',
-          content: [
-            ...imgParts,
-            { type:'text', text:'Eres experto en e-commerce de moda. Analiza la imagen y escribe una descripción atractiva en español para la tienda DUBREM. Menciona: tipo de prenda, material o tela si se ve, colores, estilo y ocasión de uso. Máximo 2 oraciones cortas y directas. Solo escribe la descripción, sin prefijos.' }
-          ]
-        }]
-      })
-    });
+    const resp = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts }] })
+      }
+    );
     if (!resp.ok) {
       const err = await resp.json().catch(() => ({}));
-      if (resp.status === 401) { localStorage.removeItem('dubrem_ai_key'); }
+      if (resp.status === 400 || resp.status === 403) { localStorage.removeItem('dubrem_gemini_key'); }
       throw new Error(err.error?.message || resp.status);
     }
     const data = await resp.json();
-    const desc = data.content?.[0]?.text?.trim() || '';
+    const desc = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
     if (desc) { document.getElementById('prodEditDesc').value = desc; toast('✨ Descripción generada', 'ok'); }
+    else toast('No se pudo generar descripción', 'err');
   } catch(e) {
     toast('Error IA: ' + e.message, 'err');
   } finally {
