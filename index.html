@@ -2006,7 +2006,14 @@
 
     <!-- Descripción -->
     <div class="form-group">
-      <label class="form-label">Descripción</label>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <label class="form-label" style="margin-bottom:0">Descripción</label>
+        <button type="button" id="aiDescBtn" onclick="suggestDescWithAI()"
+          style="display:flex;align-items:center;gap:5px;padding:5px 12px;border:none;border-radius:50px;background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;font-size:.65rem;font-weight:700;letter-spacing:.06em;cursor:pointer;transition:opacity .2s;white-space:nowrap"
+          onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+          ✨ Sugerir con IA
+        </button>
+      </div>
       <textarea class="form-input" id="prodEditDesc" rows="3" placeholder="Describe materiales, colores…"></textarea>
     </div>
 
@@ -2248,6 +2255,10 @@ const DELIVERY_LABELS = {
    6. Pégala abajo entre las comillas de FIREBASE_DB_URL
 ────────────────────────────────────────────────────── */
 const FIREBASE_DB_URL = 'https://bella-esencial-default-rtdb.firebaseio.com';
+
+/* API key de Anthropic para sugerencias IA (se guarda en localStorage del admin) */
+function getAIKey() { return localStorage.getItem('dubrem_ai_key') || ''; }
+function setAIKey(k) { localStorage.setItem('dubrem_ai_key', k); }
 
 async function fbFetch(path, opts={}){
   if(!FIREBASE_DB_URL) return null;
@@ -2497,6 +2508,65 @@ function renderAdminImgGrid() {
 function removeAdminImg(idx) {
   _adminImgs.splice(idx, 1);
   renderAdminImgGrid();
+}
+
+async function suggestDescWithAI() {
+  if (!_adminImgs.length) {
+    toast('Sube al menos una foto primero', 'err'); return;
+  }
+  let key = getAIKey();
+  if (!key) {
+    key = prompt('Ingresa tu API key de Anthropic (se guarda solo en este navegador):');
+    if (!key || !key.trim()) return;
+    setAIKey(key.trim());
+    key = key.trim();
+  }
+  const btn = document.getElementById('aiDescBtn');
+  btn.disabled = true; btn.textContent = '⏳ Analizando…';
+
+  const imgParts = _adminImgs.slice(0, 3).map(src => {
+    if (src.startsWith('data:')) {
+      const [meta, b64] = src.split(',');
+      const mediaType = (meta.match(/data:([^;]+)/) || [])[1] || 'image/jpeg';
+      return { type:'image', source:{ type:'base64', media_type:mediaType, data:b64 } };
+    }
+    return { type:'image', source:{ type:'url', url:src } };
+  });
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 200,
+        messages: [{
+          role: 'user',
+          content: [
+            ...imgParts,
+            { type:'text', text:'Eres experto en e-commerce de moda. Analiza la imagen y escribe una descripción atractiva en español para la tienda DUBREM. Menciona: tipo de prenda, material o tela si se ve, colores, estilo y ocasión de uso. Máximo 2 oraciones cortas y directas. Solo escribe la descripción, sin prefijos.' }
+          ]
+        }]
+      })
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      if (resp.status === 401) { localStorage.removeItem('dubrem_ai_key'); }
+      throw new Error(err.error?.message || resp.status);
+    }
+    const data = await resp.json();
+    const desc = data.content?.[0]?.text?.trim() || '';
+    if (desc) { document.getElementById('prodEditDesc').value = desc; toast('✨ Descripción generada', 'ok'); }
+  } catch(e) {
+    toast('Error IA: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false; btn.textContent = '✨ Sugerir con IA';
+  }
 }
 
 /** Busca producto en PRODUCTS (numérico) o PRODUCT_OVERRIDES (string new_*) */
