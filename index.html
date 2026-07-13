@@ -2270,10 +2270,10 @@ const DELIVERY_LABELS = {
 const FIREBASE_DB_URL = 'https://bella-esencial-default-rtdb.firebaseio.com';
 
 /* API key de Anthropic para sugerencias IA (se guarda en localStorage del admin) */
-function getAIKey() { return localStorage.getItem('dubrem_gemini_key') || ''; }
-function setAIKey(k) { localStorage.setItem('dubrem_gemini_key', k); }
+function getAIKey() { return localStorage.getItem('dubrem_openrouter_key') || ''; }
+function setAIKey(k) { localStorage.setItem('dubrem_openrouter_key', k); }
 function resetAIKey() {
-  localStorage.removeItem('dubrem_gemini_key');
+  localStorage.removeItem('dubrem_openrouter_key');
   toast('Key eliminado — el próximo clic en ✨ pedirá uno nuevo', 'ok');
 }
 
@@ -2533,7 +2533,7 @@ async function suggestDescWithAI() {
   }
   let key = getAIKey();
   if (!key) {
-    key = prompt('Ingresa tu API key de Google Gemini (aistudio.google.com → Get API key).\nSe guarda solo en este navegador:');
+    key = prompt('Ingresa tu API key de OpenRouter.\nObtén uno gratis en openrouter.ai (sin tarjeta de crédito).\nSe guarda solo en este navegador:');
     if (!key || !key.trim()) return;
     setAIKey(key.trim());
     key = key.trim();
@@ -2541,44 +2541,38 @@ async function suggestDescWithAI() {
   const btn = document.getElementById('aiDescBtn');
   btn.disabled = true; btn.textContent = '⏳ Analizando…';
 
-  const parts = _adminImgs.slice(0, 3).map(src => {
-    const [meta, b64] = src.startsWith('data:') ? src.split(',') : ['data:image/jpeg', src];
-    const mimeType = (meta.match(/data:([^;]+)/) || [])[1] || 'image/jpeg';
-    return { inline_data: { mime_type: mimeType, data: b64 } };
-  });
-  parts.push({ text: 'Eres experto en e-commerce de moda. Analiza la imagen y escribe una descripción atractiva en español para la tienda DUBREM. Menciona: tipo de prenda, material o tela si se ve, colores, estilo y ocasión de uso. Máximo 2 oraciones cortas y directas. Solo escribe la descripción, sin prefijos.' });
+  const imgContent = _adminImgs.slice(0, 3).map(src => ({
+    type: 'image_url',
+    image_url: { url: src }
+  }));
 
   try {
-    // Detectar modelo disponible automáticamente
-    const modelsResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
-    if (!modelsResp.ok) {
-      const err = await modelsResp.json().catch(() => ({}));
-      localStorage.removeItem('dubrem_gemini_key');
-      throw new Error(err.error?.message || 'Key inválido');
-    }
-    const modelsData = await modelsResp.json();
-    const available = (modelsData.models || [])
-      .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
-      .map(m => m.name.replace('models/', ''));
-    const priority = ['gemini-2.0-flash','gemini-1.5-flash','gemini-1.5-pro','gemini-pro-vision','gemini-pro'];
-    const model = priority.find(p => available.some(a => a.startsWith(p))) || available[0];
-    if (!model) throw new Error('No hay modelos disponibles con este key');
-
-    const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
-      {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts }] })
-      }
-    );
+    const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${key}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://dubrem.github.io',
+        'X-Title': 'DUBREM Admin'
+      },
+      body: JSON.stringify({
+        model: 'meta-llama/llama-3.2-11b-vision-instruct:free',
+        messages: [{
+          role: 'user',
+          content: [
+            ...imgContent,
+            { type: 'text', text: 'Eres experto en e-commerce de moda. Analiza la imagen y escribe una descripción atractiva en español para la tienda DUBREM. Menciona: tipo de prenda, material o tela si se ve, colores, estilo y ocasión de uso. Máximo 2 oraciones cortas y directas. Solo escribe la descripción, sin prefijos.' }
+          ]
+        }]
+      })
+    });
     if (!resp.ok) {
       const err = await resp.json().catch(() => ({}));
-      if (resp.status === 429) throw new Error('Cuota agotada — espera 24h o activa facturación en console.cloud.google.com');
-      throw new Error(err.error?.message || resp.status);
+      if (resp.status === 401) { localStorage.removeItem('dubrem_openrouter_key'); }
+      throw new Error(err.error?.message || `Error ${resp.status}`);
     }
     const data = await resp.json();
-    const desc = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+    const desc = data.choices?.[0]?.message?.content?.trim() || '';
     if (desc) { document.getElementById('prodEditDesc').value = desc; toast('✨ Descripción generada', 'ok'); }
     else toast('No se pudo generar descripción', 'err');
   } catch(e) {
