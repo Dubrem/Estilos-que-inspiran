@@ -2547,6 +2547,20 @@ async function suggestDescWithAI() {
   }));
 
   try {
+    // Buscar modelo de visión gratuito disponible
+    const modelsResp = await fetch('https://openrouter.ai/api/v1/models', {
+      headers: { 'Authorization': `Bearer ${key}` }
+    });
+    let model = 'google/gemini-2.0-flash-exp:free';
+    if (modelsResp.ok) {
+      const modelsData = await modelsResp.json();
+      const freeVision = (modelsData.data || []).filter(m =>
+        m.id.endsWith(':free') &&
+        (m.architecture?.modality || '').includes('image')
+      );
+      if (freeVision.length) model = freeVision[0].id;
+    }
+
     const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -2556,7 +2570,7 @@ async function suggestDescWithAI() {
         'X-Title': 'DUBREM Admin'
       },
       body: JSON.stringify({
-        model: 'meta-llama/llama-3.2-11b-vision-instruct:free',
+        model,
         messages: [{
           role: 'user',
           content: [
