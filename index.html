@@ -2547,18 +2547,19 @@ async function suggestDescWithAI() {
   }));
 
   try {
-    // Buscar modelo de visión gratuito disponible
-    const modelsResp = await fetch('https://openrouter.ai/api/v1/models', {
-      headers: { 'Authorization': `Bearer ${key}` }
-    });
-    let model = 'google/gemini-2.0-flash-exp:free';
+    // Probar modelos de visión gratuitos en orden de preferencia
+    const VISION_MODELS = [
+      'google/gemini-2.0-flash-exp:free',
+      'google/gemini-flash-1.5-8b:free',
+      'qwen/qwen2-vl-7b-instruct:free',
+      'meta-llama/llama-3.2-11b-vision-instruct:free',
+      'microsoft/phi-3.5-vision-instruct:free',
+    ];
+    const modelsResp = await fetch('https://openrouter.ai/api/v1/models');
+    let model = VISION_MODELS[0];
     if (modelsResp.ok) {
-      const modelsData = await modelsResp.json();
-      const freeVision = (modelsData.data || []).filter(m =>
-        m.id.endsWith(':free') &&
-        (m.architecture?.modality || '').includes('image')
-      );
-      if (freeVision.length) model = freeVision[0].id;
+      const available = new Set((await modelsResp.json()).data?.map(m => m.id) || []);
+      model = VISION_MODELS.find(m => available.has(m)) || VISION_MODELS[0];
     }
 
     const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
