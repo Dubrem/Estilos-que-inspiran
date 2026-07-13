@@ -2546,50 +2546,37 @@ async function suggestDescWithAI() {
     image_url: { url: src }
   }));
 
+  const PROMPT = 'Eres experto en e-commerce de moda. Analiza la imagen y escribe una descripción atractiva en español para la tienda DUBREM. Menciona: tipo de prenda, material o tela si se ve, colores, estilo y ocasión de uso. Máximo 2 oraciones cortas y directas. Solo escribe la descripción, sin prefijos ni explicaciones.';
+  const HEADERS = { 'Authorization':`Bearer ${key}`, 'Content-Type':'application/json', 'HTTP-Referer':'https://dubrem.github.io', 'X-Title':'DUBREM Admin' };
+
   try {
-    // Probar modelos de visión gratuitos en orden de preferencia
-    const VISION_MODELS = [
-      'google/gemini-2.0-flash-exp:free',
-      'google/gemini-flash-1.5-8b:free',
-      'qwen/qwen2-vl-7b-instruct:free',
-      'meta-llama/llama-3.2-11b-vision-instruct:free',
-      'microsoft/phi-3.5-vision-instruct:free',
-    ];
+    // Obtener modelos de visión gratuitos disponibles en tiempo real
     const modelsResp = await fetch('https://openrouter.ai/api/v1/models');
-    let model = VISION_MODELS[0];
-    if (modelsResp.ok) {
-      const available = new Set((await modelsResp.json()).data?.map(m => m.id) || []);
-      model = VISION_MODELS.find(m => available.has(m)) || VISION_MODELS[0];
+    const modelsJson = modelsResp.ok ? await modelsResp.json() : { data: [] };
+    const SKIP = /guard|safety|moderat|embed|rerank|whisper|tts|dall/i;
+    const visionModels = (modelsJson.data || [])
+      .filter(m => m.id.endsWith(':free') && (m.architecture?.modality||'').includes('image') && !SKIP.test(m.id))
+      .map(m => m.id);
+
+    if (!visionModels.length) throw new Error('No hay modelos de visión gratuitos disponibles ahora');
+
+    let desc = '';
+    let lastErr = '';
+    for (const model of visionModels) {
+      const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST', headers: HEADERS,
+        body: JSON.stringify({ model, messages:[{ role:'user', content:[...imgContent,{type:'text',text:PROMPT}] }] })
+      });
+      if (resp.status === 401) { localStorage.removeItem('dubrem_openrouter_key'); throw new Error('Key inválido'); }
+      if (!resp.ok) { const e = await resp.json().catch(()=>({})); lastErr = e.error?.message||`Error ${resp.status}`; continue; }
+      const data = await resp.json();
+      const txt = data.choices?.[0]?.message?.content?.trim() || '';
+      if (txt && txt.length > 20 && !/^(user safety|safe|unsafe)/i.test(txt)) { desc = txt; break; }
+      lastErr = 'Respuesta inválida del modelo';
     }
 
-    const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${key}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://dubrem.github.io',
-        'X-Title': 'DUBREM Admin'
-      },
-      body: JSON.stringify({
-        model,
-        messages: [{
-          role: 'user',
-          content: [
-            ...imgContent,
-            { type: 'text', text: 'Eres experto en e-commerce de moda. Analiza la imagen y escribe una descripción atractiva en español para la tienda DUBREM. Menciona: tipo de prenda, material o tela si se ve, colores, estilo y ocasión de uso. Máximo 2 oraciones cortas y directas. Solo escribe la descripción, sin prefijos.' }
-          ]
-        }]
-      })
-    });
-    if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
-      if (resp.status === 401) { localStorage.removeItem('dubrem_openrouter_key'); }
-      throw new Error(err.error?.message || `Error ${resp.status}`);
-    }
-    const data = await resp.json();
-    const desc = data.choices?.[0]?.message?.content?.trim() || '';
     if (desc) { document.getElementById('prodEditDesc').value = desc; toast('✨ Descripción generada', 'ok'); }
-    else toast('No se pudo generar descripción', 'err');
+    else throw new Error(lastErr || 'Ningún modelo pudo generar descripción');
   } catch(e) {
     toast('IA: ' + e.message, 'err');
   } finally {
