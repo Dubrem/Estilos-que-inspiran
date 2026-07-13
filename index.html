@@ -2014,11 +2014,18 @@
     <div class="form-group">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <label class="form-label" style="margin-bottom:0">Descripción</label>
-        <button type="button" id="aiDescBtn" onclick="suggestDescWithAI()"
-          style="display:flex;align-items:center;gap:5px;padding:5px 12px;border:none;border-radius:50px;background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;font-size:.65rem;font-weight:700;letter-spacing:.06em;cursor:pointer;transition:opacity .2s;white-space:nowrap"
-          onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
-          ✨ Sugerir con IA
-        </button>
+        <div style="display:flex;gap:6px;align-items:center">
+          <button type="button" id="aiDescBtn" onclick="suggestDescWithAI()"
+            style="display:flex;align-items:center;gap:5px;padding:5px 12px;border:none;border-radius:50px;background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;font-size:.65rem;font-weight:700;letter-spacing:.06em;cursor:pointer;transition:opacity .2s;white-space:nowrap"
+            onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+            ✨ Sugerir con IA
+          </button>
+          <button type="button" onclick="resetAIKey()" title="Cambiar API key"
+            style="width:24px;height:24px;border-radius:50%;border:1.5px solid #d1a3c8;background:transparent;color:#a855f7;font-size:.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0"
+            onmouseover="this.style.background='#f5eaff'" onmouseout="this.style.background='transparent'">
+            ⚙
+          </button>
+        </div>
       </div>
       <textarea class="form-input" id="prodEditDesc" rows="3" placeholder="Describe materiales, colores…"></textarea>
     </div>
@@ -2265,6 +2272,10 @@ const FIREBASE_DB_URL = 'https://bella-esencial-default-rtdb.firebaseio.com';
 /* API key de Anthropic para sugerencias IA (se guarda en localStorage del admin) */
 function getAIKey() { return localStorage.getItem('dubrem_gemini_key') || ''; }
 function setAIKey(k) { localStorage.setItem('dubrem_gemini_key', k); }
+function resetAIKey() {
+  localStorage.removeItem('dubrem_gemini_key');
+  toast('Key eliminado — el próximo clic en ✨ pedirá uno nuevo', 'ok');
+}
 
 async function fbFetch(path, opts={}){
   if(!FIREBASE_DB_URL) return null;
