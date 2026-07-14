@@ -64,7 +64,7 @@
        HEADER — Fashion Editorial
     ============================ */
     .header {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
       background: transparent;
       border-bottom: none;
       transition: background .3s, border-color .3s;
@@ -133,6 +133,26 @@
       letter-spacing: .1em; text-transform: uppercase; transition: color .2s;
     }
     .cart-btn:hover { color: #fff; }
+    /* ── HEADER SEARCH ── */
+    .header-search-btn { background:none; border:none; color:rgba(255,255,255,.7); cursor:pointer; padding:6px; display:flex; align-items:center; transition:color .2s; }
+    .header-search-btn:hover { color:#fff; }
+    .header-search-wrap {
+      display:none; position:absolute; top:0; left:0; right:0; height:64px;
+      background:rgba(8,4,6,.97); backdrop-filter:blur(16px);
+      align-items:center; padding:0 1.2rem; gap:10px; z-index:10;
+    }
+    .header-search-wrap.active { display:flex; }
+    .header-search-input {
+      flex:1; background:rgba(255,255,255,.1); border:1.5px solid rgba(255,255,255,.15);
+      border-radius:50px; padding:9px 18px; color:#fff;
+      font-family:var(--ff-body); font-size:.88rem; outline:none; transition:border-color .2s;
+    }
+    .header-search-input::placeholder { color:rgba(255,255,255,.35); }
+    .header-search-input:focus { border-color:var(--rose); }
+    .header-search-x { background:none; border:none; color:rgba(255,255,255,.5); cursor:pointer; padding:6px; display:none; align-items:center; flex-shrink:0; transition:color .15s; font-size:1rem; }
+    .header-search-x:hover { color:#fff; }
+    .header-search-back { background:none; border:none; color:rgba(255,255,255,.7); cursor:pointer; padding:6px; display:flex; align-items:center; flex-shrink:0; transition:color .15s; }
+    .header-search-back:hover { color:#fff; }
     .cart-icon { font-size: .95rem; }
     .cart-badge {
       position: absolute; top: 0; right: 0;
@@ -1514,12 +1534,26 @@
       <div id="loginArea">
         <button class="btn-login" onclick="openLoginModal()">Iniciar Sesión</button>
       </div>
+      <button class="header-search-btn" onclick="openHeaderSearch()" aria-label="Buscar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      </button>
       <button class="cart-btn" onclick="openCart()" aria-label="Carrito">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
         <span id="cartBadge" class="cart-badge"></span>
         <span id="cartLabel">Carrito</span>
       </button>
     </div>
+  </div>
+  <!-- Overlay de búsqueda en el header -->
+  <div class="header-search-wrap" id="headerSearchWrap">
+    <button class="header-search-back" onclick="closeHeaderSearch()" aria-label="Cerrar búsqueda">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <input class="header-search-input" id="searchInput" type="text"
+      placeholder="Busca una prenda... (ej: chamarra, vestido)"
+      oninput="handleSearch(this.value)"
+      autocomplete="off" autocorrect="off" spellcheck="false">
+    <button class="header-search-x" id="searchClear" onclick="clearSearch()" aria-label="Limpiar">✕</button>
   </div>
   <nav class="mobile-nav" id="mobileNav">
     <a href="#catalogo" onclick="showCatalog('mujer');closeMobileNav()">Mujer</a>
@@ -1603,13 +1637,6 @@
       <div class="cat-banner-label">Ver Chamarras →</div>
     </div>
     <p class="section-gender-label" id="sectionGenderLabel"></p>
-    <div class="search-bar-wrap">
-      <input class="search-bar-input" id="searchInput" type="text"
-        placeholder="🔍 Busca una prenda... (ej: chamarra, vestido rojo, deportiva)"
-        oninput="handleSearch(this.value)"
-        autocomplete="off" autocorrect="off" spellcheck="false">
-      <button class="search-bar-clear" id="searchClear" onclick="clearSearch()">✕</button>
-    </div>
     <div class="search-results-info" id="searchInfo"></div>
     <!-- Dropdown colapsable de categorías -->
     <div class="filter-dropdown-wrap" id="filterDropdownWrap">
@@ -2481,6 +2508,15 @@ function renderSectionTabs(section) {
       banner.style.display = 'none';
     }
   }
+}
+function openHeaderSearch() {
+  const wrap = document.getElementById('headerSearchWrap');
+  if (wrap) { wrap.classList.add('active'); document.getElementById('searchInput').focus(); }
+}
+function closeHeaderSearch() {
+  const wrap = document.getElementById('headerSearchWrap');
+  if (wrap) wrap.classList.remove('active');
+  clearSearch();
 }
 function toggleFilterDropdown() {
   const list = document.getElementById('filterDropdownList');
@@ -3386,7 +3422,7 @@ function normalizeQuery(q) {
 function handleSearch(val) {
   _searchQuery = val.trim();
   const clearBtn = document.getElementById('searchClear');
-  if (clearBtn) clearBtn.style.display = _searchQuery ? 'block' : 'none';
+  if (clearBtn) clearBtn.style.display = _searchQuery ? 'flex' : 'none';
 
   if (!_searchQuery) {
     document.getElementById('searchInfo').textContent = '';
