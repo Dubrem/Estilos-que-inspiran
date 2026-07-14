@@ -1489,7 +1489,7 @@
 
   <!-- Panel Mujer -->
   <div class="hero-panel" onclick="heroTransitionTo('mujer',event,this)">
-    <img id="heroImg-mujer" src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=2560&q=95" alt="Colección Mujer" loading="eager">
+    <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=2560&q=95" alt="Colección Mujer" loading="eager">
     <div class="hero-panel-info">
       <span class="hero-panel-label">Mujer</span>
       <button class="hero-panel-cta">Ver Colección</button>
@@ -1498,7 +1498,7 @@
 
   <!-- Panel Hombre -->
   <div class="hero-panel" onclick="heroTransitionTo('hombre',event,this)">
-    <img id="heroImg-hombre" src="https://images.unsplash.com/photo-1488161628813-04466f872be2?auto=format&fit=crop&w=1400&h=2100&q=95" alt="Colección Hombre" loading="eager" style="object-position:center top;">
+    <img src="https://images.unsplash.com/photo-1488161628813-04466f872be2?auto=format&fit=crop&w=1400&h=2100&q=95" alt="Colección Hombre" loading="eager" style="object-position:center top;">
     <div class="hero-panel-info">
       <span class="hero-panel-label">Hombre</span>
       <button class="hero-panel-cta">Ver Colección</button>
@@ -1507,7 +1507,7 @@
 
   <!-- Panel Niños -->
   <div class="hero-panel" onclick="heroTransitionTo('ninos',event,this)">
-    <img id="heroImg-ninos" src="https://images.unsplash.com/photo-1618325521029-dbf6d9708035?auto=format&fit=crop&w=2560&q=95" alt="Colección Niños" loading="eager">
+    <img src="https://images.unsplash.com/photo-1618325521029-dbf6d9708035?auto=format&fit=crop&w=2560&q=95" alt="Colección Niños" loading="eager">
     <div class="hero-panel-info">
       <span class="hero-panel-label">Niños</span>
       <button class="hero-panel-cta">Ver Colección</button>
@@ -1516,7 +1516,7 @@
 
   <!-- Panel Juvenil -->
   <div class="hero-panel" onclick="heroTransitionTo('juvenil',event,this)">
-    <img id="heroImg-juvenil" src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1400&h=2100&q=95" alt="Colección Juvenil" loading="eager" style="object-position:center top;">
+    <img src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1400&h=2100&q=95" alt="Colección Juvenil" loading="eager" style="object-position:center top;">
     <div class="hero-panel-info">
       <span class="hero-panel-label">Juvenil</span>
       <button class="hero-panel-cta">Ver Colección</button>
@@ -2621,11 +2621,6 @@ function renderAdminProducts() {
           <div class="prod-admin-stock" style="${stkColor}">${p.stock} en stock</div>
           <div style="font-size:.58rem;margin-top:3px;${p.subcat?'color:#5a9e5a':'color:#c0392b;font-weight:700'}">${p.subcat ? catLabel(p.subcat) : '⚠ Sin sub-cat'}</div>
           ${p.sku ? `<div style="font-size:.55rem;margin-top:2px;color:var(--rose);letter-spacing:.06em;font-weight:600">${p.sku}</div>` : ''}
-          ${p.cat && ['mujer','hombre','ninos','juvenil'].includes(p.cat) ? `
-          <button onclick="event.stopPropagation();setHeroImage('${p.cat}','${imgSrc}')"
-            style="margin-top:6px;padding:3px 8px;border:1.5px solid gold;border-radius:50px;background:transparent;color:gold;font-size:.55rem;font-weight:700;cursor:pointer;letter-spacing:.04em">
-            ⭐ Portada ${catLabel(p.cat)}
-          </button>` : ''}
         </div>
       </div>`;
   }).join('');
@@ -2647,27 +2642,6 @@ function renderAdminProducts() {
       <div class="admin-prods-grid">${cards}</div>
     ` : `<p style="font-size:.8rem;color:rgba(255,255,255,.35);text-align:center;margin-top:40px">Aún no hay productos. ¡Agrega el primero!</p>`}
   `;
-}
-
-async function setHeroImage(cat, imgSrc) {
-  if (!imgSrc) return;
-  await fbFetch(`meta/heroImages/${cat}`, {
-    method: 'PUT', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify(imgSrc)
-  });
-  const el = document.getElementById(`heroImg-${cat}`);
-  if (el) el.src = imgSrc;
-  toast(`✓ Portada de ${catLabel(cat)} actualizada`, 'ok');
-}
-
-async function fbLoadHeroImages() {
-  const data = await fbFetch('meta/heroImages');
-  if (!data || typeof data !== 'object') return;
-  for (const [cat, src] of Object.entries(data)) {
-    if (!src) continue;
-    const el = document.getElementById(`heroImg-${cat}`);
-    if (el) el.src = src;
-  }
 }
 
 function skuLetters(idx) {
@@ -3095,7 +3069,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Cargar productos de Firebase al iniciar (necesario para el catálogo)
   fbLoadProductOverrides();
-  fbLoadHeroImages();
   // Limpiar reservas antiguas (carrito vacío en carga) y cargar reservas activas
   fbClearMyReservations().then(() => fbLoadReservations());
   // Refrescar productos y reservas cada minuto si el catálogo está visible
