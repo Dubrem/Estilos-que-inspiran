@@ -462,7 +462,41 @@
       display: block; margin-bottom: 8px;
     }
     .section-sub { color:var(--text-light); font-size:.65rem; letter-spacing:.2em; text-transform:uppercase; margin-bottom:8px; }
-    .section-gender-label { font-family:'Bebas Neue',sans-serif; font-size:1.6rem; letter-spacing:.12em; color:var(--accent); margin:0 0 28px; min-height:1.8rem; }
+    .section-gender-label { font-family:'Bebas Neue',sans-serif; font-size:2.8rem; letter-spacing:.18em; color:var(--text-dark); margin:0 0 18px; line-height:1; }
+
+    /* ── CATEGORY BANNER ── */
+    .cat-banner { width:100%; border-radius:18px; overflow:hidden; margin-bottom:22px; position:relative; cursor:pointer; }
+    .cat-banner img { width:100%; height:280px; object-fit:cover; object-position:center 20%; display:block; transition:transform .4s ease; }
+    .cat-banner:hover img { transform:scale(1.04); }
+    .cat-banner-label { position:absolute; bottom:18px; right:18px; background:rgba(0,0,0,.48); color:#fff; font-size:.65rem; letter-spacing:.18em; text-transform:uppercase; padding:8px 16px; border-radius:50px; backdrop-filter:blur(6px); pointer-events:none; }
+
+    /* ── FILTER DROPDOWN ── */
+    .filter-dropdown-wrap { position:relative; max-width:300px; margin:0 auto; }
+    .filter-dropdown-btn {
+      display:flex; align-items:center; justify-content:space-between; width:100%;
+      padding:11px 20px; border:1.5px solid var(--border); border-radius:50px;
+      background:#fff; color:var(--text-dark); font-family:var(--ff-body);
+      font-size:.72rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase;
+      cursor:pointer; transition:border-color .2s, box-shadow .2s; gap:10px;
+    }
+    .filter-dropdown-btn:hover, .filter-dropdown-btn.open { border-color:var(--rose); }
+    .filter-dropdown-btn.open { border-radius:18px 18px 0 0; box-shadow:0 0 0 3px rgba(196,86,106,.1); }
+    .filter-dropdown-list {
+      display:none; position:absolute; top:calc(100% - 1px); left:0; right:0;
+      background:#fff; border:1.5px solid var(--rose); border-top:none;
+      border-radius:0 0 18px 18px; overflow:hidden; z-index:50;
+      box-shadow:0 12px 28px rgba(196,86,106,.15);
+    }
+    .filter-dropdown-list.open { display:block; }
+    .filter-dropdown-item {
+      display:block; width:100%; padding:12px 22px; text-align:left;
+      background:none; border:none; border-bottom:1px solid var(--blush-light);
+      font-family:var(--ff-body); font-size:.72rem; letter-spacing:.1em;
+      text-transform:uppercase; color:var(--text-med); cursor:pointer; transition:background .15s, color .15s;
+    }
+    .filter-dropdown-item:last-child { border-bottom:none; }
+    .filter-dropdown-item:hover { background:var(--blush-light); color:var(--rose); }
+    .filter-dropdown-item.active { color:var(--rose); font-weight:700; background:rgba(196,86,106,.06); }
 
     /* FILTER BAR — femenino con punto activo */
     .filter-bar { padding: 80px 2.5rem 20px; }
@@ -1306,6 +1340,8 @@
     @media(max-width:640px){
       .header-inner{padding:0 1.2rem}
       .filter-bar { padding:68px 1.2rem 14px; }
+      .cat-banner img { height:220px; }
+      .filter-dropdown-wrap { max-width:100%; }
       .products-section{padding-left:1rem;padding-right:1rem}
       .products-grid{grid-template-columns:repeat(2,1fr);gap:12px}
       .product-name{font-size:.84rem} .product-info{padding:12px 12px 14px}
@@ -1561,9 +1597,11 @@
 <!-- ========== FILTER BAR ========== -->
 <section class="filter-bar" id="catalogo">
   <div class="section-wrap" style="text-align:center">
-    <div style="font-family:var(--ff-display);font-size:2.2rem;letter-spacing:0.28em;color:var(--text-dark);line-height:1;text-transform:uppercase;margin-bottom:4px">DUB<span style="color:var(--rose)">REM</span></div>
-    <span class="section-super">Nuestra</span>
-    <h2 class="section-title">Colección</h2>
+    <!-- Banner clickeable — solo visible en categoría Mujer -->
+    <div class="cat-banner" id="catBanner" style="display:none" onclick="catBannerClick()">
+      <img id="catBannerImg" src="" alt="Colección Mujer">
+      <div class="cat-banner-label">Ver Chamarras →</div>
+    </div>
     <p class="section-gender-label" id="sectionGenderLabel"></p>
     <div class="search-bar-wrap">
       <input class="search-bar-input" id="searchInput" type="text"
@@ -1573,9 +1611,16 @@
       <button class="search-bar-clear" id="searchClear" onclick="clearSearch()">✕</button>
     </div>
     <div class="search-results-info" id="searchInfo"></div>
-    <div class="filter-tabs" id="filterTabs">
-      <button class="tab-btn active" onclick="filterBy('all',this)">✦ Todos</button>
+    <!-- Dropdown colapsable de categorías -->
+    <div class="filter-dropdown-wrap" id="filterDropdownWrap">
+      <button class="filter-dropdown-btn" id="filterDropdownBtn" onclick="toggleFilterDropdown()">
+        <span id="filterDropdownLabel">✦ Todos</span>
+        <svg id="filterDropdownChevron" width="14" height="14" viewBox="0 0 14 14" fill="none" style="transition:transform .25s;flex-shrink:0"><path d="M2 5l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="filter-dropdown-list" id="filterDropdownList"></div>
     </div>
+    <!-- Tabs ocultos para compatibilidad con goToSection -->
+    <div class="filter-tabs" id="filterTabs" style="display:none"></div>
   </div>
 </section>
 
@@ -2403,12 +2448,59 @@ const SUBCATS = {
 
 function renderSectionTabs(section) {
   const tabs = SECTION_TABS[section] || [['all','✦ Todos']];
+  // Tabs ocultos — para compatibilidad con goToSection
   document.getElementById('filterTabs').innerHTML = tabs.map(([val,lbl], i) =>
     `<button class="tab-btn${i===0?' active':''}" onclick="filterBy('${val}',this)">${lbl}</button>`
   ).join('');
+  // Dropdown items
+  const dl = document.getElementById('filterDropdownList');
+  if (dl) {
+    dl.classList.remove('open');
+    dl.innerHTML = tabs.map(([val,lbl], i) =>
+      `<button class="filter-dropdown-item${i===0?' active':''}" data-val="${val}" onclick="filterBy('${val}',null)">${lbl}</button>`
+    ).join('');
+  }
+  const btnEl = document.getElementById('filterDropdownBtn');
+  if (btnEl) btnEl.classList.remove('open');
+  const lbl = document.getElementById('filterDropdownLabel');
+  if (lbl) lbl.textContent = '✦ Todos';
+  const chevron = document.getElementById('filterDropdownChevron');
+  if (chevron) chevron.style.transform = '';
+  // Label de sección
   const labels = { mujer:'Mujer', hombre:'Hombre', ninos:'Niños', juvenil:'Juvenil', belleza:'Belleza' };
   const el = document.getElementById('sectionGenderLabel');
   if (el) el.textContent = labels[section] || '';
+  // Banner — solo en Mujer
+  const banner = document.getElementById('catBanner');
+  const bannerImg = document.getElementById('catBannerImg');
+  if (banner) {
+    if (section === 'mujer') {
+      if (bannerImg) { bannerImg.src = 'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=900&q=85'; }
+      banner.style.display = 'block';
+    } else {
+      banner.style.display = 'none';
+    }
+  }
+}
+function toggleFilterDropdown() {
+  const list = document.getElementById('filterDropdownList');
+  const btn = document.getElementById('filterDropdownBtn');
+  const chevron = document.getElementById('filterDropdownChevron');
+  const isOpen = list.classList.contains('open');
+  list.classList.toggle('open', !isOpen);
+  btn.classList.toggle('open', !isOpen);
+  if (chevron) chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+function closeFilterDropdown() {
+  const list = document.getElementById('filterDropdownList');
+  const btn = document.getElementById('filterDropdownBtn');
+  const chevron = document.getElementById('filterDropdownChevron');
+  if (list) list.classList.remove('open');
+  if (btn) btn.classList.remove('open');
+  if (chevron) chevron.style.transform = '';
+}
+function catBannerClick() {
+  filterBy('chamarra', null);
 }
 
 function updateSubcatOptions(cat, selected) {
@@ -3092,6 +3184,11 @@ function logoutAdmin(){
 /* ──────────────────────────────────────────────────────
    INIT
 ────────────────────────────────────────────────────── */
+document.addEventListener('click', (e) => {
+  const wrap = document.getElementById('filterDropdownWrap');
+  if (wrap && !wrap.contains(e.target)) closeFilterDropdown();
+});
+
 document.addEventListener('DOMContentLoaded', () => {
   loadUsers();
   loadSession();
@@ -3282,6 +3379,10 @@ function clearSearch() {
   // Restaurar tab activo
   const firstTab = document.querySelector('#filterTabs .tab-btn');
   if (firstTab) firstTab.classList.add('active');
+  // Restaurar dropdown
+  const lbl = document.getElementById('filterDropdownLabel');
+  if (lbl) lbl.textContent = '✦ Todos';
+  document.querySelectorAll('.filter-dropdown-item').forEach((el,i) => el.classList.toggle('active', i===0));
   renderGrid('all');
   _currentFilter = 'all';
 }
@@ -3311,9 +3412,18 @@ function renderSearchResults(query) {
 
 function filterBy(subcat, btn) {
   _currentFilter = subcat;
-  // Limpiar búsqueda al cambiar filtro
   clearSearch();
+  // Tabs ocultos
   if (btn) { document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+  // Dropdown: actualizar label y estado activo
+  const tabs = SECTION_TABS[_currentSection] || [];
+  const found = tabs.find(([v]) => v === subcat);
+  const lbl = document.getElementById('filterDropdownLabel');
+  if (lbl) lbl.textContent = found ? found[1] : '✦ Todos';
+  document.querySelectorAll('.filter-dropdown-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.val === subcat);
+  });
+  closeFilterDropdown();
   renderGrid(subcat);
   document.getElementById('catalogo').scrollIntoView({behavior:'smooth'});
 }
