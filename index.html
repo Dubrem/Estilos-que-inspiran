@@ -840,6 +840,10 @@
     .bank-val { font-size:.84rem; font-weight:700; color:var(--text-dark); text-align:right; }
     .bank-clabe { font-size:1rem; font-weight:700; color:var(--text-dark); letter-spacing:1.5px; }
     .pay-note { background:#fff; border-radius:10px; border:1px solid var(--border); padding:10px 14px; font-size:.74rem; color:var(--text-med); line-height:1.55; margin-bottom:16px; }
+    .pay-method-opts { display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
+    .pay-opt { display:flex; align-items:center; gap:14px; border:2px solid var(--border); border-radius:14px; padding:14px 16px; cursor:pointer; transition:all .2s; background:#fff; }
+    .pay-opt.selected { border-color:#009EE3; background:#f0f9ff; }
+    .pay-opt-check { margin-left:auto; width:22px; height:22px; border-radius:50%; background:#009EE3; color:#fff; display:flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:700; flex-shrink:0; }
     .checkout-nav { display:flex; gap:10px; margin-top:2px; }
     .btn-back { padding:11px 22px; border:1.5px solid var(--border); background:transparent; color:var(--text-med); border-radius:50px; font-size:.72rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase; transition:all .2s; }
     .btn-back:hover { border-color:var(--rose); color:var(--rose); }
@@ -1926,14 +1930,32 @@
     <!-- Step 2 -->
     <div class="step-panel" id="sp2">
       <h3 class="checkout-title">Método de Pago</h3>
-      <div class="bank-card">
-        <h4>🏦 Transferencia Bancaria</h4>
+      <div class="pay-method-opts">
+        <div class="pay-opt selected" id="pmMp" onclick="setPayMethod('mp')">
+          <div style="font-size:1.4rem">💳</div>
+          <div>
+            <div style="font-weight:700;font-size:.85rem;color:#009EE3">MercadoPago</div>
+            <div style="font-size:.72rem;color:var(--text-light)">Tarjeta, OXXO, transferencia</div>
+          </div>
+          <div class="pay-opt-check" id="pmMpCheck">✓</div>
+        </div>
+        <div class="pay-opt" id="pmBank" onclick="setPayMethod('bank')">
+          <div style="font-size:1.4rem">🏦</div>
+          <div>
+            <div style="font-weight:700;font-size:.85rem;color:var(--text-dark)">Transferencia BBVA</div>
+            <div style="font-size:.72rem;color:var(--text-light)">Manual, puede tardar más</div>
+          </div>
+          <div class="pay-opt-check" id="pmBankCheck" style="opacity:0">✓</div>
+        </div>
+      </div>
+      <div class="bank-card" id="bankCard" style="display:none;margin-top:12px">
+        <h4>🏦 Datos de Transferencia</h4>
         <div class="bank-row"><span class="bank-lbl">Banco</span><span class="bank-val">BBVA México</span></div>
         <div class="bank-row"><span class="bank-lbl">Titular</span><span class="bank-val">DUBREM</span></div>
         <div class="bank-row"><span class="bank-lbl">No. Cuenta</span><span class="bank-val">4152 3140 2857 6194</span></div>
         <div class="bank-row" style="align-items:flex-start"><span class="bank-lbl" style="padding-top:3px">CLABE</span><span class="bank-clabe">012 180 00485761940 8</span></div>
+        <p class="pay-note" style="margin-top:10px;margin-bottom:0">⚠️ Transfiere exactamente el monto total. Incluye tu número de orden en el concepto.</p>
       </div>
-      <p class="pay-note">⚠️ Transfiere exactamente el monto total. Incluye tu <strong>número de orden</strong> en el concepto.</p>
       <div class="summary-box" id="sum2"></div>
       <div class="checkout-nav">
         <button class="btn-back" onclick="goStep(1)">← Atrás</button>
@@ -3470,6 +3492,28 @@ document.addEventListener('DOMContentLoaded', () => {
     history.replaceState({}, '', location.pathname);
   }
 
+  // Retorno desde MercadoPago
+  (function(){
+    const params = new URLSearchParams(location.search);
+    const pago = params.get('pago');
+    const orden = params.get('orden');
+    if(pago){
+      history.replaceState({}, '', location.pathname);
+      if(pago === 'exitoso'){
+        setTimeout(() => {
+          document.getElementById('orderNum').textContent = orden || '';
+          document.getElementById('btnWhatsApp').href = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`¡Hola! 🖤 Acabo de pagar mi pedido *${orden}* por MercadoPago. ¡Gracias! — DUBREM`)}`;
+          document.getElementById('orderModal').classList.add('open');
+          lockScroll();
+        }, 300);
+      } else if(pago === 'pendiente'){
+        setTimeout(() => toast('Pago pendiente de confirmación. Te notificaremos pronto.', ''), 300);
+      } else {
+        setTimeout(() => toast('El pago no se completó. Puedes intentarlo de nuevo.', 'err'), 300);
+      }
+    }
+  })();
+
   // Cargar productos y héroes de Firebase al iniciar
   fbLoadProductOverrides();
   fbLoadCatHeroes();
@@ -4169,11 +4213,21 @@ function normalizePhone(p){ return String(p).replace(/\D/g,''); }
 /* ──────────────────────────────────────────────────────
    CHECKOUT
 ────────────────────────────────────────────────────── */
+function setPayMethod(m){
+  S.payMethod = m;
+  document.getElementById('pmMp').classList.toggle('selected', m==='mp');
+  document.getElementById('pmBank').classList.toggle('selected', m==='bank');
+  document.getElementById('pmMpCheck').style.opacity = m==='mp' ? '1' : '0';
+  document.getElementById('pmBankCheck').style.opacity = m==='bank' ? '1' : '0';
+  document.getElementById('bankCard').style.display = m==='bank' ? '' : 'none';
+  const btn = document.getElementById('btnConfirmarPedido');
+  if(btn) btn.textContent = m==='mp' ? '💳 Pagar con MercadoPago' : '✓ Confirmar Pedido';
+}
 function startCheckout(){
   if(!S.cart.length){ toast('Tu carrito está vacío','err'); return; }
   if(!S.user){ closeCart(); toast('Inicia sesión para continuar',''); setTimeout(openLoginModal,400); return; }
   closeCart();
-  S.step=1; S.delivery='pickup'; S.shipCost=0;
+  S.step=1; S.delivery='pickup'; S.shipCost=0; S.payMethod='mp';
   document.querySelector('input[name="dv"][value="pickup"]').checked=true;
   ['dOpt1','dOpt2','dOpt3','dOpt4'].forEach(id=>{ const el=document.getElementById(id); if(el) el.classList.remove('selected'); });
   document.getElementById('dOpt1').classList.add('selected');
@@ -4274,7 +4328,42 @@ async function confirmOrder(){
   await fbLoadProductOverrides();
   if (document.querySelector('.products-section.catalog-visible')) renderGrid(_currentFilter);
 
-  // Armar enlace de WhatsApp con número de orden y monto total
+  if(S.payMethod === 'mp'){
+    // Pago con MercadoPago — redirigir a su checkout
+    const confirmBtn2 = document.getElementById('btnConfirmarPedido');
+    if(confirmBtn2){ confirmBtn2.textContent = '⏳ Preparando pago…'; }
+    try {
+      const mpItems = S.cart.map(item => {
+        const p = findProduct(item.id);
+        return { id: String(item.id), title: p ? p.name : 'Producto', quantity: item.qty, unit_price: p ? p.price : 0 };
+      });
+      if(S.shipCost > 0) mpItems.push({ id:'envio', title:'Envío', quantity:1, unit_price: S.shipCost });
+      const r = await fetch('/api/create-preference', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          items: mpItems,
+          payer: { name: S.user?.name || '', email: S.user?.email || '' },
+          orderNum: num,
+          backUrl: window.location.origin + window.location.pathname,
+        })
+      });
+      const data = await r.json();
+      if(data.init_point){
+        S.cart=[]; refreshCartUI();
+        fbClearMyReservations();
+        closeCheckoutModal();
+        window.location.href = data.init_point;
+        return;
+      }
+    } catch(e){}
+    // Si falla el API, mostrar error
+    toast('Error al conectar con MercadoPago. Intenta de nuevo.','err');
+    if(confirmBtn2){ confirmBtn2.disabled=false; confirmBtn2.textContent='💳 Pagar con MercadoPago'; }
+    return;
+  }
+
+  // Pago por transferencia bancaria — flujo original
   const msg = `¡Hola! 🖤 Ya realicé la transferencia bancaria de *${fmtMXN(total)} MXN* para mi pedido *${num}*. `
             + `Por favor confirmar el despacho. ¡Gracias! — DUBREM`;
   document.getElementById('btnWhatsApp').href =
