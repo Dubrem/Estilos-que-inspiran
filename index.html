@@ -2381,7 +2381,7 @@ const S = {
 };
 const SHIP_COST  = 110;
 const WA_NUMBER  = '5214421052174';
-const ADMIN_CRED = { email:'admin@dubrem.com', pass:'dubrem2026' };
+const FIREBASE_API_KEY = 'AIzaSyAQMv0-dkJq76rXPZQGFuJBSUUn43JcuOE';
 // ← Cambia esta dirección por la real de tu tienda
 const SHIP_LOCAL = 20;
 const STORE_LOCATION = {
@@ -2417,10 +2417,15 @@ function resetAIKey() {
   toast('Key eliminado — el próximo clic en ✨ pedirá uno nuevo', 'ok');
 }
 
+function fbAuthParam(){
+  return _adminToken ? `?auth=${_adminToken}` : '';
+}
 async function fbFetch(path, opts={}){
   if(!FIREBASE_DB_URL) return null;
   try{
-    const r = await fetch(`${FIREBASE_DB_URL}/${path}.json`, opts);
+    const isWrite = opts.method && opts.method !== 'GET';
+    const auth = isWrite ? fbAuthParam() : '';
+    const r = await fetch(`${FIREBASE_DB_URL}/${path}.json${auth}`, opts);
     if(!r.ok) return null;
     return await r.json();
   }catch(e){ return null; }
@@ -2464,7 +2469,7 @@ async function fbSaveOrder(order){
 async function fbUpdateOrderStatus(num, status){
   if(!FIREBASE_DB_URL) return;
   try{
-    await fetch(`${FIREBASE_DB_URL}/orders/${orderKey(num)}/status.json`,{
+    await fetch(`${FIREBASE_DB_URL}/orders/${orderKey(num)}/status.json${fbAuthParam()}`,{
       method:'PUT', headers:{'Content-Type':'application/json'},
       body: JSON.stringify(status)
     });
@@ -2473,7 +2478,7 @@ async function fbUpdateOrderStatus(num, status){
 async function fbUpdateOrderItem(num, idx, done){
   if(!FIREBASE_DB_URL) return;
   try{
-    await fetch(`${FIREBASE_DB_URL}/orders/${orderKey(num)}/items/${idx}/done.json`,{
+    await fetch(`${FIREBASE_DB_URL}/orders/${orderKey(num)}/items/${idx}/done.json${fbAuthParam()}`,{
       method:'PUT', headers:{'Content-Type':'application/json'},
       body: JSON.stringify(done)
     });
@@ -2723,7 +2728,7 @@ async function fbSaveProductOverride(fbKey, data){
 async function fbDeleteProductOverride(fbKey){
   try {
     if(!FIREBASE_DB_URL) return;
-    await fetch(`${FIREBASE_DB_URL}/products/${fbKey}.json`, { method:'DELETE' });
+    await fetch(`${FIREBASE_DB_URL}/products/${fbKey}.json${fbAuthParam()}`, { method:'DELETE' });
   } catch(e){}
 }
 
@@ -2771,7 +2776,7 @@ async function fbSetReservation(productId, qty) {
 async function fbClearMyReservations() {
   if (!FIREBASE_DB_URL) return;
   ALL_RESERVATIONS[SESSION_ID] = {};
-  try { await fetch(`${FIREBASE_DB_URL}/reservations/${SESSION_ID}.json`, { method:'DELETE' }); } catch(e) {}
+  try { await fetch(`${FIREBASE_DB_URL}/reservations/${SESSION_ID}.json${fbAuthParam()}`, { method:'DELETE' }); } catch(e) {}
 }
 
 async function fbLoadReservations() {
@@ -2783,7 +2788,7 @@ async function fbLoadReservations() {
       for (const [key, r] of Object.entries(items || {})) {
         if (r.expiresAt <= now) {
           delete ALL_RESERVATIONS[sid][key];
-          try { await fetch(`${FIREBASE_DB_URL}/reservations/${sid}/${key}.json`, { method:'DELETE' }); } catch(e) {}
+          try { await fetch(`${FIREBASE_DB_URL}/reservations/${sid}/${key}.json${fbAuthParam()}`, { method:'DELETE' }); } catch(e) {}
         }
       }
     }
@@ -3411,15 +3416,20 @@ function loadSession(){
   } catch(e){}
 }
 
-/* Sesión admin — persiste entre recargas, solo se borra con logoutAdmin() */
-function saveAdminSession(){
-  try { localStorage.setItem(LS_ADMIN_SESSION, '1'); } catch(e){}
+/* Sesión admin — token Firebase Auth, expira en 1h */
+let _adminToken = null;
+(function(){ try { _adminToken = localStorage.getItem('dubrem_admin_token') || null; } catch(e){} })();
+
+function saveAdminSession(token){
+  _adminToken = token;
+  try { localStorage.setItem('dubrem_admin_token', token); localStorage.setItem(LS_ADMIN_SESSION, '1'); } catch(e){}
 }
 function clearAdminSession(){
-  try { localStorage.removeItem(LS_ADMIN_SESSION); } catch(e){}
+  _adminToken = null;
+  try { localStorage.removeItem('dubrem_admin_token'); localStorage.removeItem(LS_ADMIN_SESSION); } catch(e){}
 }
 function hasAdminSession(){
-  try { return localStorage.getItem(LS_ADMIN_SESSION) === '1'; } catch(e){ return false; }
+  try { return !!_adminToken && localStorage.getItem(LS_ADMIN_SESSION) === '1'; } catch(e){ return false; }
 }
 function logoutAdmin(){
   clearAdminSession();
@@ -4494,16 +4504,30 @@ function closeAdminLogin(){
   document.getElementById('adminLoginModal').classList.remove('open');
   unlockScroll();
 }
-function doAdminLogin(){
+async function doAdminLogin(){
   const em = document.getElementById('adminEmail').value.trim().toLowerCase();
   const pw = document.getElementById('adminPass').value;
-  if(em === ADMIN_CRED.email && pw === ADMIN_CRED.pass){
-    saveAdminSession();   // guardar sesión para no pedir credenciales de nuevo
-    closeAdminLogin();
-    openAdmin();
-  } else {
+  const btn = document.querySelector('#adminLoginModal .btn-primary');
+  if(btn){ btn.disabled = true; btn.textContent = 'Verificando…'; }
+  try {
+    const r = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY}`,
+      { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ email:em, password:pw, returnSecureToken:true }) }
+    );
+    const data = await r.json();
+    if(data.idToken){
+      saveAdminSession(data.idToken);
+      closeAdminLogin();
+      openAdmin();
+    } else {
+      document.getElementById('adminErr').classList.add('show');
+      document.getElementById('adminPass').value='';
+    }
+  } catch(e){
     document.getElementById('adminErr').classList.add('show');
-    document.getElementById('adminPass').value='';
+  } finally {
+    if(btn){ btn.disabled = false; btn.textContent = 'Entrar'; }
   }
 }
 async function openAdmin(){
@@ -4819,7 +4843,7 @@ async function deleteOrder(orderNum){
   S.orders = S.orders.filter(o => o.num !== orderNum);
   try {
     if(FIREBASE_DB_URL)
-      await fetch(`${FIREBASE_DB_URL}/orders/${orderKey(orderNum)}.json`, { method:'DELETE' });
+      await fetch(`${FIREBASE_DB_URL}/orders/${orderKey(orderNum)}.json${fbAuthParam()}`, { method:'DELETE' });
   } catch(e){}
   renderAdminOrders();
   toast('Pedido eliminado', 'ok');
