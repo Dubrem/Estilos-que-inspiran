@@ -1537,17 +1537,15 @@
     </div>
     <!-- Belleza -->
     <div class="sb-section">
-      <button class="sb-cat" onclick="toggleSidebarCat(this,'sub-belleza')">
-        <span>Belleza</span><span class="sb-arrow">›</span>
+      <button class="sb-cat" onclick="showCatalog('belleza');closeSidebar()">
+        <span>Belleza</span><span style="font-size:.7rem;opacity:.6;margin-left:6px">Próximamente</span>
       </button>
-      <div class="sb-sub" id="sub-belleza">
-        <a onclick="goToSection('belleza','all')">✦ Todos</a>
-        <a onclick="goToSection('belleza','skincare')">Skincare</a>
-        <a onclick="goToSection('belleza','maquillaje')">Maquillaje</a>
-        <a onclick="goToSection('belleza','cabello')">Cabello</a>
-        <a onclick="goToSection('belleza','fragancia')">Fragancias</a>
-        <a onclick="goToSection('belleza','unas')">Uñas</a>
-      </div>
+    </div>
+    <!-- Lencería -->
+    <div class="sb-section">
+      <button class="sb-cat" onclick="showCatalog('lenceria');closeSidebar()">
+        <span>Lencería</span><span style="font-size:.7rem;opacity:.6;margin-left:6px">Próximamente</span>
+      </button>
     </div>
   </nav>
 </aside>
@@ -1597,6 +1595,7 @@
     <a href="#catalogo" onclick="showCatalog('ninos');closeMobileNav()">Niños</a>
     <a href="#catalogo" onclick="showCatalog('juvenil');closeMobileNav()">Juvenil</a>
     <a href="#catalogo" onclick="showCatalog('belleza');closeMobileNav()">Belleza</a>
+    <a href="#catalogo" onclick="showCatalog('lenceria');closeMobileNav()">Lencería</a>
   </nav>
 </header>
 
@@ -2121,6 +2120,7 @@
         <option value="ninos">Niños</option>
         <option value="juvenil">Juvenil</option>
         <option value="belleza">Belleza</option>
+        <option value="lenceria">Lencería</option>
       </select>
     </div>
     <!-- Sub-categoría -->
@@ -2210,6 +2210,7 @@
         <li><a href="#catalogo" onclick="showCatalog('ninos')">✦ Niños</a></li>
         <li><a href="#catalogo" onclick="showCatalog('juvenil')">✦ Juvenil</a></li>
         <li><a href="#catalogo" onclick="showCatalog('belleza')">✦ Belleza</a></li>
+        <li><a href="#catalogo" onclick="showCatalog('lenceria')">✦ Lencería</a></li>
       </ul>
     </div>
     <div class="footer-col">
@@ -2515,19 +2516,23 @@ let _heroSection = null;
 let _currentFilter  = 'all';   // subcat activa
 let _currentSection = null;    // mujer | hombre | ninos | null
 
+const COMING_SOON = new Set(['belleza','lenceria']);
+
 const SECTION_TABS = {
-  mujer:   [['all','✦ Todos'],['vestido','Vestidos'],['blusa','Blusas'],['pantalon','Pantalones'],['chamarra','Chamarras'],['deportiva','Deportivas'],['sudadera','Sudaderas'],['marca','Marca Exclusiva']],
-  hombre:  [['all','✦ Todos'],['chamarra','Chamarras'],['pantalon','Pantalones'],['sueter','Suéteres'],['playera','Playeras'],['deportiva','Deportivas'],['sudadera','Sudaderas'],['marca','Marca Exclusiva']],
-  ninos:   [['all','✦ Todos'],['playera','Playeras'],['chamarra','Chamarras'],['pantalon','Pantalones'],['vestido','Vestidos'],['deportiva','Deportivas'],['sudadera','Sudaderas'],['marca','Marca Exclusiva']],
-  juvenil: [['all','✦ Todos'],['playera','Playeras'],['pantalon','Pantalones'],['chamarra','Chamarras'],['sudadera','Sudaderas'],['deportiva','Deportivas'],['jeans','Jeans'],['marca','Marca Exclusiva']],
-  belleza: [['all','✦ Todos'],['skincare','Skincare'],['maquillaje','Maquillaje'],['cabello','Cabello'],['fragancia','Fragancias'],['unas','Uñas'],['corporal','Corporal']],
+  mujer:    [['all','✦ Todos'],['vestido','Vestidos'],['blusa','Blusas'],['pantalon','Pantalones'],['chamarra','Chamarras'],['deportiva','Deportivas'],['sudadera','Sudaderas'],['marca','Marca Exclusiva']],
+  hombre:   [['all','✦ Todos'],['chamarra','Chamarras'],['pantalon','Pantalones'],['sueter','Suéteres'],['playera','Playeras'],['deportiva','Deportivas'],['sudadera','Sudaderas'],['marca','Marca Exclusiva']],
+  ninos:    [['all','✦ Todos'],['playera','Playeras'],['chamarra','Chamarras'],['pantalon','Pantalones'],['vestido','Vestidos'],['deportiva','Deportivas'],['sudadera','Sudaderas'],['marca','Marca Exclusiva']],
+  juvenil:  [['all','✦ Todos'],['playera','Playeras'],['pantalon','Pantalones'],['chamarra','Chamarras'],['sudadera','Sudaderas'],['deportiva','Deportivas'],['jeans','Jeans'],['marca','Marca Exclusiva']],
+  belleza:  [['all','✦ Todos']],
+  lenceria: [['all','✦ Todos']],
 };
 const SUBCATS = {
-  mujer:   [['vestido','Vestido'],['blusa','Blusa'],['pantalon','Pantalón'],['chamarra','Chamarra'],['deportiva','Deportiva'],['sudadera','Sudadera'],['marca','Marca Exclusiva']],
-  hombre:  [['chamarra','Chamarra'],['pantalon','Pantalón'],['sueter','Suéter'],['playera','Playera'],['deportiva','Deportiva'],['sudadera','Sudadera'],['marca','Marca Exclusiva']],
-  ninos:   [['playera','Playera'],['chamarra','Chamarra'],['pantalon','Pantalón'],['vestido','Vestido'],['deportiva','Deportiva'],['sudadera','Sudadera'],['marca','Marca Exclusiva']],
-  juvenil: [['playera','Playera'],['pantalon','Pantalón'],['chamarra','Chamarra'],['sudadera','Sudadera'],['deportiva','Deportiva'],['jeans','Jeans'],['marca','Marca Exclusiva']],
-  belleza: [['skincare','Skincare'],['maquillaje','Maquillaje'],['cabello','Cabello'],['fragancia','Fragancia'],['unas','Uñas'],['corporal','Corporal']],
+  mujer:    [['vestido','Vestido'],['blusa','Blusa'],['pantalon','Pantalón'],['chamarra','Chamarra'],['deportiva','Deportiva'],['sudadera','Sudadera'],['marca','Marca Exclusiva']],
+  hombre:   [['chamarra','Chamarra'],['pantalon','Pantalón'],['sueter','Suéter'],['playera','Playera'],['deportiva','Deportiva'],['sudadera','Sudadera'],['marca','Marca Exclusiva']],
+  ninos:    [['playera','Playera'],['chamarra','Chamarra'],['pantalon','Pantalón'],['vestido','Vestido'],['deportiva','Deportiva'],['sudadera','Sudadera'],['marca','Marca Exclusiva']],
+  juvenil:  [['playera','Playera'],['pantalon','Pantalón'],['chamarra','Chamarra'],['sudadera','Sudadera'],['deportiva','Deportiva'],['jeans','Jeans'],['marca','Marca Exclusiva']],
+  belleza:  [['skincare','Skincare'],['maquillaje','Maquillaje'],['cabello','Cabello'],['fragancia','Fragancia'],['unas','Uñas'],['corporal','Corporal']],
+  lenceria: [['conjunto','Conjuntos'],['bralette','Bralettes'],['body','Bodies'],['pijama','Pijamas']],
 };
 
 function renderSectionTabs(section) {
@@ -2551,10 +2556,20 @@ function renderSectionTabs(section) {
   const chevron = document.getElementById('filterDropdownChevron');
   if (chevron) chevron.style.transform = '';
   // Label de sección
-  const labels = { mujer:'Mujer', hombre:'Hombre', ninos:'Niños', juvenil:'Juvenil', belleza:'Belleza' };
+  const labels = { mujer:'Mujer', hombre:'Hombre', ninos:'Niños', juvenil:'Juvenil', belleza:'Belleza', lenceria:'Lencería' };
   const el = document.getElementById('sectionGenderLabel');
   if (el) el.textContent = labels[section] || '';
-  startCatBannerSlideshow(section);
+  // Sin hero banner para categorías próximamente
+  if (COMING_SOON.has(section)) {
+    const banner = document.getElementById('catBanner');
+    if (banner) banner.style.display = 'none';
+    const wrap = document.getElementById('filterDropdownWrap');
+    if (wrap) wrap.style.display = 'none';
+  } else {
+    const wrap = document.getElementById('filterDropdownWrap');
+    if (wrap) wrap.style.display = '';
+    startCatBannerSlideshow(section);
+  }
 }
 
 let _heroSlides = []; // [{src, id}]
@@ -2903,8 +2918,8 @@ function switchAdminTab(tab) {
 function renderAdminHeroes(activeCat) {
   const sec = document.getElementById('adminHeroesSection');
   if (!sec) return;
-  const cats = ['mujer','hombre','ninos','juvenil','belleza'];
-  const labels = { mujer:'Mujer', hombre:'Hombre', ninos:'Niños', juvenil:'Juvenil', belleza:'Belleza' };
+  const cats = ['mujer','hombre','ninos','juvenil'];
+  const labels = { mujer:'Mujer', hombre:'Hombre', ninos:'Niños', juvenil:'Juvenil', belleza:'Belleza', lenceria:'Lencería' };
   const selected = CAT_HEROES[activeCat] || [];
   const prods = getMergedProducts().filter(p => !p.hidden && p.cat === activeCat);
 
@@ -3510,7 +3525,7 @@ function togglePass(id, btn) {
 }
 function catLabel(c){
   return {
-    mujer:'Mujer',hombre:'Hombre',ninos:'Niños',juvenil:'Juvenil',belleza:'Belleza',outerwear:'Outerwear',bottoms:'Bottoms',sets:'Sets',
+    mujer:'Mujer',hombre:'Hombre',ninos:'Niños',juvenil:'Juvenil',belleza:'Belleza',lenceria:'Lencería',outerwear:'Outerwear',bottoms:'Bottoms',sets:'Sets',
     chamarra:'Chamarra',pantalon:'Pantalón',sueter:'Suéter',playera:'Playera',vestido:'Vestido',blusa:'Blusa'
   }[c]||c;
 }
@@ -3679,9 +3694,15 @@ function filterBy(subcat, btn) {
   document.getElementById('catalogo').scrollIntoView({behavior:'smooth'});
 }
 function renderGrid(subcat) {
-  // Reconstruir índice de búsqueda con datos frescos
   _fuseInstance = null;
   const grid = document.getElementById('grid');
+  if (COMING_SOON.has(_currentSection)) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px 80px">
+      <p style="font-family:'Bebas Neue',sans-serif;font-size:3rem;letter-spacing:.2em;color:var(--text-dark);margin:0 0 10px">Próximamente</p>
+      <p style="color:var(--text-light);font-size:1rem;margin:0">Estamos trabajando en esta colección para ti.</p>
+    </div>`;
+    return;
+  }
   let all = getMergedProducts().filter(p => !p.hidden);
   if (_currentSection) all = all.filter(p => p.cat === _currentSection);
   const list = (subcat === 'all') ? all : all.filter(p => p.subcat === subcat);
