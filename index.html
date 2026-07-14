@@ -1305,7 +1305,13 @@
       .products-section{padding-left:1rem;padding-right:1rem}
       .products-grid{grid-template-columns:repeat(2,1fr);gap:12px}
       .product-name{font-size:.84rem} .product-info{padding:12px 12px 14px}
-      .lb-box{flex-direction:column} .lb-img-wrap{width:100%;} .lb-img{aspect-ratio:4/3;flex:none;}
+      .lightbox{padding:0;align-items:flex-start;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+      .lb-box{flex-direction:column;border-radius:0;min-height:100svh;max-width:100%;overflow:visible;}
+      .lb-img-wrap{width:100%!important;aspect-ratio:3/4;flex-shrink:0;}
+      .lb-img{aspect-ratio:3/4;flex:none;min-height:unset;}
+      .lb-close{position:fixed;top:12px;right:12px;z-index:510;background:rgba(0,0,0,.45);color:#fff;border-color:transparent;}
+      .lb-info{padding:20px 20px 28px;}
+      .lb-add-btn{align-self:stretch;text-align:center;}
       .cart-sidebar{width:100%}
       .modal-box{padding:28px 20px;max-height:calc(100svh - 24px)}
       .checkout-modal .modal-box{padding:20px 16px;max-height:calc(100svh - 24px)}
@@ -1602,6 +1608,10 @@
         <div class="lb-sizes" id="lbSizes"></div>
       </div>
       <button class="lb-add-btn" id="lbAddBtn" onclick="addFromLightbox()">Añadir al Carrito</button>
+      <div id="lbSuggestions" style="display:none;margin-top:28px;border-top:1px solid var(--blush-mid);padding-top:20px">
+        <p style="font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-med);margin-bottom:12px">También te puede gustar</p>
+        <div id="lbSugGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px"></div>
+      </div>
     </div>
     <button class="lb-close" onclick="closeLightbox()">✕</button>
   </div>
@@ -3377,8 +3387,33 @@ function openLightbox(id) {
     document.getElementById('lbSizes').innerHTML = '';
   }
   document.getElementById('lightbox').classList.add('open');
+  document.getElementById('lightbox').scrollTop = 0;
   lockScroll();
+  renderLbSuggestions(p);
 }
+
+function renderLbSuggestions(p) {
+  const wrap = document.getElementById('lbSuggestions');
+  const grid = document.getElementById('lbSugGrid');
+  if (!wrap || !grid) return;
+  const all = getMergedProducts().filter(x => !x.hidden && x.id !== p.id && x.cat === p.cat);
+  const picks = all.sort(() => Math.random() - .5).slice(0, 6);
+  if (!picks.length) { wrap.style.display = 'none'; return; }
+  grid.innerHTML = picks.map(s => {
+    const idArg = typeof s.id === 'number' ? s.id : `'${s.id}'`;
+    return `<div onclick="openLightbox(${idArg})" style="cursor:pointer;border-radius:10px;overflow:hidden;background:var(--blush-light)">
+      <div style="aspect-ratio:3/4;overflow:hidden">
+        <img src="${s.img||''}" alt="${s.name}" style="width:100%;height:100%;object-fit:cover" onerror="imgErr(this)" loading="lazy">
+      </div>
+      <div style="padding:6px 8px">
+        <div style="font-size:.65rem;font-weight:600;color:var(--text-dark);line-height:1.2;margin-bottom:3px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${s.name}</div>
+        <div style="font-size:.7rem;font-weight:700;color:var(--rose)">${fmtMXN(s.price)}</div>
+      </div>
+    </div>`;
+  }).join('');
+  wrap.style.display = 'block';
+}
+
 function selectSize(size, btn) {
   S.lbSize = size;
   document.querySelectorAll('#lbSizes .size-btn').forEach(b => b.classList.remove('selected'));
