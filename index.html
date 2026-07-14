@@ -2555,40 +2555,50 @@ function renderSectionTabs(section) {
   startCatBannerSlideshow(section);
 }
 
+let _heroSlides = []; // [{src, id}]
 function startCatBannerSlideshow(section) {
   clearInterval(_heroInterval);
   _heroIdx = 0;
   _heroSection = section;
+  _heroSlides = [];
   const banner = document.getElementById('catBanner');
   const track  = document.getElementById('catBannerTrack');
   const dotsEl = document.getElementById('catBannerDots');
   const label  = document.getElementById('catBannerLabel');
   if (!banner || !track) return;
 
+  // Resolver IDs → {src, id}
   const ids = CAT_HEROES[section] || [];
-  let imgs = ids.map(id => {
+  _heroSlides = ids.map(id => {
     const p = getMergedProducts().find(x => String(x.id) === String(id));
     if (!p) return null;
-    return (p.imgs && p.imgs[0]) ? p.imgs[0] : (p.img || null);
+    const src = (p.imgs && p.imgs[0]) ? p.imgs[0] : (p.img || null);
+    return src ? { src, id: String(p.id) } : null;
   }).filter(Boolean);
 
-  if (!imgs.length && section === 'mujer') imgs = ['img/Photoroom_20260713_221353.PNG'];
-  if (!imgs.length) { banner.style.display = 'none'; return; }
+  // Fallback mujer
+  if (!_heroSlides.length && section === 'mujer') {
+    _heroSlides = [{ src: 'img/Photoroom_20260713_221353.PNG', id: 'new_1784002709501' }];
+  }
+  if (!_heroSlides.length) { banner.style.display = 'none'; return; }
   banner.style.display = 'block';
 
-  track.innerHTML = imgs.map((src, i) =>
-    `<div class="cat-banner-slide${i===0?' active':''}"><img src="${src}" alt=""></div>`
+  // Cada slide es clickeable y abre su producto
+  track.innerHTML = _heroSlides.map((s, i) =>
+    `<div class="cat-banner-slide${i===0?' active':''}" onclick="catBannerSlideClick(${i})" style="cursor:pointer"><img src="${s.src}" alt=""></div>`
   ).join('');
 
-  if (dotsEl) dotsEl.innerHTML = imgs.length > 1 ? imgs.map((_, i) =>
-    `<span class="cat-banner-dot${i===0?' active':''}" onclick="catBannerGoTo(${i})"></span>`
+  // Dots
+  if (dotsEl) dotsEl.innerHTML = _heroSlides.length > 1 ? _heroSlides.map((_, i) =>
+    `<span class="cat-banner-dot${i===0?' active':''}" onclick="event.stopPropagation();catBannerGoTo(${i})"></span>`
   ).join('') : '';
 
-  const lblMap = { mujer:'Ver Chamarras →', hombre:'Ver Chamarras →', ninos:'Ver todo →', juvenil:'Ver todo →', belleza:'Ver todo →' };
-  if (label) label.textContent = lblMap[section] || 'Ver todo →';
+  // Label
+  if (label) label.style.display = 'none'; // el click ya está en la imagen
 
-  if (imgs.length > 1) {
-    _heroInterval = setInterval(() => catBannerGoTo((_heroIdx + 1) % imgs.length), 3500);
+  // Auto-avance
+  if (_heroSlides.length > 1) {
+    _heroInterval = setInterval(() => catBannerGoTo((_heroIdx + 1) % _heroSlides.length), 3500);
   }
 }
 function catBannerGoTo(idx) {
@@ -2599,9 +2609,9 @@ function catBannerGoTo(idx) {
   if (dotsEl) dotsEl.querySelectorAll('.cat-banner-dot').forEach((d,i) => d.classList.toggle('active', i===idx));
   _heroIdx = idx;
 }
-function catBannerClick() {
-  const sub = { mujer:'chamarra', hombre:'chamarra', ninos:'all', juvenil:'all', belleza:'all' }[_heroSection] || 'all';
-  filterBy(sub, null);
+function catBannerSlideClick(idx) {
+  const slide = _heroSlides[idx];
+  if (slide && slide.id) openLightbox(slide.id);
 }
 function openHeaderSearch() {
   const wrap = document.getElementById('headerSearchWrap');
@@ -2629,9 +2639,6 @@ function closeFilterDropdown() {
   if (btn) btn.classList.remove('open');
   if (chevron) chevron.style.transform = '';
 }
-function catBannerClick() {
-  openLightbox('new_1784002709501');
-}
 
 function updateSubcatOptions(cat, selected) {
   const opts = SUBCATS[cat] || [];
@@ -2654,6 +2661,7 @@ async function fbLoadProductOverrides(){
       );
       try { localStorage.setItem('dubrem_products_v1', JSON.stringify(slim)); } catch(e2) {}
     }
+    if (_heroSection) startCatBannerSlideshow(_heroSection);
   } catch(e){ PRODUCT_OVERRIDES = {}; }
 }
 async function fbLoadCatHeroes() {
@@ -2661,6 +2669,7 @@ async function fbLoadCatHeroes() {
     const data = await fbFetch('meta/categoryHeroes');
     CAT_HEROES = (data && typeof data === 'object') ? data : {};
     try { localStorage.setItem('dubrem_cat_heroes_v1', JSON.stringify(CAT_HEROES)); } catch(e) {}
+    if (_heroSection) startCatBannerSlideshow(_heroSection);
   } catch(e) {}
 }
 async function fbSaveCatHero(cat, ids) {
