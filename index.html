@@ -708,6 +708,10 @@
     .form-label { display:block; font-size:.68rem; font-weight:600; color:var(--text-med); margin-bottom:6px; letter-spacing:.08em; text-transform:uppercase; }
     .form-input { width:100%; padding:11px 14px; border:1.5px solid var(--border); border-radius:10px; font-family:var(--ff-body); font-size:.85rem; color:var(--text-dark); background:#fff; outline:none; transition:border-color .2s; }
     .form-input:focus { border-color:var(--rose); }
+    .pass-wrap { position:relative; }
+    .pass-wrap .form-input { padding-right:42px; }
+    .pass-toggle { position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--text-light); padding:4px; display:flex; align-items:center; justify-content:center; transition:color .15s; }
+    .pass-toggle:hover { color:var(--rose); }
     .form-error { font-size:.72rem; color:#c0392b; margin-top:5px; display:none; }
     .form-error.show { display:block; }
     .auth-error { font-size:.74rem; color:#c0392b; text-align:center; margin-bottom:12px; display:none; }
@@ -1655,9 +1659,12 @@
     </div>
     <div class="form-group">
       <label class="form-label">Contraseña</label>
-      <input class="form-input" type="password" id="loginPass"
-             placeholder="••••••••" autocomplete="current-password"
-             onkeydown="if(event.key==='Enter')doLogin()">
+      <div class="pass-wrap">
+        <input class="form-input" type="password" id="loginPass"
+               placeholder="••••••••" autocomplete="current-password"
+               onkeydown="if(event.key==='Enter')doLogin()">
+        <button type="button" class="pass-toggle" onclick="togglePass('loginPass',this)" tabindex="-1"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      </div>
     </div>
     <div style="text-align:right;margin:-8px 0 14px">
       <a class="forgot-link" onclick="switchToForgot()">¿Olvidaste tu contraseña?</a>
@@ -1697,12 +1704,18 @@
     </div>
     <div class="form-group">
       <label class="form-label">Contraseña</label>
-      <input class="form-input" type="password" id="regPass" placeholder="Mínimo 6 caracteres">
+      <div class="pass-wrap">
+        <input class="form-input" type="password" id="regPass" placeholder="Mínimo 6 caracteres">
+        <button type="button" class="pass-toggle" onclick="togglePass('regPass',this)" tabindex="-1"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      </div>
     </div>
     <div class="form-group" style="margin-bottom:22px">
       <label class="form-label">Confirmar contraseña</label>
-      <input class="form-input" type="password" id="regPass2" placeholder="Repite tu contraseña"
-             onkeydown="if(event.key==='Enter')doRegister()">
+      <div class="pass-wrap">
+        <input class="form-input" type="password" id="regPass2" placeholder="Repite tu contraseña"
+               onkeydown="if(event.key==='Enter')doRegister()">
+        <button type="button" class="pass-toggle" onclick="togglePass('regPass2',this)" tabindex="-1"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      </div>
     </div>
     <button class="btn-primary" id="regBtn" onclick="doRegister()">Crear Cuenta</button>
     <p class="auth-switch">¿Ya tienes cuenta? <a onclick="switchToLogin()">Inicia sesión</a></p>
@@ -1896,8 +1909,11 @@
     </div>
     <div class="form-group">
       <label class="form-label">Contraseña</label>
-      <input class="form-input" id="adminPass" type="password" placeholder="••••••••"
-             onkeydown="if(event.key==='Enter')doAdminLogin()">
+      <div class="pass-wrap">
+        <input class="form-input" id="adminPass" type="password" placeholder="••••••••"
+               onkeydown="if(event.key==='Enter')doAdminLogin()">
+        <button type="button" class="pass-toggle" onclick="togglePass('adminPass',this)" tabindex="-1"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      </div>
     </div>
     <button class="btn-primary" style="width:100%;margin-top:4px" onclick="doAdminLogin()">Entrar al Panel</button>
   </div>
@@ -2158,12 +2174,18 @@
       <div class="auth-error" id="cp-err3"></div>
       <div class="form-group">
         <label class="form-label">Nueva contraseña</label>
-        <input class="form-input" type="password" id="cp-pass1" placeholder="Mínimo 6 caracteres">
+        <div class="pass-wrap">
+          <input class="form-input" type="password" id="cp-pass1" placeholder="Mínimo 6 caracteres">
+          <button type="button" class="pass-toggle" onclick="togglePass('cp-pass1',this)" tabindex="-1"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        </div>
       </div>
       <div class="form-group" style="margin-bottom:18px">
         <label class="form-label">Confirmar contraseña</label>
-        <input class="form-input" type="password" id="cp-pass2" placeholder="Repite la contraseña"
-               onkeydown="if(event.key==='Enter')doChangePassword()">
+        <div class="pass-wrap">
+          <input class="form-input" type="password" id="cp-pass2" placeholder="Repite la contraseña"
+                 onkeydown="if(event.key==='Enter')doChangePassword()">
+          <button type="button" class="pass-toggle" onclick="togglePass('cp-pass2',this)" tabindex="-1"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        </div>
       </div>
       <button class="btn-primary" style="width:100%" onclick="doChangePassword()">✓ Guardar Nueva Contraseña</button>
     </div>
@@ -3140,6 +3162,15 @@ function spawnParticles() {
 }
 
 function fmtMXN(n){ return '$' + n.toLocaleString('es-MX'); }
+function togglePass(id, btn) {
+  const inp = document.getElementById(id);
+  if (!inp) return;
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  btn.innerHTML = show
+    ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
+    : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+}
 function catLabel(c){
   return {
     mujer:'Mujer',hombre:'Hombre',ninos:'Niños',juvenil:'Juvenil',belleza:'Belleza',outerwear:'Outerwear',bottoms:'Bottoms',sets:'Sets',
