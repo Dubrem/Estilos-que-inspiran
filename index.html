@@ -4042,7 +4042,36 @@ async function doLogin() {
     document.getElementById('loginPass').value='';
   }
 }
-function doLogout(){ S.user=null; saveSession(); renderLoginArea(); toast('Sesión cerrada',''); }
+function doLogout(){
+  showConfirm('¿Deseas cerrar sesión?', () => {
+    S.user=null; saveSession(); renderLoginArea(); toast('Sesión cerrada','');
+  });
+}
+function showConfirm(msg, onYes){
+  let overlay = document.getElementById('confirmOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'confirmOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)';
+    overlay.innerHTML = `<div style="background:#fff;border-radius:20px;padding:32px 28px 24px;max-width:300px;width:88%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.2)">
+      <p id="confirmMsg" style="font-family:var(--ff-body);font-size:1rem;color:var(--text-dark);margin:0 0 24px;line-height:1.5"></p>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <button onclick="closeConfirm(false)" style="flex:1;padding:12px;border-radius:50px;border:1.5px solid #ddd;background:#fff;font-family:var(--ff-body);font-size:.85rem;cursor:pointer;color:var(--text-light)">Cancelar</button>
+        <button id="confirmYesBtn" onclick="closeConfirm(true)" style="flex:1;padding:12px;border-radius:50px;border:none;background:var(--rose);color:#fff;font-family:var(--ff-body);font-size:.85rem;cursor:pointer;font-weight:600">Sí, salir</button>
+      </div>
+    </div>`;
+    document.body.appendChild(overlay);
+  }
+  document.getElementById('confirmMsg').textContent = msg;
+  overlay._onYes = onYes;
+  overlay.style.display = 'flex';
+}
+function closeConfirm(yes){
+  const overlay = document.getElementById('confirmOverlay');
+  if (!overlay) return;
+  overlay.style.display = 'none';
+  if (yes && overlay._onYes) overlay._onYes();
+}
 function renderLoginArea(){
   const area=document.getElementById('loginArea');
   area.innerHTML = S.user
