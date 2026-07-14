@@ -3189,12 +3189,30 @@ document.addEventListener('click', (e) => {
   if (wrap && !wrap.contains(e.target)) closeFilterDropdown();
 });
 
+window.addEventListener('popstate', () => {
+  const section = location.hash.slice(1);
+  if (section && SECTION_TABS[section]) {
+    showCatalog(section, false);
+  } else {
+    showHero();
+  }
+});
+
 document.addEventListener('DOMContentLoaded', () => {
   loadUsers();
   loadSession();
   renderLoginArea();
   spawnParticles();
   syncUsers();
+
+  // Restaurar sección desde hash en URL (para refresh y navegación directa)
+  const _initHash = location.hash.slice(1);
+  if (_initHash && SECTION_TABS[_initHash]) {
+    history.replaceState({ section: _initHash }, '', '#' + _initHash);
+    showCatalog(_initHash, false);
+  } else {
+    history.replaceState({}, '', location.pathname);
+  }
 
   // Cargar productos de Firebase al iniciar (necesario para el catálogo)
   fbLoadProductOverrides();
@@ -3289,7 +3307,8 @@ function closeMobileNav(){ document.getElementById('mobileNav').classList.remove
 /* ──────────────────────────────────────────────────────
    GRID
 ────────────────────────────────────────────────────── */
-function showCatalog(section) {
+function showCatalog(section, pushHistory = true) {
+  if (pushHistory) history.pushState({ section }, '', '#' + section);
   document.getElementById('inicio').style.display = 'none';
   document.querySelector('.filter-bar').classList.add('catalog-visible');
   document.querySelector('.products-section').classList.add('catalog-visible');
@@ -3299,7 +3318,6 @@ function showCatalog(section) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
   _currentSection = section;
   _currentFilter  = 'all';
-  // Limpiar buscador al cambiar sección
   const si = document.getElementById('searchInput');
   if (si) si.value = '';
   _searchQuery = '';
@@ -3308,10 +3326,20 @@ function showCatalog(section) {
   const sinfo = document.getElementById('searchInfo');
   if (sinfo) sinfo.textContent = '';
   renderSectionTabs(section);
-  // Mostrar inmediatamente con datos en caché, refrescar Firebase en segundo plano
   renderGrid('all');
   fbLoadProductOverrides().then(() => renderGrid('all'));
   setTimeout(() => document.getElementById('catalogo').scrollIntoView({behavior:'smooth'}), 50);
+}
+function showHero() {
+  document.getElementById('inicio').style.display = '';
+  document.querySelector('.filter-bar').classList.remove('catalog-visible');
+  document.querySelector('.products-section').classList.remove('catalog-visible');
+  document.querySelector('.footer').classList.remove('catalog-visible');
+  document.getElementById('headerActions').style.display = 'none';
+  document.querySelector('.header').classList.remove('catalog-open');
+  _currentSection = null;
+  _currentFilter  = 'all';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 /* ── BÚSQUEDA INTELIGENTE ── */
