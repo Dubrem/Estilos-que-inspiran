@@ -2455,6 +2455,11 @@ async function fbGetUserOrders(email){
    FIREBASE — PRODUCTOS (subir fotos / editar / agregar)
 ────────────────────────────────────────────────────── */
 let PRODUCT_OVERRIDES = {};   // { fbKey: { name, price, stock, cat, desc, img } }
+// Cargar caché de productos desde localStorage (instantáneo al refrescar)
+try {
+  const _pc = localStorage.getItem('dubrem_products_v1');
+  if (_pc) PRODUCT_OVERRIDES = JSON.parse(_pc);
+} catch(e) {}
 let _currentFilter  = 'all';   // subcat activa
 let _currentSection = null;    // mujer | hombre | ninos | null
 
@@ -2550,6 +2555,16 @@ async function fbLoadProductOverrides(){
   try {
     const data = await fbFetch('products');
     PRODUCT_OVERRIDES = (data && typeof data === 'object') ? data : {};
+    // Guardar en localStorage para carga instantánea en refresh
+    try {
+      localStorage.setItem('dubrem_products_v1', JSON.stringify(PRODUCT_OVERRIDES));
+    } catch(e) {
+      // Cuota excedida (imágenes base64 pesadas) — guardar solo metadatos sin imgs
+      const slim = Object.fromEntries(
+        Object.entries(PRODUCT_OVERRIDES).map(([k,v]) => { const {imgs,...r}=v; return [k,r]; })
+      );
+      try { localStorage.setItem('dubrem_products_v1', JSON.stringify(slim)); } catch(e2) {}
+    }
   } catch(e){ PRODUCT_OVERRIDES = {}; }
 }
 async function fbSaveProductOverride(fbKey, data){
