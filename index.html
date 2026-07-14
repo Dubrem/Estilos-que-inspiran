@@ -487,8 +487,8 @@
     /* ── CATEGORY BANNER SLIDESHOW ── */
     .cat-banner { width:100%; border-radius:18px; overflow:hidden; margin-bottom:22px; position:relative; cursor:pointer; height:280px; }
     .cat-banner-track { position:relative; width:100%; height:100%; }
-    .cat-banner-slide { position:absolute; inset:0; opacity:0; transition:opacity .9s ease; }
-    .cat-banner-slide.active { opacity:1; }
+    .cat-banner-slide { position:absolute; inset:0; opacity:0; transition:opacity .9s ease; pointer-events:none; }
+    .cat-banner-slide.active { opacity:1; pointer-events:auto; }
     .cat-banner-slide img { width:100%; height:100%; object-fit:cover; object-position:center 20%; display:block; }
     .cat-banner:hover .cat-banner-slide.active img { transform:scale(1.03); transition:transform .4s ease; }
     .cat-banner-label { position:absolute; bottom:14px; right:14px; background:rgba(0,0,0,.48); color:#fff; font-size:.65rem; letter-spacing:.18em; text-transform:uppercase; padding:8px 16px; border-radius:50px; backdrop-filter:blur(6px); z-index:2; }
