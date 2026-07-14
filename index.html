@@ -2506,12 +2506,41 @@ async function fbUpdateOrderItem(num, idx, done){
     });
   }catch(e){}
 }
+let _knownPaidOrders = new Set();
 async function syncAdminOrders(){
   const data = await fbFetch('orders');
   if(!data || typeof data!=='object') return;
+  const prev = new Set(_knownPaidOrders);
   S.orders = Object.values(data)
     .filter(o=>o&&o.num)
     .sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+  // Detectar nuevos pagados
+  const adminOpen = document.getElementById('adminPanel')?.classList.contains('open');
+  S.orders.forEach(o => {
+    if(o.status === 'pagado' && !prev.has(o.num)){
+      _knownPaidOrders.add(o.num);
+      if(adminOpen && prev.size > 0){
+        showAdminPayNotification(o);
+      }
+    } else if(o.status === 'pagado'){
+      _knownPaidOrders.add(o.num);
+    }
+  });
+}
+function showAdminPayNotification(order){
+  let n = document.getElementById('adminPayNotif');
+  if(!n){
+    n = document.createElement('div');
+    n.id = 'adminPayNotif';
+    n.style.cssText = 'position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:9999;background:#0a5931;color:#fff;border-radius:14px;padding:14px 22px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 32px rgba(0,0,0,.3);font-family:var(--ff-body);font-size:.85rem;cursor:pointer;min-width:280px;justify-content:center';
+    n.onclick = () => { n.remove(); renderAdminOrders(); };
+    document.body.appendChild(n);
+  }
+  n.innerHTML = `✅ <strong>Pago recibido</strong> — Pedido ${order.num} &nbsp;<span style="opacity:.7;font-size:.75rem">Toca para ver</span>`;
+  clearTimeout(n._t);
+  n._t = setTimeout(() => n.remove(), 8000);
+  // Actualizar la lista visible
+  renderAdminOrders();
 }
 async function fbGetUserOrders(email){
   const data = await fbFetch('orders');
@@ -4631,8 +4660,16 @@ async function openAdmin(){
   // load both in parallel
   await Promise.all([syncAdminOrders(), fbLoadProductOverrides()]);
   renderAdminOrders();
+  // Polling cada 12s para detectar pagos automáticos
+  clearInterval(window._adminPollInterval);
+  window._adminPollInterval = setInterval(async () => {
+    if(!document.getElementById('adminPanel')?.classList.contains('open')) return;
+    await syncAdminOrders();
+    renderAdminOrders();
+  }, 12000);
 }
 function closeAdmin(){
+  clearInterval(window._adminPollInterval);
   document.getElementById('adminPanel').classList.remove('open');
 }
 

@@ -40,6 +40,7 @@ export default async function handler(req, res) {
         auto_return: 'approved',
         external_reference: orderNum,
         statement_descriptor: 'DUBREM',
+        notification_url: 'https://estilos-que-inspiran.vercel.app/api/webhook',
       }),
     });
 
