@@ -2439,15 +2439,18 @@ function resetAIKey() {
   toast('Key eliminado — el próximo clic en ✨ pedirá uno nuevo', 'ok');
 }
 
-function fbAuthParam(){
-  return _adminToken ? `?auth=${_adminToken}` : '';
+function fbAuthHeaders(){
+  if(!_adminToken) return {};
+  return { 'Authorization': `Bearer ${_adminToken}` };
 }
 async function fbFetch(path, opts={}){
   if(!FIREBASE_DB_URL) return null;
   try{
     const isWrite = opts.method && opts.method !== 'GET';
-    const auth = isWrite ? fbAuthParam() : '';
-    const r = await fetch(`${FIREBASE_DB_URL}/${path}.json${auth}`, opts);
+    if(isWrite && _adminToken){
+      opts.headers = { ...(opts.headers||{}), ...fbAuthHeaders() };
+    }
+    const r = await fetch(`${FIREBASE_DB_URL}/${path}.json`, opts);
     if(!r.ok) return null;
     return await r.json();
   }catch(e){ return null; }
@@ -2491,8 +2494,8 @@ async function fbSaveOrder(order){
 async function fbUpdateOrderStatus(num, status){
   if(!FIREBASE_DB_URL) return;
   try{
-    await fetch(`${FIREBASE_DB_URL}/orders/${orderKey(num)}/status.json${fbAuthParam()}`,{
-      method:'PUT', headers:{'Content-Type':'application/json'},
+    await fetch(`${FIREBASE_DB_URL}/orders/${orderKey(num)}/status.json`,{
+      method:'PUT', headers:{'Content-Type':'application/json',...fbAuthHeaders()},
       body: JSON.stringify(status)
     });
   }catch(e){}
@@ -2500,8 +2503,8 @@ async function fbUpdateOrderStatus(num, status){
 async function fbUpdateOrderItem(num, idx, done){
   if(!FIREBASE_DB_URL) return;
   try{
-    await fetch(`${FIREBASE_DB_URL}/orders/${orderKey(num)}/items/${idx}/done.json${fbAuthParam()}`,{
-      method:'PUT', headers:{'Content-Type':'application/json'},
+    await fetch(`${FIREBASE_DB_URL}/orders/${orderKey(num)}/items/${idx}/done.json`,{
+      method:'PUT', headers:{'Content-Type':'application/json',...fbAuthHeaders()},
       body: JSON.stringify(done)
     });
   }catch(e){}
@@ -2768,27 +2771,22 @@ async function fbSaveCatHero(cat, ids) {
 async function fbSaveProductOverride(fbKey, data){
   if (!FIREBASE_DB_URL) return false;
   try {
-    const authParam = fbAuthParam();
-    const url = `${FIREBASE_DB_URL}/products/${fbKey}.json${authParam}`;
-    console.log('[fbSave] token present:', !!_adminToken, '| url:', url.slice(0,80));
-    const r = await fetch(url, {
+    const r = await fetch(`${FIREBASE_DB_URL}/products/${fbKey}.json`, {
       method: 'PUT',
-      headers: {'Content-Type':'application/json'},
+      headers: {'Content-Type':'application/json', ...fbAuthHeaders()},
       body: JSON.stringify(data)
     });
-    const body = await r.text();
-    console.log('[fbSave] status:', r.status, '| response:', body.slice(0,200));
     if(r.status === 401 || r.status === 403){
       toast('Sesión expirada — vuelve a iniciar sesión como admin','err');
       clearAdminSession(); closeAdmin(); return false;
     }
     return r.ok;
-  } catch(e) { console.error('[fbSave] exception:', e); return false; }
+  } catch(e) { return false; }
 }
 async function fbDeleteProductOverride(fbKey){
   try {
     if(!FIREBASE_DB_URL) return;
-    await fetch(`${FIREBASE_DB_URL}/products/${fbKey}.json${fbAuthParam()}`, { method:'DELETE' });
+    await fetch(`${FIREBASE_DB_URL}/products/${fbKey}.json`, { method:'DELETE', headers:{...fbAuthHeaders()} });
   } catch(e){}
 }
 
@@ -2836,7 +2834,7 @@ async function fbSetReservation(productId, qty) {
 async function fbClearMyReservations() {
   if (!FIREBASE_DB_URL) return;
   ALL_RESERVATIONS[SESSION_ID] = {};
-  try { await fetch(`${FIREBASE_DB_URL}/reservations/${SESSION_ID}.json${fbAuthParam()}`, { method:'DELETE' }); } catch(e) {}
+  try { await fetch(`${FIREBASE_DB_URL}/reservations/${SESSION_ID}.json`, { method:'DELETE', headers:{...fbAuthHeaders()} }); } catch(e) {}
 }
 
 async function fbLoadReservations() {
@@ -2848,7 +2846,7 @@ async function fbLoadReservations() {
       for (const [key, r] of Object.entries(items || {})) {
         if (r.expiresAt <= now) {
           delete ALL_RESERVATIONS[sid][key];
-          try { await fetch(`${FIREBASE_DB_URL}/reservations/${sid}/${key}.json${fbAuthParam()}`, { method:'DELETE' }); } catch(e) {}
+          try { await fetch(`${FIREBASE_DB_URL}/reservations/${sid}/${key}.json`, { method:'DELETE', headers:{...fbAuthHeaders()} }); } catch(e) {}
         }
       }
     }
@@ -4344,13 +4342,13 @@ async function confirmOrder(){
     if (prod && FIREBASE_DB_URL) {
       const newStock = Math.max(0, (prod.stock || 0) - item.qty);
       // Actualizar solo el campo stock
-      await fetch(`${FIREBASE_DB_URL}/products/${item.id}/stock.json${fbAuthParam()}`, {
+      await fetch(`${FIREBASE_DB_URL}/products/${item.id}/stock.json`, {
         method: 'PUT',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify(newStock)
       }).catch(()=>{});
       if (newStock <= 0) {
-        await fetch(`${FIREBASE_DB_URL}/products/${item.id}/hidden.json${fbAuthParam()}`, {
+        await fetch(`${FIREBASE_DB_URL}/products/${item.id}/hidden.json`, {
           method: 'PUT',
           headers: {'Content-Type':'application/json'},
           body: JSON.stringify(true)
@@ -4955,10 +4953,10 @@ async function cancelOrder(orderNum){
     const prod = PRODUCT_OVERRIDES[item.id];
     if(prod && FIREBASE_DB_URL){
       const newStock = (prod.stock || 0) + item.qty;
-      await fetch(`${FIREBASE_DB_URL}/products/${item.id}/stock.json${fbAuthParam()}`,{
+      await fetch(`${FIREBASE_DB_URL}/products/${item.id}/stock.json`,{
         method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newStock)
       }).catch(()=>{});
-      await fetch(`${FIREBASE_DB_URL}/products/${item.id}/hidden.json${fbAuthParam()}`,{
+      await fetch(`${FIREBASE_DB_URL}/products/${item.id}/hidden.json`,{
         method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(false)
       }).catch(()=>{});
       prod.stock = newStock;
@@ -4977,7 +4975,7 @@ async function deleteOrder(orderNum){
   S.orders = S.orders.filter(o => o.num !== orderNum);
   try {
     if(FIREBASE_DB_URL)
-      await fetch(`${FIREBASE_DB_URL}/orders/${orderKey(orderNum)}.json${fbAuthParam()}`, { method:'DELETE' });
+      await fetch(`${FIREBASE_DB_URL}/orders/${orderKey(orderNum)}.json`, { method:'DELETE', headers:{...fbAuthHeaders()} });
   } catch(e){}
   renderAdminOrders();
   toast('Pedido eliminado', 'ok');
