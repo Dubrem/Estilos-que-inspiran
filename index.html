@@ -2768,13 +2768,22 @@ async function fbSaveCatHero(cat, ids) {
 async function fbSaveProductOverride(fbKey, data){
   if (!FIREBASE_DB_URL) return false;
   try {
-    const r = await fetch(`${FIREBASE_DB_URL}/products/${fbKey}.json${fbAuthParam()}`, {
+    const authParam = fbAuthParam();
+    const url = `${FIREBASE_DB_URL}/products/${fbKey}.json${authParam}`;
+    console.log('[fbSave] token present:', !!_adminToken, '| url:', url.slice(0,80));
+    const r = await fetch(url, {
       method: 'PUT',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify(data)
     });
+    const body = await r.text();
+    console.log('[fbSave] status:', r.status, '| response:', body.slice(0,200));
+    if(r.status === 401 || r.status === 403){
+      toast('Sesión expirada — vuelve a iniciar sesión como admin','err');
+      clearAdminSession(); closeAdmin(); return false;
+    }
     return r.ok;
-  } catch(e) { return false; }
+  } catch(e) { console.error('[fbSave] exception:', e); return false; }
 }
 async function fbDeleteProductOverride(fbKey){
   try {
