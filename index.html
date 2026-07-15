@@ -2768,7 +2768,7 @@ async function fbSaveCatHero(cat, ids) {
 async function fbSaveProductOverride(fbKey, data){
   if (!FIREBASE_DB_URL) return false;
   try {
-    const r = await fetch(`${FIREBASE_DB_URL}/products/${fbKey}.json`, {
+    const r = await fetch(`${FIREBASE_DB_URL}/products/${fbKey}.json${fbAuthParam()}`, {
       method: 'PUT',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify(data)
@@ -4335,14 +4335,13 @@ async function confirmOrder(){
     if (prod && FIREBASE_DB_URL) {
       const newStock = Math.max(0, (prod.stock || 0) - item.qty);
       // Actualizar solo el campo stock
-      await fetch(`${FIREBASE_DB_URL}/products/${item.id}/stock.json`, {
+      await fetch(`${FIREBASE_DB_URL}/products/${item.id}/stock.json${fbAuthParam()}`, {
         method: 'PUT',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify(newStock)
       }).catch(()=>{});
-      // Si llegó a 0, ocultarlo también
       if (newStock <= 0) {
-        await fetch(`${FIREBASE_DB_URL}/products/${item.id}/hidden.json`, {
+        await fetch(`${FIREBASE_DB_URL}/products/${item.id}/hidden.json${fbAuthParam()}`, {
           method: 'PUT',
           headers: {'Content-Type':'application/json'},
           body: JSON.stringify(true)
@@ -4947,10 +4946,10 @@ async function cancelOrder(orderNum){
     const prod = PRODUCT_OVERRIDES[item.id];
     if(prod && FIREBASE_DB_URL){
       const newStock = (prod.stock || 0) + item.qty;
-      await fetch(`${FIREBASE_DB_URL}/products/${item.id}/stock.json`,{
+      await fetch(`${FIREBASE_DB_URL}/products/${item.id}/stock.json${fbAuthParam()}`,{
         method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newStock)
       }).catch(()=>{});
-      await fetch(`${FIREBASE_DB_URL}/products/${item.id}/hidden.json`,{
+      await fetch(`${FIREBASE_DB_URL}/products/${item.id}/hidden.json${fbAuthParam()}`,{
         method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(false)
       }).catch(()=>{});
       prod.stock = newStock;
