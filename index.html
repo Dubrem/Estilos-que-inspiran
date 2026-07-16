@@ -3932,9 +3932,16 @@ function openLightbox(id) {
     document.getElementById('lbSizes').innerHTML = sizes.map(s =>
       `<button class="size-btn" onclick="selectSize('${s}',this)">${s}</button>`
     ).join('');
+    if (sizes.length === 1) {
+      S.lbSize = sizes[0];
+      document.querySelector('#lbSizes .size-btn').classList.add('selected');
+    } else {
+      S.lbSize = null;
+    }
   } else {
     wrap.style.display = 'none';
     document.getElementById('lbSizes').innerHTML = '';
+    S.lbSize = null;
   }
   document.getElementById('lightbox').classList.add('open');
   document.getElementById('lightbox').scrollTop = 0;
