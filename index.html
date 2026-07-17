@@ -665,8 +665,10 @@
     }
     .product-desc { font-size: .72rem; color: var(--text-light); line-height: 1.5; margin-bottom: 10px; flex: 1; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
     .product-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-    .product-price { font-size: .95rem; font-weight: 600; color: var(--text-dark); }
+    .product-price { font-size: .95rem; font-weight: 600; color: var(--rose); }
     .product-price sup { font-size: .6rem; font-weight: 600; color: var(--rose); }
+    .product-price-old { font-size: .72rem; color: var(--text-light); text-decoration: line-through; line-height: 1.2; }
+    .product-discount-badge { display:inline-block; background:var(--rose); color:#fff; font-size:.52rem; font-weight:700; letter-spacing:.08em; padding:2px 6px; border-radius:50px; margin-left:5px; vertical-align:middle; }
     .product-stock { font-size: .64rem; color: var(--text-light); margin-top: 2px; }
     .product-stock.low { color: #c0392b; }
     .card-sizes { display:flex; flex-wrap:wrap; gap:4px; margin:6px 0 8px; }
@@ -714,7 +716,9 @@
     }
     .lb-name { font-family:var(--ff-head); font-style:italic; font-size:1.7rem; font-weight:400; line-height:1.1; margin-bottom:10px; color:var(--text-dark); }
     .lb-desc { font-size:.8rem; color:var(--text-med); line-height:1.7; margin-bottom:18px; }
-    .lb-price { font-size:1.5rem; font-weight:600; color:var(--rose); margin-bottom:4px; }
+    .lb-price { font-size:1.5rem; font-weight:600; color:var(--rose); margin-bottom:2px; }
+    .lb-price-old { font-size:.85rem; color:var(--text-light); text-decoration:line-through; margin-bottom:2px; }
+    .lb-discount-badge { display:inline-block; background:var(--rose); color:#fff; font-size:.6rem; font-weight:700; letter-spacing:.1em; padding:3px 9px; border-radius:50px; margin-left:8px; vertical-align:middle; }
     .lb-stock { font-size:.7rem; color:var(--text-light); margin-bottom:14px; }
     /* Selector de tallas */
     .lb-sizes-label { font-size:.62rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--text-med); margin-bottom:8px; }
@@ -1774,6 +1778,7 @@
       <span class="lb-cat" id="lbCat"></span>
       <h2 class="lb-name" id="lbName"></h2>
       <p class="lb-desc" id="lbDesc"></p>
+      <div class="lb-price-old" id="lbPriceOld"></div>
       <div class="lb-price" id="lbPrice"></div>
       <div class="lb-stock" id="lbStock"></div>
       <div id="lbSizesWrap" style="display:none">
@@ -3886,7 +3891,8 @@ function cardHTML(p) {
         ${sizesHtml}
         <div class="product-footer">
           <div class="card-price-col">
-            <div class="product-price">${fmtMXN(p.price)} <sup>MXN</sup></div>
+            <div class="product-price-old">${fmtMXN(Math.round(p.price * 2))} MXN</div>
+            <div class="product-price">${fmtMXN(p.price)} <sup>MXN</sup><span class="product-discount-badge">50% OFF</span></div>
             <div class="product-stock ${eff<=5?'low':''}" id="stk${p.id}">${stkTxt}</div>
           </div>
           <button class="card-cart-btn" onclick="addToCart(${idArg})" ${eff===0?'disabled':''} title="${quickLbl}">${cartIcon}</button>
@@ -3940,7 +3946,8 @@ function openLightbox(id) {
   document.getElementById('lbCat').textContent   = catLabel(p.cat);
   document.getElementById('lbName').textContent  = p.name;
   document.getElementById('lbDesc').textContent  = p.desc;
-  document.getElementById('lbPrice').textContent = fmtMXN(p.price) + ' MXN';
+  document.getElementById('lbPriceOld').textContent = fmtMXN(Math.round(p.price * 2)) + ' MXN';
+  document.getElementById('lbPrice').innerHTML = fmtMXN(p.price) + ' MXN <span class="lb-discount-badge">50% OFF</span>';
   updateLbStock(p);
   // Renderizar tallas
   const wrap  = document.getElementById('lbSizesWrap');
