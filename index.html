@@ -1513,6 +1513,133 @@
 </head>
 <body>
 
+<!-- ========== ANUNCIO APERTURA ========== -->
+<div id="aperturaOverlay" style="
+  position:fixed;inset:0;z-index:9999;
+  background:#0d0608;
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
+  animation:aperturaFadeIn .6s ease forwards;
+">
+  <!-- Partículas de fondo -->
+  <div id="aperturaParticles" style="position:absolute;inset:0;pointer-events:none;overflow:hidden"></div>
+
+  <!-- Líneas decorativas -->
+  <div style="position:absolute;inset:0;pointer-events:none">
+    <div style="position:absolute;top:0;left:50%;width:1px;height:100%;background:linear-gradient(to bottom,transparent,rgba(196,86,106,.18),transparent);transform:translateX(-50%)"></div>
+    <div style="position:absolute;top:50%;left:0;width:100%;height:1px;background:linear-gradient(to right,transparent,rgba(196,86,106,.18),transparent);transform:translateY(-50%)"></div>
+  </div>
+
+  <!-- Botón cerrar -->
+  <button onclick="cerrarApertura()" style="
+    position:absolute;top:20px;right:20px;
+    width:44px;height:44px;border-radius:50%;border:1.5px solid rgba(255,255,255,.25);
+    background:rgba(255,255,255,.07);color:#fff;font-size:1.1rem;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;
+    transition:background .2s,border-color .2s;z-index:2;
+    backdrop-filter:blur(8px);
+  " onmouseover="this.style.background='rgba(196,86,106,.4)';this.style.borderColor='rgba(196,86,106,.7)'"
+     onmouseout="this.style.background='rgba(255,255,255,.07)';this.style.borderColor='rgba(255,255,255,.25)'">✕</button>
+
+  <!-- Contenido central -->
+  <div style="text-align:center;padding:32px 24px;max-width:560px;width:100%;position:relative;z-index:1;animation:aperturaSlideUp .8s .2s ease both">
+
+    <!-- Logo símbolo -->
+    <div style="margin-bottom:18px">
+      <svg viewBox="0 0 48 48" width="52" height="52" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter:drop-shadow(0 0 18px rgba(196,86,106,.55))">
+        <polygon points="24,2 46,24 24,46 2,24" fill="none" stroke="#C4566A" stroke-width="1.8"/>
+        <polygon points="24,10 38,24 24,38 10,24" fill="#C4566A"/>
+      </svg>
+    </div>
+
+    <!-- Marca -->
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(3.8rem,12vw,6.5rem);letter-spacing:.25em;color:#fff;line-height:1;text-shadow:0 0 60px rgba(196,86,106,.4)">DUBREM</div>
+
+    <!-- Script tagline -->
+    <div style="font-family:'Great Vibes',cursive;font-size:clamp(1.4rem,5vw,2.2rem);color:#C4566A;margin:-6px 0 20px;letter-spacing:.04em">Estilos que inspiran</div>
+
+    <!-- Divisor -->
+    <div style="display:flex;align-items:center;gap:12px;margin:0 auto 24px;max-width:300px">
+      <div style="flex:1;height:1px;background:linear-gradient(to right,transparent,rgba(196,86,106,.5))"></div>
+      <div style="width:6px;height:6px;background:#C4566A;transform:rotate(45deg);flex-shrink:0"></div>
+      <div style="flex:1;height:1px;background:linear-gradient(to left,transparent,rgba(196,86,106,.5))"></div>
+    </div>
+
+    <!-- Texto principal -->
+    <div style="font-family:'Playfair Display',Georgia,serif;font-size:clamp(.95rem,3vw,1.2rem);color:rgba(255,255,255,.75);letter-spacing:.06em;margin-bottom:28px;line-height:1.65">
+      Tienda online<br>
+      <span style="color:#fff;font-style:italic;font-size:1.15em">próximamente en apertura</span>
+    </div>
+
+    <!-- Badge 50% OFF -->
+    <div style="display:inline-block;position:relative;margin-bottom:30px">
+      <div style="
+        background:linear-gradient(135deg,#e02020,#b01010);
+        color:#fff;border-radius:16px;padding:18px 40px;
+        box-shadow:0 8px 40px rgba(224,32,32,.45),0 0 0 1px rgba(255,255,255,.08);
+        position:relative;overflow:hidden;
+      ">
+        <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.12),transparent);pointer-events:none"></div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(2.8rem,10vw,4.5rem);letter-spacing:.12em;line-height:1;position:relative">50% OFF</div>
+        <div style="font-size:clamp(.6rem,2vw,.75rem);letter-spacing:.28em;text-transform:uppercase;opacity:.9;margin-top:2px;position:relative">Todo por apertura</div>
+      </div>
+      <!-- Destellos -->
+      <div style="position:absolute;top:-8px;right:-8px;width:22px;height:22px;background:radial-gradient(circle,#fff 0%,transparent 70%);border-radius:50%;opacity:.7;animation:sparkle 2s infinite"></div>
+      <div style="position:absolute;bottom:-6px;left:-6px;width:16px;height:16px;background:radial-gradient(circle,#fff 0%,transparent 70%);border-radius:50%;opacity:.5;animation:sparkle 2.3s .5s infinite"></div>
+    </div>
+
+    <!-- CTA -->
+    <div>
+      <button onclick="cerrarApertura()" style="
+        background:none;border:1.5px solid rgba(255,255,255,.3);color:rgba(255,255,255,.65);
+        font-family:'Bebas Neue',sans-serif;font-size:.78rem;letter-spacing:.3em;
+        padding:12px 32px;border-radius:50px;cursor:pointer;
+        transition:all .25s;
+      " onmouseover="this.style.borderColor='rgba(196,86,106,.8)';this.style.color='#C4566A'"
+         onmouseout="this.style.borderColor='rgba(255,255,255,.3)';this.style.color='rgba(255,255,255,.65)'">
+        EXPLORAR TIENDA
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+@keyframes aperturaFadeIn { from{opacity:0} to{opacity:1} }
+@keyframes aperturaFadeOut { from{opacity:1} to{opacity:0;pointer-events:none} }
+@keyframes aperturaSlideUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+@keyframes sparkle { 0%,100%{opacity:.7;transform:scale(1)} 50%{opacity:1;transform:scale(1.4)} }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+</style>
+
+<script>
+(function(){
+  if(sessionStorage.getItem('dubrem_apertura_closed')) {
+    document.getElementById('aperturaOverlay').style.display='none';
+    return;
+  }
+  // Generar partículas
+  const container = document.getElementById('aperturaParticles');
+  for(let i=0;i<28;i++){
+    const p=document.createElement('div');
+    const size=Math.random()*3+1;
+    const x=Math.random()*100;
+    const delay=Math.random()*6;
+    const dur=Math.random()*8+6;
+    p.style.cssText=`position:absolute;left:${x}%;bottom:-10px;width:${size}px;height:${size}px;
+      border-radius:50%;background:rgba(196,86,106,${Math.random()*.6+.2});
+      animation:float ${dur}s ${delay}s ease-in-out infinite;
+      top:${Math.random()*100}%;opacity:${Math.random()*.5+.2}`;
+    container.appendChild(p);
+  }
+})();
+function cerrarApertura(){
+  const el=document.getElementById('aperturaOverlay');
+  el.style.animation='aperturaFadeOut .4s ease forwards';
+  setTimeout(()=>el.style.display='none',400);
+  sessionStorage.setItem('dubrem_apertura_closed','1');
+}
+</script>
+
 <!-- ========== SIDEBAR ========== -->
 <div class="sb-overlay" id="sbOverlay" onclick="closeSidebar()"></div>
 <aside class="sidebar" id="sidebar">
