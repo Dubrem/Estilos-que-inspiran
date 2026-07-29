@@ -3944,7 +3944,8 @@ function showCatalog(section, pushHistory = true) {
   const sinfo = document.getElementById('searchInfo');
   if (sinfo) sinfo.textContent = '';
   renderSectionTabs(section);
-  _fbFetching = true;
+  const hasCached = Object.keys(PRODUCT_OVERRIDES).length > 0;
+  _fbFetching = !hasCached;
   renderGrid('all');
   fbLoadProductOverrides().then(() => { _fbFetching = false; renderGrid('all'); });
   setTimeout(() => document.getElementById('catalogo').scrollIntoView({behavior:'smooth'}), 50);
