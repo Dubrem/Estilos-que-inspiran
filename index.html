@@ -2914,25 +2914,30 @@ function updateSubcatOptions(cat, selected) {
 }
 
 let _fbLoadError = false;
+let _fbProductsPromise = null;
 async function fbLoadProductOverrides(){
   _fbLoadError = false;
-  try {
-    const data = await fbFetch('products');
-    if (data && typeof data === 'object') {
-      PRODUCT_OVERRIDES = data;
-      try {
-        localStorage.setItem('dubrem_products_v1', JSON.stringify(PRODUCT_OVERRIDES));
-      } catch(e) {
-        const slim = Object.fromEntries(
-          Object.entries(PRODUCT_OVERRIDES).map(([k,v]) => { const {imgs,...r}=v; return [k,r]; })
-        );
-        try { localStorage.setItem('dubrem_products_v1', JSON.stringify(slim)); } catch(e2) {}
+  _fbProductsPromise = (async () => {
+    try {
+      const data = await fbFetch('products');
+      if (data && typeof data === 'object') {
+        PRODUCT_OVERRIDES = data;
+        try {
+          localStorage.setItem('dubrem_products_v1', JSON.stringify(PRODUCT_OVERRIDES));
+        } catch(e) {
+          const slim = Object.fromEntries(
+            Object.entries(PRODUCT_OVERRIDES).map(([k,v]) => { const {imgs,...r}=v; return [k,r]; })
+          );
+          try { localStorage.setItem('dubrem_products_v1', JSON.stringify(slim)); } catch(e2) {}
+        }
+        if (_heroSection) startCatBannerSlideshow(_heroSection);
+      } else {
+        _fbLoadError = true;
       }
-      if (_heroSection) startCatBannerSlideshow(_heroSection);
-    } else {
-      _fbLoadError = true;
-    }
-  } catch(e){ _fbLoadError = true; }
+    } catch(e){ _fbLoadError = true; }
+    finally { _fbProductsPromise = null; }
+  })();
+  return _fbProductsPromise;
 }
 async function fbLoadCatHeroes() {
   try {
@@ -3847,10 +3852,14 @@ function showCatalog(section, pushHistory = true) {
   const sinfo = document.getElementById('searchInfo');
   if (sinfo) sinfo.textContent = '';
   renderSectionTabs(section);
-  const hasCached = Object.keys(PRODUCT_OVERRIDES).length > 0;
-  _fbFetching = !hasCached;
+  const hasData = Object.keys(PRODUCT_OVERRIDES).length > 0;
+  _fbFetching = !hasData;
   renderGrid('all');
-  fbLoadProductOverrides().then(() => { _fbFetching = false; renderGrid('all'); });
+  if (hasData) {
+    fbLoadProductOverrides();
+  } else {
+    (_fbProductsPromise || fbLoadProductOverrides()).then(() => { _fbFetching = false; renderGrid('all'); });
+  }
   setTimeout(() => document.getElementById('catalogo').scrollIntoView({behavior:'smooth'}), 50);
 }
 function reintentarCarga() {
