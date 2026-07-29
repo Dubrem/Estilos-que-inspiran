@@ -1547,6 +1547,7 @@
 .ap-close{position:absolute;top:18px;right:18px;width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.04);color:rgba(255,255,255,.5);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;transition:all .25s;backdrop-filter:blur(8px);opacity:0}
 .ap-close.show{opacity:1;transition:opacity .5s .3s,background .2s,border-color .2s,color .2s}
 .ap-close:hover{background:rgba(196,86,106,.3);border-color:rgba(196,86,106,.6);color:#fff}
+@keyframes spin{to{transform:rotate(360deg)}}
 @keyframes apRingSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 @keyframes apPulse{0%{transform:scale(1);opacity:.8}100%{transform:scale(2.2);opacity:0}}
 @keyframes apAuroraShift{0%,100%{opacity:.35;transform:scale(1) translate(0,0)}50%{opacity:.55;transform:scale(1.15) translate(-3%,2%)}}
@@ -1648,7 +1649,7 @@
       w:Math.random()*6+3, h:Math.random()*3+2
     };
   }
-  for(let i=0;i<120;i++) particles.push(mkParticle());
+  for(let i=0;i<40;i++) particles.push(mkParticle());
 
   function drawFrame(){
     ctx.clearRect(0,0,W,H);
@@ -3943,8 +3944,9 @@ function showCatalog(section, pushHistory = true) {
   const sinfo = document.getElementById('searchInfo');
   if (sinfo) sinfo.textContent = '';
   renderSectionTabs(section);
+  _fbFetching = true;
   renderGrid('all');
-  fbLoadProductOverrides().then(() => renderGrid('all'));
+  fbLoadProductOverrides().then(() => { _fbFetching = false; renderGrid('all'); });
   setTimeout(() => document.getElementById('catalogo').scrollIntoView({behavior:'smooth'}), 50);
 }
 function showHero() {
@@ -4073,6 +4075,7 @@ function filterBy(subcat, btn) {
   renderGrid(subcat);
   document.getElementById('catalogo').scrollIntoView({behavior:'smooth'});
 }
+let _fbFetching = false;
 function renderGrid(subcat) {
   _fuseInstance = null;
   const grid = document.getElementById('grid');
@@ -4086,7 +4089,17 @@ function renderGrid(subcat) {
   let all = getMergedProducts().filter(p => !p.hidden);
   if (_currentSection) all = all.filter(p => p.cat === _currentSection);
   const list = (subcat === 'all') ? all : all.filter(p => p.subcat === subcat);
-  if (!list.length) { grid.innerHTML='<p class="no-products">No hay productos en esta categoría.</p>'; return; }
+  if (!list.length) {
+    if (_fbFetching) {
+      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:80px 20px">
+        <div style="display:inline-block;width:36px;height:36px;border:3px solid var(--blush-mid);border-top-color:var(--rose);border-radius:50%;animation:spin .8s linear infinite"></div>
+        <p style="color:var(--text-light);font-size:.8rem;margin-top:16px;letter-spacing:.1em">Cargando productos…</p>
+      </div>`;
+    } else {
+      grid.innerHTML = '<p class="no-products">No hay productos en esta categoría.</p>';
+    }
+    return;
+  }
   grid.innerHTML = list.map(cardHTML).join('');
 }
 function cardHTML(p) {
