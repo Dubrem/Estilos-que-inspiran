@@ -1502,9 +1502,9 @@
 </head>
 <body>
 
-<!-- ========== ANUNCIO APERTURA ========== -->
+<!-- ========== ANUNCIO APERTURA (desactivado) ========== -->
 <style>
-#aperturaOverlay{position:fixed;inset:0;z-index:9999;background:#060306;display:flex;align-items:center;justify-content:center;overflow:hidden;font-family:'Inter',sans-serif}
+#aperturaOverlay{display:none!important}
 #aperturaCanvas{position:absolute;inset:0;width:100%;height:100%}
 .ap-aurora{position:absolute;inset:0;pointer-events:none}
 .ap-curtain-l,.ap-curtain-r{position:absolute;top:0;bottom:0;width:52%;background:#060306;z-index:2;transition:transform 1.1s cubic-bezier(.77,0,.18,1)}
@@ -1621,111 +1621,7 @@
 </div>
 
 <script>
-(function(){
-  const ov = document.getElementById('aperturaOverlay');
-  if(sessionStorage.getItem('dubrem_apertura_closed')){ov.style.display='none';return;}
-
-  /* ── Canvas partículas ── */
-  const cvs = document.getElementById('aperturaCanvas');
-  const ctx = cvs.getContext('2d');
-  let W,H,particles=[];
-  function resize(){W=cvs.width=cvs.offsetWidth;H=cvs.height=cvs.offsetHeight}
-  resize();
-  window.addEventListener('resize',resize);
-
-  function mkParticle(){
-    const colors=['#C4566A','#e02020','#ff9999','#fff','#f0a0a0','#ffd0d0'];
-    return{
-      x:Math.random()*W, y:Math.random()*H,
-      r:Math.random()*2+.5,
-      vx:(Math.random()-.5)*.3, vy:-(Math.random()*.4+.1),
-      alpha:Math.random()*.7+.2,
-      color:colors[Math.floor(Math.random()*colors.length)],
-      twinkle:Math.random()*Math.PI*2,
-      twinkleSpeed:Math.random()*.04+.01,
-      isConfetti:Math.random()<.12,
-      rotation:Math.random()*Math.PI*2,
-      rotSpeed:(Math.random()-.5)*.06,
-      w:Math.random()*6+3, h:Math.random()*3+2
-    };
-  }
-  for(let i=0;i<40;i++) particles.push(mkParticle());
-
-  function drawFrame(){
-    ctx.clearRect(0,0,W,H);
-    particles.forEach(p=>{
-      p.twinkle+=p.twinkleSpeed;
-      const a=p.alpha*(0.6+0.4*Math.sin(p.twinkle));
-      ctx.save();
-      ctx.globalAlpha=a;
-      if(p.isConfetti){
-        ctx.translate(p.x,p.y);
-        ctx.rotate(p.rotation);
-        ctx.fillStyle=p.color;
-        ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
-        p.rotation+=p.rotSpeed;
-      } else {
-        ctx.beginPath();
-        ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-        ctx.fillStyle=p.color;
-        ctx.fill();
-        /* halo */
-        const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*4);
-        g.addColorStop(0,p.color.replace(')',',0.3)').replace('rgb','rgba').replace('#','rgba(')+'');
-        ctx.beginPath();ctx.arc(p.x,p.y,p.r*4,0,Math.PI*2);
-        ctx.fillStyle='transparent';ctx.fill();
-      }
-      ctx.restore();
-      p.x+=p.vx; p.y+=p.vy;
-      if(p.y<-10){p.y=H+5;p.x=Math.random()*W;}
-      if(p.x<-10||p.x>W+10){p.x=Math.random()*W;p.y=Math.random()*H;}
-    });
-    if(ov.style.display!=='none') requestAnimationFrame(drawFrame);
-  }
-  requestAnimationFrame(drawFrame);
-
-  /* ── Secuencia de animación orquestada ── */
-  function show(id,delay){setTimeout(()=>{const el=document.getElementById(id)||document.querySelector(id);if(el)el.classList.add('show');},delay);}
-
-  setTimeout(()=>{
-    document.getElementById('apCurtainL').classList.add('open');
-    document.getElementById('apCurtainR').classList.add('open');
-  },100);
-
-  show('apPrehead',700);
-  show('apLogo',900);
-
-  /* Letras escalonadas */
-  document.querySelectorAll('.ap-letter').forEach((l,i)=>{
-    setTimeout(()=>l.classList.add('show'),1200+i*120);
-  });
-
-  /* Efecto glow en cadena */
-  setTimeout(()=>{
-    document.querySelectorAll('.ap-letter').forEach((l,i)=>{
-      setTimeout(()=>{
-        l.classList.add('glow');
-        setTimeout(()=>l.classList.remove('glow'),400);
-      },i*80);
-    });
-  },1950);
-
-  /* Shimmer sweep */
-  setTimeout(()=>{document.getElementById('apShimmer').classList.add('run');},2200);
-
-  show('apScript',2100);
-  show('apDivider',2400);
-  show('apSub',2650);
-  show('apCta',2950);
-  show('apClose',3600);
-})();
-
-function cerrarApertura(){
-  const el=document.getElementById('aperturaOverlay');
-  el.style.animation='apFadeOut .5s ease forwards';
-  setTimeout(()=>el.style.display='none',500);
-  sessionStorage.setItem('dubrem_apertura_closed','1');
-}
+function cerrarApertura(){}
 </script>
 
 <!-- ========== SIDEBAR ========== -->
@@ -2727,7 +2623,10 @@ function resetAIKey() {
 async function fbFetch(path, opts={}){
   if(!FIREBASE_DB_URL) return null;
   try{
-    const r = await fetch(`${FIREBASE_DB_URL}/${path}.json`, opts);
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 8000);
+    const r = await fetch(`${FIREBASE_DB_URL}/${path}.json`, { signal: ctrl.signal, ...opts });
+    clearTimeout(timer);
     if(!r.ok) return null;
     return await r.json();
   }catch(e){ return null; }
@@ -3014,22 +2913,26 @@ function updateSubcatOptions(cat, selected) {
     opts.map(([v,l]) => `<option value="${v}"${v===selected?' selected':''}>${l}</option>`).join('');
 }
 
+let _fbLoadError = false;
 async function fbLoadProductOverrides(){
+  _fbLoadError = false;
   try {
     const data = await fbFetch('products');
-    PRODUCT_OVERRIDES = (data && typeof data === 'object') ? data : {};
-    // Guardar en localStorage para carga instantánea en refresh
-    try {
-      localStorage.setItem('dubrem_products_v1', JSON.stringify(PRODUCT_OVERRIDES));
-    } catch(e) {
-      // Cuota excedida (imágenes base64 pesadas) — guardar solo metadatos sin imgs
-      const slim = Object.fromEntries(
-        Object.entries(PRODUCT_OVERRIDES).map(([k,v]) => { const {imgs,...r}=v; return [k,r]; })
-      );
-      try { localStorage.setItem('dubrem_products_v1', JSON.stringify(slim)); } catch(e2) {}
+    if (data && typeof data === 'object') {
+      PRODUCT_OVERRIDES = data;
+      try {
+        localStorage.setItem('dubrem_products_v1', JSON.stringify(PRODUCT_OVERRIDES));
+      } catch(e) {
+        const slim = Object.fromEntries(
+          Object.entries(PRODUCT_OVERRIDES).map(([k,v]) => { const {imgs,...r}=v; return [k,r]; })
+        );
+        try { localStorage.setItem('dubrem_products_v1', JSON.stringify(slim)); } catch(e2) {}
+      }
+      if (_heroSection) startCatBannerSlideshow(_heroSection);
+    } else {
+      _fbLoadError = true;
     }
-    if (_heroSection) startCatBannerSlideshow(_heroSection);
-  } catch(e){ PRODUCT_OVERRIDES = {}; }
+  } catch(e){ _fbLoadError = true; }
 }
 async function fbLoadCatHeroes() {
   try {
@@ -3950,6 +3853,12 @@ function showCatalog(section, pushHistory = true) {
   fbLoadProductOverrides().then(() => { _fbFetching = false; renderGrid('all'); });
   setTimeout(() => document.getElementById('catalogo').scrollIntoView({behavior:'smooth'}), 50);
 }
+function reintentarCarga() {
+  _fbFetching = true;
+  _fbLoadError = false;
+  renderGrid(_currentFilter || 'all');
+  fbLoadProductOverrides().then(() => { _fbFetching = false; renderGrid(_currentFilter || 'all'); });
+}
 function showHero() {
   clearInterval(_heroInterval);
   document.getElementById('inicio').style.display = '';
@@ -4095,6 +4004,11 @@ function renderGrid(subcat) {
       grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:80px 20px">
         <div style="display:inline-block;width:36px;height:36px;border:3px solid var(--blush-mid);border-top-color:var(--rose);border-radius:50%;animation:spin .8s linear infinite"></div>
         <p style="color:var(--text-light);font-size:.8rem;margin-top:16px;letter-spacing:.1em">Cargando productos…</p>
+      </div>`;
+    } else if (_fbLoadError) {
+      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:80px 20px">
+        <p style="color:var(--text-light);font-size:.9rem;margin-bottom:16px">Sin conexión — no se pudieron cargar los productos.</p>
+        <button onclick="reintentarCarga()" style="background:var(--rose);color:#fff;border:none;padding:12px 28px;border-radius:50px;font-family:var(--ff-body);font-size:.85rem;letter-spacing:.08em;cursor:pointer;">↺ Reintentar</button>
       </div>`;
     } else {
       grid.innerHTML = '<p class="no-products">No hay productos en esta categoría.</p>';
