@@ -2763,10 +2763,10 @@ async function fbGetUserOrders(email){
    FIREBASE — PRODUCTOS (subir fotos / editar / agregar)
 ────────────────────────────────────────────────────── */
 let PRODUCT_OVERRIDES = {};   // { fbKey: { name, price, stock, cat, desc, img } }
-// Cargar caché de productos desde localStorage (instantáneo al refrescar)
+// Carga rápida: solo metadatos sin imágenes (34 KB vs 36 MB)
 try {
-  const _pc = localStorage.getItem('dubrem_products_v1');
-  if (_pc) PRODUCT_OVERRIDES = JSON.parse(_pc);
+  const slim = localStorage.getItem('dubrem_products_slim_v2');
+  if (slim) PRODUCT_OVERRIDES = JSON.parse(slim);
 } catch(e) {}
 
 let CAT_HEROES = {}; // { mujer: ['prodId1','prodId2'], hombre: [...] }
@@ -2952,14 +2952,21 @@ async function fbLoadProductOverrides(){
       const data = await fbFetch('products');
       if (data && typeof data === 'object') {
         PRODUCT_OVERRIDES = data;
-        try {
-          localStorage.setItem('dubrem_products_v1', JSON.stringify(PRODUCT_OVERRIDES));
-        } catch(e) {
-          const slim = Object.fromEntries(
-            Object.entries(PRODUCT_OVERRIDES).map(([k,v]) => { const {imgs,...r}=v; return [k,r]; })
-          );
-          try { localStorage.setItem('dubrem_products_v1', JSON.stringify(slim)); } catch(e2) {}
-        }
+        // Guardar solo metadatos (sin img/imgs) en localStorage — 34 KB en vez de 36 MB
+        const slim = Object.fromEntries(
+          Object.entries(data).map(([k,v]) => {
+            const {img, imgs, ...rest} = v;
+            return [k, rest];
+          })
+        );
+        try { localStorage.setItem('dubrem_products_slim_v2', JSON.stringify(slim)); } catch(e) {}
+        // Actualizar imágenes en tarjetas ya visibles sin re-renderizar el grid completo
+        document.querySelectorAll('[data-prod-img]').forEach(el => {
+          const id = el.dataset.prodImg;
+          const key = `new_${id}`;
+          const p = data[key] || Object.values(data).find(x => String(x.id) === String(id));
+          if (p && p.img) el.src = p.img;
+        });
         if (_heroSection) startCatBannerSlideshow(_heroSection);
       } else {
         _fbLoadError = true;
@@ -4067,7 +4074,7 @@ function cardHTML(p) {
   return `
     <div class="product-card" id="card${p.id}">
       <div class="product-img-wrap" onclick="openLightbox(${idArg})">
-        <img src="${p.img||''}" alt="${p.name}" loading="lazy" onerror="imgErr(this)">
+        <img src="${p.img||''}" alt="${p.name}" loading="lazy" onerror="imgErr(this)" data-prod-img="${p.id}">
         <span class="cat-badge">${catLabel(p.subcat || p.cat)}</span>
         <button class="card-quick-add" id="badd${p.id}" onclick="event.stopPropagation();addToCart(${idArg})" ${eff===0?'disabled':''}>${quickLbl}</button>
       </div>
@@ -4103,11 +4110,26 @@ function lbGoto(idx) {
   thumbs.querySelectorAll('.lb-thumb').forEach((t, i) => t.classList.toggle('active', i === _lbIdx));
 }
 
-function openLightbox(id) {
-  const p = getMergedProducts().find(x=>x.id===id); if(!p) return;
+async function openLightbox(id) {
+  let p = getMergedProducts().find(x=>x.id===id); if(!p) return;
   S.lbId = id;
   S.lbSize = null;
-  document.getElementById('lbImg').src   = p.img;
+  let _scrollLocked = false;
+  // Si no hay imagen aún (carga slim), obtenerla de Firebase al momento
+  if (!p.img) {
+    document.getElementById('lbImg').src = '';
+    document.getElementById('lightbox').classList.add('open');
+    lockScroll(); _scrollLocked = true;
+    const fbKey = typeof id === 'string' && id.startsWith('new_') ? id : `new_${id}`;
+    const full = await fbFetch(`products/${fbKey}`);
+    if (full) {
+      PRODUCT_OVERRIDES[fbKey] = { ...PRODUCT_OVERRIDES[fbKey], ...full };
+      p = getMergedProducts().find(x=>x.id===id) || p;
+      const cardImg = document.querySelector(`[data-prod-img="${id}"]`);
+      if (cardImg && full.img) cardImg.src = full.img;
+    }
+  }
+  document.getElementById('lbImg').src   = p.img || '';
   document.getElementById('lbImg').alt   = p.name;
   // Set up gallery
   _lbImgs = p.imgs && p.imgs.length ? p.imgs : (p.img ? [p.img] : []);
@@ -4153,7 +4175,7 @@ function openLightbox(id) {
   }
   document.getElementById('lightbox').classList.add('open');
   document.getElementById('lightbox').scrollTop = 0;
-  lockScroll();
+  if (!_scrollLocked) lockScroll();
   renderLbSuggestions(p);
 }
 
