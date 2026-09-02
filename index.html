@@ -2945,6 +2945,8 @@ function updateSubcatOptions(cat, selected) {
 
 let _fbLoadError = false;
 let _fbProductsPromise = null;
+
+// Descarga completa (36 MB) — solo para panel admin que necesita editar imágenes
 async function fbLoadProductOverrides(){
   _fbLoadError = false;
   _fbProductsPromise = (async () => {
@@ -2952,29 +2954,37 @@ async function fbLoadProductOverrides(){
       const data = await fbFetch('products');
       if (data && typeof data === 'object') {
         PRODUCT_OVERRIDES = data;
-        // Guardar solo metadatos (sin img/imgs) en localStorage — 34 KB en vez de 36 MB
+        // Guardar slim (34 KB) en localStorage para clientes
         const slim = Object.fromEntries(
-          Object.entries(data).map(([k,v]) => {
-            const {img, imgs, ...rest} = v;
-            return [k, rest];
-          })
+          Object.entries(data).map(([k,v]) => { const {img,imgs,...r}=v; return [k,r]; })
         );
         try { localStorage.setItem('dubrem_products_slim_v2', JSON.stringify(slim)); } catch(e) {}
-        // Actualizar imágenes en tarjetas ya visibles sin re-renderizar el grid completo
-        document.querySelectorAll('[data-prod-img]').forEach(el => {
-          const id = el.dataset.prodImg;
-          const key = `new_${id}`;
-          const p = data[key] || Object.values(data).find(x => String(x.id) === String(id));
-          if (p && p.img) el.src = p.img;
-        });
         if (_heroSection) startCatBannerSlideshow(_heroSection);
-      } else {
-        _fbLoadError = true;
-      }
+      } else { _fbLoadError = true; }
     } catch(e){ _fbLoadError = true; }
     finally { _fbProductsPromise = null; }
   })();
   return _fbProductsPromise;
+}
+
+// Descarga ligera de metadatos (34 KB guardados) — solo refresca stock/precio
+// NO descarga imágenes, NO bloquea el catálogo
+async function fbRefreshProductMeta(){
+  try {
+    const data = await fbFetch('products');
+    if (!data) return;
+    const slim = Object.fromEntries(
+      Object.entries(data).map(([k,v]) => { const {img,imgs,...r}=v; return [k,r]; })
+    );
+    // Solo actualizar campos de metadatos, preservar imágenes ya cargadas en memoria
+    Object.entries(slim).forEach(([k,v]) => {
+      PRODUCT_OVERRIDES[k] = PRODUCT_OVERRIDES[k]
+        ? { ...v, img: PRODUCT_OVERRIDES[k].img, imgs: PRODUCT_OVERRIDES[k].imgs }
+        : v;
+    });
+    try { localStorage.setItem('dubrem_products_slim_v2', JSON.stringify(slim)); } catch(e) {}
+    if (document.querySelector('.products-section.catalog-visible')) renderGrid(_currentFilter);
+  } catch(e){}
 }
 async function fbLoadCatHeroes() {
   try {
@@ -3776,18 +3786,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   })();
 
-  // Cargar productos y héroes de Firebase al iniciar
-  fbLoadProductOverrides();
+  // Cargar héroes de Firebase al iniciar
   fbLoadCatHeroes();
   // Limpiar reservas antiguas (carrito vacío en carga) y cargar reservas activas
   fbClearMyReservations().then(() => fbLoadReservations());
-  // Refrescar productos y reservas cada minuto si el catálogo está visible
+  // Refrescar solo metadatos (34 KB) cada 2 minutos — sin descargar imágenes
+  setTimeout(() => fbRefreshProductMeta(), 3000); // 3 seg después de carga
   setInterval(() => {
-    Promise.all([fbLoadProductOverrides(), fbLoadReservations()]).then(() => {
-      if (document.querySelector('.products-section.catalog-visible'))
-        renderGrid(_currentFilter);
-    });
-  }, 60000);
+    fbRefreshProductMeta();
+    fbLoadReservations();
+  }, 120000);
 
   // Header transparente sobre el hero, opaco al bajar
   const header = document.querySelector('.header');
@@ -3892,10 +3900,9 @@ function showCatalog(section, pushHistory = true) {
   const hasData = Object.keys(PRODUCT_OVERRIDES).length > 0;
   _fbFetching = !hasData;
   renderGrid('all');
-  if (hasData) {
-    fbLoadProductOverrides();
-  } else {
-    (_fbProductsPromise || fbLoadProductOverrides()).then(() => { _fbFetching = false; renderGrid('all'); });
+  if (!hasData) {
+    // Primera visita sin caché: descarga metadatos (36MB) una sola vez, guarda slim
+    fbRefreshProductMeta().then(() => { _fbFetching = false; renderGrid('all'); });
   }
   setTimeout(() => document.getElementById('catalogo').scrollIntoView({behavior:'smooth'}), 50);
 }
@@ -3903,7 +3910,7 @@ function reintentarCarga() {
   _fbFetching = true;
   _fbLoadError = false;
   renderGrid(_currentFilter || 'all');
-  fbLoadProductOverrides().then(() => { _fbFetching = false; renderGrid(_currentFilter || 'all'); });
+  fbRefreshProductMeta().then(() => { _fbFetching = false; renderGrid(_currentFilter || 'all'); });
 }
 function showHero() {
   clearInterval(_heroInterval);
