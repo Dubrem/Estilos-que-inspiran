@@ -5598,13 +5598,16 @@ if ('serviceWorker' in navigator) {
         body: JSON.stringify({ message: text, history: _botHistory.slice(0,-1) })
       });
       const d = await r.json();
-      const reply = d.reply || 'Lo siento, hubo un error. Escríbenos por WhatsApp al 5214421052174.';
       typing.remove();
-      botAppend(reply, false);
-      _botHistory.push({role:'assistant', content:reply});
+      if(d.reply){
+        botAppend(d.reply, false);
+        _botHistory.push({role:'assistant', content:d.reply});
+      } else {
+        botAppend('Por el momento no puedo responder. Escríbenos directo por WhatsApp 📲 55 6372 3284', false);
+      }
     } catch(e){
       typing.remove();
-      botAppend('Sin conexión. Contáctanos por WhatsApp: 5214421052174', false);
+      botAppend('Sin conexión. Contáctanos por WhatsApp: 55 6372 3284', false);
     } finally {
       _botBusy = false;
       send.disabled = false;
