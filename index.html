@@ -1751,20 +1751,6 @@ function cerrarApertura(){}
         <a onclick="goToSection('maternidad','faja')">Fajas</a>
       </div>
     </div>
-    <!-- Bebé -->
-    <div class="sb-section">
-      <button class="sb-cat" onclick="toggleSidebarCat(this,'sub-bebe')">
-        <span>Bebé</span><span class="sb-arrow">›</span>
-      </button>
-      <div class="sb-sub" id="sub-bebe">
-        <a onclick="goToSection('bebe','all')">✦ Todos</a>
-        <a onclick="goToSection('bebe','body')">Bodies</a>
-        <a onclick="goToSection('bebe','pijama')">Pijamas</a>
-        <a onclick="goToSection('bebe','playera')">Playeras</a>
-        <a onclick="goToSection('bebe','pantalon')">Pantalones</a>
-        <a onclick="goToSection('bebe','accesorio')">Accesorios</a>
-      </div>
-    </div>
   </nav>
 </aside>
 
@@ -1813,7 +1799,6 @@ function cerrarApertura(){}
     <a href="#catalogo" onclick="showCatalog('ninos');closeMobileNav()">Niños</a>
     <a href="#catalogo" onclick="showCatalog('juvenil');closeMobileNav()">Juvenil</a>
     <a href="#catalogo" onclick="showCatalog('maternidad');closeMobileNav()">Maternidad</a>
-    <a href="#catalogo" onclick="showCatalog('bebe');closeMobileNav()">Bebé</a>
   </nav>
 </header>
 
@@ -2357,7 +2342,6 @@ function cerrarApertura(){}
         <option value="ninos">Niños</option>
         <option value="juvenil">Juvenil</option>
         <option value="maternidad">Maternidad</option>
-        <option value="bebe">Bebé</option>
       </select>
     </div>
     <!-- Sub-categoría -->
@@ -2447,7 +2431,6 @@ function cerrarApertura(){}
         <li><a href="#catalogo" onclick="showCatalog('ninos')">✦ Niños</a></li>
         <li><a href="#catalogo" onclick="showCatalog('juvenil')">✦ Juvenil</a></li>
         <li><a href="#catalogo" onclick="showCatalog('maternidad')">✦ Maternidad</a></li>
-        <li><a href="#catalogo" onclick="showCatalog('bebe')">✦ Bebé</a></li>
       </ul>
     </div>
     <div class="footer-col">
@@ -2793,7 +2776,6 @@ const SECTION_TABS = {
   ninos:      [['all','✦ Todos'],['playera','Playeras'],['chamarra','Chamarras'],['pantalon','Pantalones'],['vestido','Vestidos'],['deportiva','Deportivas'],['sudadera','Sudaderas'],['marca','Marca Exclusiva']],
   juvenil:    [['all','✦ Todos'],['playera','Playeras'],['pantalon','Pantalones'],['chamarra','Chamarras'],['sudadera','Sudaderas'],['deportiva','Deportivas'],['jeans','Jeans'],['marca','Marca Exclusiva']],
   maternidad: [['all','✦ Todos'],['top','Tops'],['pantalon','Pantalones'],['vestido','Vestidos'],['pijama','Pijamas'],['lactancia','Lactancia'],['faja','Fajas']],
-  bebe:       [['all','✦ Todos'],['body','Bodies'],['pijama','Pijamas'],['playera','Playeras'],['pantalon','Pantalones'],['accesorio','Accesorios']],
 };
 const SUBCATS = {
   mujer:      [['vestido','Vestido'],['blusa','Blusa'],['pantalon','Pantalón'],['chamarra','Chamarra'],['deportiva','Deportiva'],['sudadera','Sudadera'],['marca','Marca Exclusiva']],
@@ -2801,7 +2783,6 @@ const SUBCATS = {
   ninos:      [['playera','Playera'],['chamarra','Chamarra'],['pantalon','Pantalón'],['vestido','Vestido'],['deportiva','Deportiva'],['sudadera','Sudadera'],['marca','Marca Exclusiva']],
   juvenil:    [['playera','Playera'],['pantalon','Pantalón'],['chamarra','Chamarra'],['sudadera','Sudadera'],['deportiva','Deportiva'],['jeans','Jeans'],['marca','Marca Exclusiva']],
   maternidad: [['top','Top'],['pantalon','Pantalón'],['vestido','Vestido'],['pijama','Pijama'],['lactancia','Lactancia'],['faja','Faja']],
-  bebe:       [['body','Body'],['pijama','Pijama'],['playera','Playera'],['pantalon','Pantalón'],['accesorio','Accesorio']],
 };
 
 function renderSectionTabs(section) {
@@ -2825,7 +2806,7 @@ function renderSectionTabs(section) {
   const chevron = document.getElementById('filterDropdownChevron');
   if (chevron) chevron.style.transform = '';
   // Label de sección
-  const labels = { mujer:'Mujer', hombre:'Hombre', ninos:'Niños', juvenil:'Juvenil', maternidad:'Maternidad', bebe:'Bebé',  };
+  const labels = { mujer:'Mujer', hombre:'Hombre', ninos:'Niños', juvenil:'Juvenil', maternidad:'Maternidad',};
   const el = document.getElementById('sectionGenderLabel');
   if (el) el.textContent = labels[section] || '';
   // Sin hero banner para categorías próximamente
@@ -3228,7 +3209,7 @@ function renderAdminHeroes(activeCat) {
   const sec = document.getElementById('adminHeroesSection');
   if (!sec) return;
   const cats = ['mujer','hombre','ninos','juvenil'];
-  const labels = { mujer:'Mujer', hombre:'Hombre', ninos:'Niños', juvenil:'Juvenil', maternidad:'Maternidad', bebe:'Bebé',  };
+  const labels = { mujer:'Mujer', hombre:'Hombre', ninos:'Niños', juvenil:'Juvenil', maternidad:'Maternidad',};
   const selected = CAT_HEROES[activeCat] || [];
   const prods = getMergedProducts().filter(p => !p.hidden && p.cat === activeCat);
 
@@ -3859,7 +3840,7 @@ function togglePass(id, btn) {
 }
 function catLabel(c){
   return {
-    mujer:'Mujer',hombre:'Hombre',ninos:'Niños',juvenil:'Juvenil',maternidad:'Maternidad',bebe:'Bebé',outerwear:'Outerwear',bottoms:'Bottoms',sets:'Sets',
+    mujer:'Mujer',hombre:'Hombre',ninos:'Niños',juvenil:'Juvenil',maternidad:'Maternidad',outerwear:'Outerwear',bottoms:'Bottoms',sets:'Sets',
     chamarra:'Chamarra',pantalon:'Pantalón',sueter:'Suéter',playera:'Playera',vestido:'Vestido',blusa:'Blusa'
   }[c]||c;
 }
@@ -5125,7 +5106,8 @@ function renderAdminOrders(){
     <div class="stat-card" style="cursor:pointer" onclick="setOrderStatusFilter('listo')"       title="Filtrar listos"><div class="stat-val">${listos}</div><div class="stat-lbl">Listos</div></div>
     <div class="stat-card" style="cursor:pointer" onclick="setOrderStatusFilter('cancelado')"  title="Filtrar cancelados"><div class="stat-val">${cancelados}</div><div class="stat-lbl">Cancelados</div></div>
     <div class="stat-card" style="cursor:pointer" onclick="setOrderStatusFilter('completado')"  title="Filtrar completados"><div class="stat-val">${complet}</div><div class="stat-lbl">Completados</div></div>
-    <div class="stat-card"><div class="stat-val">${fmtMXN(revenue)}</div><div class="stat-lbl">Ingresos</div></div>`;
+    <div class="stat-card"><div class="stat-val">${fmtMXN(revenue)}</div><div class="stat-lbl">Ingresos</div></div>
+    <div class="stat-card" style="border-top:2px solid var(--rose)" title="Prendas subidas al catálogo"><div class="stat-val" style="color:var(--rose)">${getMergedProducts().filter(p=>!p.hidden).length}</div><div class="stat-lbl">Prendas</div></div>`;
 
   const sf = _orderStatusFilter, df = _orderDateFilter;
   const filterActive = _isFilterActive();
