@@ -4082,7 +4082,10 @@ function cardHTML(p) {
   return `
     <div class="product-card" id="card${p.id}">
       <div class="product-img-wrap" onclick="openLightbox(${idArg})">
-        <img src="${p.img||''}" alt="${p.name}" onerror="imgErr(this)" data-prod-img="${p.id}" ${!p.img?'style="background:var(--blush-light)"':''}>
+        ${p.img
+          ? `<img src="${p.img}" alt="${p.name}" onerror="imgErr(this)" data-prod-img="${p.id}">`
+          : `<img alt="${p.name}" onerror="imgErr(this)" data-prod-img="${p.id}" data-lazy="1" style="width:100%;height:100%;object-fit:cover;background:var(--blush-light)">`
+        }
         <span class="cat-badge">${catLabel(p.subcat || p.cat)}</span>
         <button class="card-quick-add" id="badd${p.id}" onclick="event.stopPropagation();addToCart(${idArg})" ${eff===0?'disabled':''}>${quickLbl}</button>
       </div>
@@ -4126,14 +4129,14 @@ function setupLazyImages() {
       if (!entry.isIntersecting) return;
       const img = entry.target;
       const id = img.dataset.prodImg;
-      if (id && !img.src) {
+      if (id) {
         loadCardImage(id);
         _imgObserver.unobserve(img);
       }
     });
   }, { rootMargin: '200px' });
-  document.querySelectorAll('[data-prod-img]').forEach(img => {
-    if (!img.src) _imgObserver.observe(img);
+  document.querySelectorAll('[data-lazy="1"]').forEach(img => {
+    _imgObserver.observe(img);
   });
 }
 
