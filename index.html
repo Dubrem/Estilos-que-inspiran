@@ -4067,6 +4067,7 @@ function renderGrid(subcat) {
     return;
   }
   grid.innerHTML = list.map(cardHTML).join('');
+  setupLazyImages();
 }
 function cardHTML(p) {
   const eff = getEffectiveStock(p);
@@ -4081,7 +4082,7 @@ function cardHTML(p) {
   return `
     <div class="product-card" id="card${p.id}">
       <div class="product-img-wrap" onclick="openLightbox(${idArg})">
-        <img src="${p.img||''}" alt="${p.name}" loading="lazy" onerror="imgErr(this)" data-prod-img="${p.id}">
+        <img src="${p.img||''}" alt="${p.name}" onerror="imgErr(this)" data-prod-img="${p.id}" ${!p.img?'style="background:var(--blush-light)"':''}>
         <span class="cat-badge">${catLabel(p.subcat || p.cat)}</span>
         <button class="card-quick-add" id="badd${p.id}" onclick="event.stopPropagation();addToCart(${idArg})" ${eff===0?'disabled':''}>${quickLbl}</button>
       </div>
@@ -4097,6 +4098,43 @@ function cardHTML(p) {
         </div>
       </div>
     </div>`;
+}
+
+/* ──────────────────────────────────────────────────────
+   LAZY IMAGE LOADING — carga imágenes al entrar en pantalla
+────────────────────────────────────────────────────── */
+let _imgObserver = null;
+const _loadingImgs = new Set();
+
+async function loadCardImage(id) {
+  if (_loadingImgs.has(id)) return;
+  _loadingImgs.add(id);
+  try {
+    const data = await fbFetch(`products/${id}`);
+    if (data?.img) {
+      PRODUCT_OVERRIDES[id] = { ...PRODUCT_OVERRIDES[id], ...data };
+      const el = document.querySelector(`[data-prod-img="${id}"]`);
+      if (el) el.src = data.img;
+    }
+  } finally { _loadingImgs.delete(id); }
+}
+
+function setupLazyImages() {
+  if (_imgObserver) _imgObserver.disconnect();
+  _imgObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const img = entry.target;
+      const id = img.dataset.prodImg;
+      if (id && !img.src) {
+        loadCardImage(id);
+        _imgObserver.unobserve(img);
+      }
+    });
+  }, { rootMargin: '200px' });
+  document.querySelectorAll('[data-prod-img]').forEach(img => {
+    if (!img.src) _imgObserver.observe(img);
+  });
 }
 
 /* ──────────────────────────────────────────────────────
