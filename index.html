@@ -44,39 +44,39 @@
   }
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400;1,600&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=Bebas+Neue&display=swap" rel="stylesheet">
 
   <style>
     /* ============================
        VARIABLES & RESET
     ============================ */
     :root {
-      --cream:         #FEF9F6;
-      --blush-light:   #FDF0EE;
-      --blush:         #F8DEDA;
-      --blush-mid:     #EFC8C4;
-      --nude-lightest: #FEF9F6;
-      --nude-light:    #FDF0EE;
-      --nude:          #F8DEDA;
-      --nude-dark:     #DCBAB6;
-      --rose-light:    #F5C8CE;
-      --rose:          #C4566A;
-      --rose-dark:     #9E3A52;
-      --rose-pale:     #FBE8EC;
-      --gold:          #2C1A1E;
-      --gold-dark:     #1A0E10;
-      --text-dark:     #2C1A1E;
-      --text-med:      #7A5C62;
-      --text-light:    #B09098;
+      --cream:         #F7F5F1;
+      --blush-light:   #EDEAE4;
+      --blush:         #E4DED6;
+      --blush-mid:     #D4CEC6;
+      --nude-lightest: #F7F5F1;
+      --nude-light:    #EDEAE4;
+      --nude:          #E4DED6;
+      --nude-dark:     #C8C2BA;
+      --rose-light:    #D8909C;
+      --rose:          #C2667A;
+      --rose-dark:     #A04A60;
+      --rose-pale:     #F0E4E8;
+      --gold:          #0C0C0B;
+      --gold-dark:     #080808;
+      --text-dark:     #0D0D0C;
+      --text-med:      #6E6860;
+      --text-light:    #9E9890;
       --white:         #FFFFFF;
-      --border:        #EDD8DA;
-      --border-dark:   #9E3A52;
-      --shadow-sm:     rgba(196,86,106,0.06);
-      --shadow-md:     rgba(196,86,106,0.14);
+      --border:        #DDD9D2;
+      --border-dark:   #A04A60;
+      --shadow-sm:     rgba(0,0,0,0.05);
+      --shadow-md:     rgba(0,0,0,0.10);
       --ff-display:    'Bebas Neue', Impact, sans-serif;
-      --ff-script:     'Great Vibes', cursive;
-      --ff-head:       'Playfair Display', Georgia, serif;
-      --ff-body:       'Inter', system-ui, sans-serif;
+      --ff-script:     'Cormorant Garamond', Georgia, serif;
+      --ff-head:       'Cormorant Garamond', Georgia, serif;
+      --ff-body:       'DM Sans', system-ui, sans-serif;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
@@ -117,12 +117,14 @@
     }
     .logo-icon svg { width: 100%; height: 100%; }
     .logo-text {
-      font-family: var(--ff-display);
-      font-size: 2.4rem; letter-spacing: 0.28em;
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 1.7rem; font-weight: 300; letter-spacing: 0.32em;
       color: #fff; line-height: 1; text-transform: uppercase;
       text-shadow: 0 1px 8px rgba(0,0,0,.7);
     }
     .logo-text span { color: var(--rose); }
+    .header.scrolled .logo-text,
+    .header.catalog-open .logo-text { color: #fff; }
     /* Nav centrado */
     .nav { display: flex; gap: 2.4rem; justify-self: center; }
     .nav a {
@@ -352,9 +354,9 @@
       text-transform: uppercase;
     }
     #heroOverlayScript {
-      font-family: var(--ff-script);
-      font-size: clamp(1.2rem, 4vw, 2rem);
-      opacity: .55; display: block; margin-top: .2em;
+      font-family: var(--ff-script); font-style: italic; font-weight: 300;
+      font-size: clamp(1rem, 3vw, 1.6rem);
+      opacity: .55; display: block; margin-top: .3em; letter-spacing: .08em;
     }
     #heroOverlayLine {
       width: 48px; height: 1px; background: rgba(255,255,255,.4);
@@ -415,19 +417,19 @@
 
     /* ─── Ticker ─── */
     .hero-ticker {
-      background: #111; overflow: hidden; padding: 13px 0;
+      background: var(--rose); overflow: hidden; padding: .52rem 0;
     }
     .hero-ticker-track {
       display: flex; width: max-content;
-      animation: tickerScroll 30s linear infinite;
+      animation: tickerScroll 32s linear infinite;
     }
     .hero-ticker-item {
-      white-space: nowrap; padding: 0 3rem;
-      font-family: var(--ff-display); font-size: .95rem;
-      letter-spacing: .22em; text-transform: uppercase; color: rgba(255,255,255,.55);
-      display: flex; align-items: center; gap: 3rem;
+      white-space: nowrap; padding: 0 2.5rem;
+      font-family: var(--ff-body); font-size: .58rem;
+      letter-spacing: .22em; text-transform: uppercase; color: rgba(255,255,255,.88);
+      display: flex; align-items: center; gap: 2.5rem;
     }
-    .hero-ticker-item::after { content:'·'; font-size:1.2rem; opacity:.4; }
+    .hero-ticker-item::after { content:'·'; font-size:1rem; opacity:.5; }
     @keyframes tickerScroll {
       from{ transform:translateX(0); }
       to  { transform:translateX(-50%); }
@@ -506,8 +508,8 @@
       display: block; margin-bottom: 8px;
     }
     .section-sub { color:var(--text-light); font-size:.65rem; letter-spacing:.2em; text-transform:uppercase; margin-bottom:8px; }
-    .section-gender-label { font-family:'Bebas Neue',sans-serif; font-size:2.8rem; letter-spacing:.18em; color:var(--text-dark); margin:8px 0 2px; line-height:1; }
-    .section-tagline { font-family:var(--ff-script); font-size:1.3rem; color:var(--rose); margin:0 0 12px; line-height:1; }
+    .section-gender-label { font-family:'Cormorant Garamond',Georgia,serif; font-style:italic; font-weight:300; font-size:clamp(2.2rem,5vw,3.4rem); letter-spacing:.06em; color:var(--text-dark); margin:8px 0 2px; line-height:1.05; }
+    .section-tagline { font-family:var(--ff-script); font-style:italic; font-size:1.05rem; color:var(--text-light); margin:0 0 12px; line-height:1; letter-spacing:.06em; }
 
     /* ── CATEGORY BANNER SLIDESHOW ── */
     .cat-banner { width:100%; max-width:480px; margin:0 auto 22px; border-radius:16px; overflow:hidden; position:relative; cursor:pointer; height:420px; }
@@ -542,18 +544,18 @@
     .filter-dropdown-wrap { position:relative; max-width:300px; margin:0 auto; }
     .filter-dropdown-btn {
       display:flex; align-items:center; justify-content:space-between; width:100%;
-      padding:11px 20px; border:1.5px solid var(--border); border-radius:50px;
-      background:#fff; color:var(--text-dark); font-family:var(--ff-body);
-      font-size:.72rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase;
-      cursor:pointer; transition:border-color .2s, box-shadow .2s; gap:10px;
+      padding:11px 20px; border:1px solid var(--border); border-radius:2px;
+      background:var(--cream); color:var(--text-dark); font-family:var(--ff-body);
+      font-size:.68rem; font-weight:400; letter-spacing:.14em; text-transform:uppercase;
+      cursor:pointer; transition:border-color .2s; gap:10px;
     }
-    .filter-dropdown-btn:hover, .filter-dropdown-btn.open { border-color:var(--rose); }
-    .filter-dropdown-btn.open { border-radius:18px 18px 0 0; box-shadow:0 0 0 3px rgba(196,86,106,.1); }
+    .filter-dropdown-btn:hover, .filter-dropdown-btn.open { border-color:var(--text-dark); }
+    .filter-dropdown-btn.open { border-radius:2px 2px 0 0; box-shadow:none; }
     .filter-dropdown-list {
       display:none; position:absolute; top:calc(100% - 1px); left:0; right:0;
-      background:#fff; border:1.5px solid var(--rose); border-top:none;
-      border-radius:0 0 18px 18px; overflow:hidden; z-index:50;
-      box-shadow:0 12px 28px rgba(196,86,106,.15);
+      background:var(--cream); border:1px solid var(--text-dark); border-top:none;
+      border-radius:0 0 2px 2px; overflow:hidden; z-index:50;
+      box-shadow:0 8px 24px rgba(0,0,0,.08);
     }
     .filter-dropdown-list.open { display:block; }
     .filter-dropdown-item {
@@ -584,16 +586,16 @@
     .search-results-info { font-size:.72rem; color:var(--text-light); text-align:center; margin-bottom:10px; letter-spacing:.05em; min-height:1.2em; }
     .filter-tabs { display:flex; justify-content:center; gap:6px; flex-wrap:wrap; }
     .tab-btn {
-      padding: 8px 22px; border: 1.5px solid var(--border);
-      border-radius: 50px; background: #fff; color: var(--text-med);
-      font-size: .7rem; font-weight: 500; letter-spacing: .12em;
+      padding: 7px 20px; border: 1px solid var(--border);
+      border-radius: 2px; background: var(--cream); color: var(--text-med);
+      font-size: .66rem; font-weight: 400; letter-spacing: .16em;
       text-transform: uppercase; transition: all .2s;
       display: flex; align-items: center; gap: 5px;
     }
     .tab-btn:hover { border-color: var(--rose); color: var(--rose); }
     .tab-btn.active {
-      background: var(--rose); border-color: var(--rose); color: #fff;
-      box-shadow: 0 4px 14px rgba(196,86,106,.35);
+      background: var(--text-dark); border-color: var(--text-dark); color: var(--cream);
+      box-shadow: none;
     }
     /* ── FILTRO DE TALLAS ── */
     .size-filter-wrap {
@@ -608,13 +610,13 @@
       color:var(--text-light); white-space:nowrap; flex-shrink:0;
     }
     .size-chip {
-      padding:5px 14px; border:1.5px solid var(--border); border-radius:50px;
-      background:#fff; color:var(--text-med);
-      font-size:.66rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase;
+      padding:5px 13px; border:1px solid var(--border); border-radius:2px;
+      background:var(--cream); color:var(--text-med);
+      font-size:.63rem; font-weight:400; letter-spacing:.12em; text-transform:uppercase;
       cursor:pointer; white-space:nowrap; flex-shrink:0; transition:all .18s;
     }
     .size-chip:hover { border-color:var(--rose); color:var(--rose); }
-    .size-chip.active { background:var(--rose); border-color:var(--rose); color:#fff; box-shadow:0 3px 10px rgba(196,86,106,.3); }
+    .size-chip.active { background:var(--text-dark); border-color:var(--text-dark); color:var(--cream); box-shadow:none; }
 
     /* ============================
        PRODUCTS GRID — portrait 3:4
@@ -680,8 +682,8 @@
     .product-info { padding: 14px 16px 18px; display: flex; flex-direction: column; flex: 1; }
     .product-name {
       font-family: var(--ff-head); font-style: italic;
-      font-size: .92rem; font-weight: 400; color: var(--text-dark);
-      margin-bottom: 5px; line-height: 1.3;
+      font-size: 1rem; font-weight: 300; color: var(--text-dark);
+      margin-bottom: 5px; line-height: 1.25;
     }
     .product-desc { font-size: .72rem; color: var(--text-light); line-height: 1.5; margin-bottom: 10px; flex: 1; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
     .product-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
@@ -1367,9 +1369,9 @@
     .footer-brand { text-align:center; padding-bottom:56px; position:relative; }
     .footer-brand-icon { margin-bottom:18px; }
     .footer-brand-logo {
-      font-family:var(--ff-display); font-size:clamp(3.2rem,7vw,5.2rem);
-      letter-spacing:.3em; color:#fff; text-transform:uppercase; line-height:1;
-      margin-bottom:16px; text-shadow:0 0 60px rgba(196,86,106,.2);
+      font-family:'Cormorant Garamond',Georgia,serif; font-weight:300; font-size:clamp(3.2rem,7vw,5.2rem);
+      letter-spacing:.38em; color:#fff; text-transform:uppercase; line-height:1;
+      margin-bottom:16px;
     }
     .footer-brand-logo span { color:var(--rose-light); }
     .footer-brand-ornament {
@@ -1381,8 +1383,9 @@
     .footer-brand-ornament::before { background:linear-gradient(90deg,transparent,rgba(196,86,106,.6)); }
     .footer-brand-ornament::after  { background:linear-gradient(90deg,rgba(196,86,106,.6),transparent); }
     .footer-brand-tagline {
-      font-family:var(--ff-script); font-size:clamp(1.9rem,4vw,2.6rem);
-      color:rgba(255,255,255,.7); display:block; margin-bottom:10px;
+      font-family:var(--ff-script); font-style:italic; font-weight:300;
+      font-size:clamp(1.6rem,3.5vw,2.2rem);
+      color:rgba(255,255,255,.65); display:block; margin-bottom:10px;
     }
     .footer-brand-sub {
       font-size:.62rem; letter-spacing:.2em; text-transform:uppercase;
@@ -1400,18 +1403,18 @@
     .footer-col ul a { color:rgba(255,255,255,.38); text-decoration:none; transition:color .18s; }
     .footer-col ul a:hover { color:var(--rose-light); }
     .footer-contact-num {
-      font-family:var(--ff-display); font-size:1.05rem; letter-spacing:.06em;
+      font-family:'Cormorant Garamond',Georgia,serif; font-size:1.15rem; font-weight:300; letter-spacing:.04em;
       color:#fff !important; display:block; margin-bottom:6px; text-decoration:none;
     }
-    .footer-contact-hrs { font-size:.7rem; color:rgba(255,255,255,.3); line-height:1.7; }
+    .footer-contact-hrs { font-size:.68rem; color:rgba(255,255,255,.28); line-height:1.75; }
     .footer-whatsapp {
       display:inline-flex; align-items:center; gap:7px; margin-top:14px;
-      padding:9px 16px; border:1px solid rgba(196,86,106,.4); border-radius:50px;
-      color:var(--rose-light); font-size:.68rem; font-weight:600; letter-spacing:.1em;
+      padding:8px 16px; border:1px solid var(--rose); border-radius:2px;
+      color:#fff; font-size:.62rem; font-weight:400; letter-spacing:.14em;
       text-transform:uppercase; text-decoration:none; transition:all .2s;
-      background:rgba(196,86,106,.06);
+      background:var(--rose);
     }
-    .footer-whatsapp:hover { background:rgba(196,86,106,.18); border-color:var(--rose-light); color:#fff; }
+    .footer-whatsapp:hover { background:var(--rose-dark); border-color:var(--rose-dark); }
     .footer-bottom { max-width:860px; margin:0 auto; border-top:1px solid rgba(255,255,255,.06); padding-top:22px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; font-size:.65rem; letter-spacing:.08em; position:relative; }
 
     /* ============================
@@ -1758,13 +1761,14 @@ function cerrarApertura(){}
     <button class="menu-btn" onclick="openSidebar()" aria-label="Menú">
       <span></span><span></span><span></span>
     </button>
-    <a href="#" class="logo">
+    <a href="#inicio" class="logo">
       <div class="logo-icon">
         <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <polygon points="16,1 31,16 16,31 1,16" fill="none" stroke="#C4566A" stroke-width="1.5"/>
-          <polygon points="16,7 25,16 16,25 7,16" fill="#C4566A"/>
+          <polygon points="16,1 31,16 16,31 1,16" fill="none" stroke="var(--rose)" stroke-width="1.5"/>
+          <polygon points="16,7 25,16 16,25 7,16" fill="var(--rose)"/>
         </svg>
       </div>
+      <span class="logo-text">DUB<span>REM</span></span>
     </a>
     <div class="header-actions" id="headerActions" style="display:none">
       <div id="loginArea">
@@ -1862,7 +1866,22 @@ function cerrarApertura(){}
 </section>
 
 <!-- ========== TICKER ========== -->
-
+<div class="hero-ticker" aria-hidden="true">
+  <div class="hero-ticker-track">
+    <span class="hero-ticker-item">DUBREM</span>
+    <span class="hero-ticker-item">Estilos que Inspiran</span>
+    <span class="hero-ticker-item">Tula de Allende, Hidalgo</span>
+    <span class="hero-ticker-item">Envíos a todo México</span>
+    <span class="hero-ticker-item">Nueva Temporada 2026</span>
+    <span class="hero-ticker-item">Moda Contemporánea</span>
+    <span class="hero-ticker-item">DUBREM</span>
+    <span class="hero-ticker-item">Estilos que Inspiran</span>
+    <span class="hero-ticker-item">Tula de Allende, Hidalgo</span>
+    <span class="hero-ticker-item">Envíos a todo México</span>
+    <span class="hero-ticker-item">Nueva Temporada 2026</span>
+    <span class="hero-ticker-item">Moda Contemporánea</span>
+  </div>
+</div>
 
 <!-- ========== FILTER BAR ========== -->
 <section class="filter-bar" id="catalogo">
