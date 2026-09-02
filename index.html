@@ -595,6 +595,26 @@
       background: var(--rose); border-color: var(--rose); color: #fff;
       box-shadow: 0 4px 14px rgba(196,86,106,.35);
     }
+    /* ── FILTRO DE TALLAS ── */
+    .size-filter-wrap {
+      display:flex; align-items:center; gap:8px;
+      overflow-x:auto; padding:8px 0 2px;
+      -webkit-overflow-scrolling:touch; scrollbar-width:none;
+      max-width:700px; margin:6px auto 0;
+    }
+    .size-filter-wrap::-webkit-scrollbar { display:none; }
+    .size-filter-label {
+      font-size:.62rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+      color:var(--text-light); white-space:nowrap; flex-shrink:0;
+    }
+    .size-chip {
+      padding:5px 14px; border:1.5px solid var(--border); border-radius:50px;
+      background:#fff; color:var(--text-med);
+      font-size:.66rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase;
+      cursor:pointer; white-space:nowrap; flex-shrink:0; transition:all .18s;
+    }
+    .size-chip:hover { border-color:var(--rose); color:var(--rose); }
+    .size-chip.active { background:var(--rose); border-color:var(--rose); color:#fff; box-shadow:0 3px 10px rgba(196,86,106,.3); }
 
     /* ============================
        PRODUCTS GRID — portrait 3:4
@@ -1897,6 +1917,8 @@ function cerrarApertura(){}
     </div>
     <!-- Tabs ocultos para compatibilidad con goToSection -->
     <div class="filter-tabs" id="filterTabs" style="display:none"></div>
+    <!-- Filtro de tallas -->
+    <div class="size-filter-wrap" id="sizeFilterWrap" style="display:none"></div>
   </div>
 </section>
 
@@ -3889,6 +3911,7 @@ function showCatalog(section, pushHistory = true) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
   _currentSection = section;
   _currentFilter  = 'all';
+  _currentSizeFilter = null;
   const si = document.getElementById('searchInput');
   if (si) si.value = '';
   _searchQuery = '';
@@ -4021,8 +4044,36 @@ function renderSearchResults(query) {
   grid.innerHTML = results.map(r => cardHTML(r.item)).join('');
 }
 
+let _currentSizeFilter = null;
+
+function renderSizeFilter(products) {
+  const wrap = document.getElementById('sizeFilterWrap');
+  if (!wrap) return;
+  // Recopilar todas las tallas disponibles en estos productos
+  const sizeSet = new Set();
+  products.forEach(p => (p.sizes || []).forEach(s => sizeSet.add(s)));
+  const ORDER = ['XS','S','M','L','XL','XXL','XXXL','0','2','4','6','8','10','12','14','16','18','20','22','24','Única'];
+  const sizes = [...sizeSet].sort((a,b) => {
+    const ia = ORDER.indexOf(a), ib = ORDER.indexOf(b);
+    return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+  });
+  if (!sizes.length) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'flex';
+  wrap.innerHTML = `<span class="size-filter-label">Talla</span>` +
+    `<button class="size-chip${!_currentSizeFilter?' active':''}" onclick="filterBySize(null,this)">Todas</button>` +
+    sizes.map(s => `<button class="size-chip${_currentSizeFilter===s?' active':''}" onclick="filterBySize('${s}',this)">${s}</button>`).join('');
+}
+
+function filterBySize(size, btn) {
+  _currentSizeFilter = size;
+  document.querySelectorAll('.size-chip').forEach(c => c.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderGrid(_currentFilter);
+}
+
 function filterBy(subcat, btn) {
   _currentFilter = subcat;
+  _currentSizeFilter = null;
   clearSearch();
   // Tabs ocultos
   if (btn) { document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
@@ -4051,7 +4102,9 @@ function renderGrid(subcat) {
   }
   let all = getMergedProducts().filter(p => !p.hidden);
   if (_currentSection) all = all.filter(p => p.cat === _currentSection);
-  const list = (subcat === 'all') ? all : all.filter(p => p.subcat === subcat);
+  let list = (subcat === 'all') ? all : all.filter(p => p.subcat === subcat);
+  renderSizeFilter(list);
+  if (_currentSizeFilter) list = list.filter(p => (p.sizes||[]).includes(_currentSizeFilter));
   if (!list.length) {
     if (_fbFetching) {
       const skelCard = `<div class="skel-card"><div class="skel-img"></div><div class="skel-info"><div class="skel-line long"></div><div class="skel-line xshort"></div><div class="skel-line short"></div></div></div>`;
