@@ -3613,13 +3613,21 @@ function skuLetters(idx) {
 }
 
 async function getNextSKU() {
-  // Máximo SKU ya existente en productos cargados (respaldo contra fallo de Firebase)
+  // Convierte un SKU estándar (ej. "B91") a su valor de contador
+  function skuToCounter(sku) {
+    const m = (sku || '').match(/^([A-Z]+)(\d+)$/);
+    if (!m) return 0;
+    const num = parseInt(m[2]);
+    if (num < 1 || num > 99) return 0; // ignorar SKUs fuera del rango
+    let prefixIdx = 0;
+    for (const c of m[1]) { prefixIdx = prefixIdx * 26 + (c.charCodeAt(0) - 64); }
+    return (prefixIdx - 1) * 99 + num;
+  }
+
+  // Máximo contador derivado de SKUs existentes (solo SKUs con formato válido A-Z+1-99)
   const localMax = getMergedProducts()
     .filter(p => p.sku)
-    .reduce((max, p) => {
-      const m = p.sku.match(/(\d+)$/);
-      return m ? Math.max(max, parseInt(m[1])) : max;
-    }, 0);
+    .reduce((max, p) => Math.max(max, skuToCounter(p.sku)), 0);
 
   let counter = 0;
   try {
