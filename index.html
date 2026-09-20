@@ -4002,17 +4002,22 @@ async function saveProductEdit() {
     // Editar producto existente
     const id = _editingProductId;
     if (typeof id === 'number') {
-      // base product override
+      // base product override — preserve or assign SKU
       const fbKey = `p${id}`;
-      PRODUCT_OVERRIDES[fbKey] = { ...data };
+      const existingSku = (PRODUCT_OVERRIDES[fbKey] && PRODUCT_OVERRIDES[fbKey].sku)
+        || (PRODUCTS.find(x => x.id === id) || {}).sku;
+      const sku = existingSku || await getNextSKU();
+      PRODUCT_OVERRIDES[fbKey] = { ...data, sku };
       const ok = await fbSaveProductOverride(fbKey, PRODUCT_OVERRIDES[fbKey]);
       if (!ok) { toast('⚠️ Error al actualizar en Firebase', 'err'); btn.textContent = 'Guardar'; btn.disabled = false; return; }
       // also update in-memory PRODUCTS
       const bp = PRODUCTS.find(x => x.id === id);
-      if (bp) { bp.name = name; bp.price = price; bp.stock = stock; bp.cat = cat; bp.desc = desc; if (img) bp.img = img; }
+      if (bp) { bp.name = name; bp.price = price; bp.stock = stock; bp.cat = cat; bp.desc = desc; if (img) bp.img = img; bp.sku = sku; }
     } else {
-      // new_ product
-      PRODUCT_OVERRIDES[id] = { ...data, id };
+      // new_ product — preserve or assign SKU
+      const existingSku = PRODUCT_OVERRIDES[id] && PRODUCT_OVERRIDES[id].sku;
+      const sku = existingSku || await getNextSKU();
+      PRODUCT_OVERRIDES[id] = { ...data, id, sku };
       const ok = await fbSaveProductOverride(id, PRODUCT_OVERRIDES[id]);
       if (!ok) { toast('⚠️ Error al actualizar en Firebase', 'err'); btn.textContent = 'Guardar'; btn.disabled = false; return; }
     }
