@@ -4061,6 +4061,7 @@ async function deleteProduct() {
 const LS_USERS        = 'be_users_v1';
 const LS_SESSION      = 'be_session_v1';
 const LS_ADMIN_SESSION= 'be_admin_v1';
+const LS_CART         = 'be_cart_v1';
 
 function saveUsers(){
   try { localStorage.setItem(LS_USERS, JSON.stringify(S.users)); } catch(e){}
@@ -4086,6 +4087,15 @@ function loadSession(){
   try {
     const raw = localStorage.getItem(LS_SESSION);
     if(raw){ const u = JSON.parse(raw); if(u && u.email) S.user = u; }
+  } catch(e){}
+}
+function saveCart(){
+  try { localStorage.setItem(LS_CART, JSON.stringify(S.cart)); } catch(e){}
+}
+function loadCart(){
+  try {
+    const raw = localStorage.getItem(LS_CART);
+    if(raw){ const c = JSON.parse(raw); if(Array.isArray(c) && c.length) S.cart = c; }
   } catch(e){}
 }
 
@@ -4130,7 +4140,9 @@ window.addEventListener('popstate', () => {
 document.addEventListener('DOMContentLoaded', () => {
   loadUsers();
   loadSession();
+  loadCart();
   renderLoginArea();
+  refreshCartUI();
   spawnParticles();
   syncUsers();
 
@@ -4793,6 +4805,7 @@ function refreshCartUI() {
       : (badge.classList.remove('show'), label.textContent='Carrito');
   renderCartBody();
   buildSummaries();
+  saveCart();
 }
 function renderCartBody() {
   const body = document.getElementById('cartBody');
@@ -4877,7 +4890,8 @@ async function doLogin() {
 }
 function doLogout(){
   showConfirm('¿Deseas cerrar sesión?', () => {
-    S.user=null; saveSession(); renderLoginArea(); toast('Sesión cerrada','');
+    S.cart=[]; saveCart();
+    S.user=null; saveSession(); renderLoginArea(); refreshCartUI(); toast('Sesión cerrada','');
   });
 }
 function showConfirm(msg, onYes){
