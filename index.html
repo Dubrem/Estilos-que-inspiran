@@ -2408,8 +2408,10 @@ function cerrarApertura(){}
     <div style="display:flex;align-items:center;gap:6px">
       <button onclick="openEditProfile()" style="font-size:.65rem;padding:6px 12px;border-radius:50px;border:1px solid rgba(255,255,255,.2);background:transparent;color:rgba(255,255,255,.75);cursor:pointer;font-family:var(--ff-body);letter-spacing:.06em;white-space:nowrap">👤 Mis Datos</button>
       <button onclick="openChangePassword()" style="font-size:.65rem;padding:6px 12px;border-radius:50px;border:1px solid rgba(255,255,255,.2);background:transparent;color:rgba(255,255,255,.75);cursor:pointer;font-family:var(--ff-body);letter-spacing:.06em;white-space:nowrap">🔑 Contraseña</button>
-      <button onclick="closeOrdersPanel();doLogout()" style="font-size:.65rem;padding:6px 12px;border-radius:50px;border:1px solid rgba(196,86,106,.5);background:transparent;color:rgba(196,86,106,.9);cursor:pointer;font-family:var(--ff-body);letter-spacing:.06em;white-space:nowrap">↪ Salir</button>
       <button class="btn-refresh" onclick="loadOrdersPanel()">↻</button>
+      <button onclick="closeOrdersPanel();doLogout()" title="Cerrar sesión" style="width:32px;height:32px;border-radius:50%;border:1.5px solid rgba(239,68,68,.5);background:rgba(239,68,68,.1);color:rgb(239,68,68);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .18s" onmouseover="this.style.background='rgba(239,68,68,.25)'" onmouseout="this.style.background='rgba(239,68,68,.1)'">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
     </div>
   </div>
   <div class="customer-orders-body" id="customerOrdersBody">
