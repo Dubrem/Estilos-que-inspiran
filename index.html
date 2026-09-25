@@ -4931,7 +4931,7 @@ function renderLoginArea(){
   const area=document.getElementById('loginArea');
   area.innerHTML = S.user
     ? `<button class="btn-orders" onclick="openOrdersPanel()">Mis Pedidos</button>
-       <button class="user-chip" onclick="doLogout()"><div class="user-avatar" style="font-family:var(--ff-display);font-size:.7rem">${S.user.name.charAt(0).toUpperCase()}</div><span>${S.user.name.split(' ')[0]}</span><span class="user-logout">Salir</span></button>`
+       <button class="user-chip" onclick="openOrdersPanel()"><div class="user-avatar" style="font-family:var(--ff-display);font-size:.7rem">${S.user.name.charAt(0).toUpperCase()}</div><span>${S.user.name.split(' ')[0]}</span><span class="user-logout" onclick="event.stopPropagation();doLogout()">Salir</span></button>`
     : `<button class="btn-login" onclick="openLoginModal()">Iniciar Sesión</button>`;
 
   // Sidebar footer: muestra Mis Pedidos y Carrito en móvil
