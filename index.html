@@ -284,6 +284,11 @@
       transition:color .15s, border-color .15s;
     }
     .sb-sub a:hover { color:var(--rose); border-color:var(--rose); }
+    .sb-foot { padding:16px 20px; border-top:1px solid rgba(255,255,255,.08); display:flex; flex-direction:column; gap:8px; }
+    .sb-foot .btn-orders-sb { width:100%; padding:10px; background:transparent; border:1px solid rgba(196,86,106,.5); color:rgba(255,255,255,.85); border-radius:8px; font-size:.65rem; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; }
+    .sb-foot .btn-orders-sb:hover { background:rgba(196,86,106,.15); }
+    .sb-foot .btn-cart-sb { width:100%; padding:10px; background:var(--rose); border:none; color:#fff; border-radius:8px; font-size:.65rem; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; }
+    .sb-foot .btn-cart-sb:hover { background:var(--rose-dark); }
 
     /* ============================
        HERO — Full-bleed split (Pull&Bear style)
@@ -1604,8 +1609,10 @@
         display:flex; flex-direction:row; flex-wrap:nowrap;
         align-items:center; gap:.4rem; flex-shrink:0;
       }
+      /* En móvil: ocultar búsqueda del header y "Mis Pedidos" para dar espacio al carrito */
+      .header-search-btn { display:none; }
+      .btn-orders { display:none; }
       .btn-login  { padding:4px 9px; font-size:.52rem; letter-spacing:.06em; white-space:nowrap; }
-      .btn-orders { padding:4px 9px; font-size:.52rem; letter-spacing:.05em; white-space:nowrap; }
       .user-chip  { padding:4px 8px; font-size:.52rem; gap:4px; white-space:nowrap; }
       .user-avatar { width:15px; height:15px; font-size:7px; }
       .user-logout { font-size:.48rem; }
@@ -1918,6 +1925,7 @@ function cerrarApertura(){}
       </div>
     </div>
   </nav>
+  <div class="sb-foot" id="sbFoot" style="display:none"></div>
 </aside>
 
 <!-- ========== HEADER ========== -->
@@ -4925,6 +4933,22 @@ function renderLoginArea(){
     ? `<button class="btn-orders" onclick="openOrdersPanel()">Mis Pedidos</button>
        <button class="user-chip" onclick="doLogout()"><div class="user-avatar" style="font-family:var(--ff-display);font-size:.7rem">${S.user.name.charAt(0).toUpperCase()}</div><span>${S.user.name.split(' ')[0]}</span><span class="user-logout">Salir</span></button>`
     : `<button class="btn-login" onclick="openLoginModal()">Iniciar Sesión</button>`;
+
+  // Sidebar footer: muestra Mis Pedidos y Carrito en móvil
+  const sbFoot = document.getElementById('sbFoot');
+  if(sbFoot){
+    if(S.user){
+      sbFoot.style.display = 'block';
+      sbFoot.innerHTML = `
+        <button class="btn-orders-sb" onclick="closeSidebar();openOrdersPanel()">Mis Pedidos</button>
+        <button class="btn-cart-sb" onclick="closeSidebar();openCart()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+          Mi Carrito
+        </button>`;
+    } else {
+      sbFoot.style.display = 'none';
+    }
+  }
 }
 
 /* ──────────────────────────────────────────────────────
