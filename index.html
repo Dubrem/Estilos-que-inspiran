@@ -5717,12 +5717,11 @@ function orderCardHTML(o){
 
   // Botones de estado — se bloquean si ya está completado
   const canComplete = st==='listo';
-  const deleteBtnHtml = `<button onclick="deleteOrder('${o.num}')" style="margin-top:8px;width:100%;padding:9px;border:1.5px solid #fcc;background:transparent;color:#c0392b;border-radius:50px;font-size:.7rem;font-weight:700;cursor:pointer;letter-spacing:.06em;text-transform:uppercase">🗑 Eliminar pedido</button>`;
 
   const footHtml = st==='completado'
-    ? `<div class="completado-badge">🎉 Pedido completado satisfactoriamente</div>${deleteBtnHtml}`
+    ? `<div class="completado-badge">🎉 Pedido completado satisfactoriamente</div>`
     : st==='cancelado'
-    ? `<div style="background:#fde2e2;border-radius:10px;padding:12px 16px;text-align:center;font-size:.8rem;font-weight:600;color:#8b0000">❌ Pedido cancelado — stock liberado al catálogo</div>${deleteBtnHtml}`
+    ? `<div style="background:#fde2e2;border-radius:10px;padding:12px 16px;text-align:center;font-size:.8rem;font-weight:600;color:#8b0000">❌ Pedido cancelado — stock liberado al catálogo</div>`
     : `<div class="order-card-foot" style="flex-wrap:wrap">
         <button class="btn-status btn-status-pendiente" onclick="setOrderStatus('${o.num}','pendiente')"
           style="${st==='pendiente'?'outline:2px solid #856404':''}">🕐 Pendiente</button>
