@@ -3570,6 +3570,7 @@ function removeHero(cat, id) {
 }
 
 let _adminSort = 'newest';
+let _adminSearch = '';
 
 function sortAdminProducts(val) {
   _adminSort = val;
@@ -3584,8 +3585,26 @@ function sortAdminProducts(val) {
   grid.innerHTML = buildAdminCards();
 }
 
+function searchAdminProducts(q) {
+  _adminSearch = q.toLowerCase().trim();
+  const grid = document.getElementById('adminProdsGrid');
+  if (grid) grid.innerHTML = buildAdminCards();
+  const count = document.getElementById('adminSearchCount');
+  if (count) {
+    const n = getMergedProducts().filter(p => !p.hidden && matchAdminSearch(p)).length;
+    count.textContent = _adminSearch ? `${n} resultado${n!==1?'s':''}` : '';
+  }
+}
+function matchAdminSearch(p) {
+  if (!_adminSearch) return true;
+  const q = _adminSearch;
+  return (p.name||'').toLowerCase().includes(q)
+      || (p.sku||'').toLowerCase().includes(q)
+      || String(p.price||'').includes(q)
+      || (p.subcat||'').toLowerCase().includes(q);
+}
 function buildAdminCards() {
-  let all = getMergedProducts().filter(p => !p.hidden);
+  let all = getMergedProducts().filter(p => !p.hidden).filter(matchAdminSearch);
 
   if (_adminSort === 'newest') {
     all = all.slice().sort((a, b) => {
@@ -3668,6 +3687,18 @@ function renderAdminProducts() {
       </button>
     </div>
     ${all.length ? `
+      <div style="position:relative;margin-bottom:14px">
+        <input
+          id="adminSearchInput"
+          type="search"
+          placeholder="🔍 Buscar por nombre, SKU, precio o subcategoría…"
+          value="${_adminSearch}"
+          oninput="searchAdminProducts(this.value)"
+          style="width:100%;box-sizing:border-box;padding:10px 16px 10px 40px;border-radius:50px;border:1.5px solid #e0c8d0;background:#fff;font-size:.78rem;font-family:var(--ff-body);outline:none;color:var(--text-dark)"
+        />
+        <svg style="position:absolute;left:14px;top:50%;transform:translateY(-50%);pointer-events:none;opacity:.4" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <span id="adminSearchCount" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:.65rem;color:var(--rose);font-weight:600"></span>
+      </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
         <span style="font-size:.62rem;color:#888;letter-spacing:.1em;text-transform:uppercase;margin-right:4px;font-weight:600">Ordenar</span>
         ${sortBtns}
