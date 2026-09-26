@@ -6299,7 +6299,6 @@ if ('serviceWorker' in navigator) {
   }
 
   window.openTutorial = function(){
-    try { if(localStorage.getItem(LS_TUT)==='1') return; } catch(e){}
     _tutStep = 0;
     buildDots();
     updateTut();
@@ -6310,7 +6309,6 @@ if ('serviceWorker' in navigator) {
   window.closeTutorial = function(){
     document.getElementById('tutOverlay').classList.remove('open');
     document.body.style.overflow = '';
-    try { localStorage.setItem(LS_TUT,'1'); } catch(e){}
   };
 
   window.tutNav = function(dir){
