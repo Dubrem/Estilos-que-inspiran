@@ -37,10 +37,11 @@ export default async function handler(req, res) {
           failure: `${backUrl}?pago=fallido&orden=${encodeURIComponent(orderNum)}`,
           pending: `${backUrl}?pago=pendiente&orden=${encodeURIComponent(orderNum)}`,
         },
-        auto_return: 'approved',
+        auto_return: 'all',
         external_reference: orderNum,
         statement_descriptor: 'DUBREM',
         notification_url: 'https://dubrem.vercel.app/api/webhook',
+        expires: false,
       }),
     });
 

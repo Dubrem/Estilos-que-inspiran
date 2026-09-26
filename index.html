@@ -4241,40 +4241,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(location.search);
     const pago = params.get('pago');
     const orden = params.get('orden');
+
+    // Respaldo: si no hay parámetro pero hay pedido pendiente en LS (usuario volvió manualmente)
+    if(!pago){
+      try {
+        const raw = localStorage.getItem('dubrem_mp_pending');
+        if(raw){
+          const p = JSON.parse(raw);
+          // Si el pedido fue creado hace más de 90 segundos, asumimos que ya pagó y volvió
+          if(p && p.ts && (Date.now() - p.ts) > 90000){
+            localStorage.removeItem('dubrem_mp_pending');
+            setTimeout(() => triggerMpSuccess(p.num, p), 500);
+          }
+        }
+      } catch(e){}
+    }
+
     if(pago){
       history.replaceState({}, '', location.pathname);
       if(pago === 'exitoso'){
         setTimeout(() => {
-          // Recuperar detalles del pedido guardados antes del redirect
           let pending = null;
           try { pending = JSON.parse(localStorage.getItem('dubrem_mp_pending') || 'null'); } catch(e){}
           try { localStorage.removeItem('dubrem_mp_pending'); } catch(e){}
-
-          const numLabel = (pending && pending.num) || orden || '';
-          const total    = (pending && pending.total) ? `$${pending.total} MXN` : '';
-          const customer = (pending && pending.customer) ? pending.customer : '';
-          const itemsLine = pending && pending.items
-            ? pending.items.map(i => `• ${i.title} × ${i.quantity} — $${i.unit_price * i.quantity} MXN`).join('\n')
-            : '';
-
-          const waMsg = [
-            `¡Hola! 🖤 *Pago realizado por MercadoPago*`,
-            ``,
-            `👤 Cliente: *${customer}*`,
-            `📦 Pedido: *${numLabel}*`,
-            itemsLine ? `\n${itemsLine}` : '',
-            total ? `\n💰 Total: *${total}*` : '',
-            ``,
-            `Por favor confirmar el despacho. ¡Gracias! — DUBREM`,
-          ].filter(Boolean).join('\n');
-
-          const waUrl = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(waMsg)}`;
-          document.getElementById('orderNum').textContent = numLabel;
-          document.getElementById('btnWhatsApp').href = waUrl;
-          document.getElementById('orderModal').classList.add('open');
-          lockScroll();
-          // Abrir WhatsApp automáticamente
-          setTimeout(() => window.open(waUrl, '_blank'), 800);
+          triggerMpSuccess(orden, pending);
         }, 300);
       } else if(pago === 'pendiente'){
         setTimeout(() => toast('Pago pendiente de confirmación. Te notificaremos pronto.', ''), 300);
@@ -4346,6 +4336,31 @@ function spawnParticles() {
 }
 
 function fmtMXN(n){ return '$' + n.toLocaleString('es-MX'); }
+
+function triggerMpSuccess(orden, pending) {
+  const numLabel = (pending && pending.num) || orden || '';
+  const total    = (pending && pending.total) ? `$${pending.total} MXN` : '';
+  const customer = (pending && pending.customer) ? pending.customer : '';
+  const itemsLine = pending && pending.items
+    ? pending.items.map(i => `• ${i.title} × ${i.quantity} — $${i.unit_price * i.quantity} MXN`).join('\n')
+    : '';
+  const waMsg = [
+    `¡Hola! 🖤 *Pago realizado por MercadoPago*`,
+    ``,
+    `👤 Cliente: *${customer}*`,
+    `📦 Pedido: *${numLabel}*`,
+    itemsLine ? `\n${itemsLine}` : '',
+    total ? `\n💰 Total: *${total}*` : '',
+    ``,
+    `Por favor confirmar el despacho. ¡Gracias! — DUBREM`,
+  ].filter(Boolean).join('\n');
+  const waUrl = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(waMsg)}`;
+  document.getElementById('orderNum').textContent = numLabel;
+  document.getElementById('btnWhatsApp').href = waUrl;
+  document.getElementById('orderModal').classList.add('open');
+  lockScroll();
+  setTimeout(() => window.open(waUrl, '_blank'), 800);
+}
 function togglePass(id, btn) {
   const inp = document.getElementById(id);
   if (!inp) return;
@@ -5275,6 +5290,7 @@ async function confirmOrder(){
             customer: S.user?.name || '',
             phone:    S.user?.phone || '',
             items: mpItems,
+            ts: Date.now(),
           }));
         } catch(e){}
         S.cart=[]; refreshCartUI();
