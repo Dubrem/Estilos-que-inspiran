@@ -1372,6 +1372,45 @@
     }
     /* Brand center block */
     /* ============================
+       TUTORIAL ONBOARDING
+    ============================ */
+    .tut-overlay {
+      display:none; position:fixed; inset:0; background:rgba(8,4,6,.85);
+      z-index:2000; align-items:center; justify-content:center; padding:16px;
+    }
+    .tut-overlay.open { display:flex; }
+    .tut-box {
+      background:#fff; border-radius:20px; width:100%; max-width:420px;
+      overflow:hidden; box-shadow:0 24px 60px rgba(0,0,0,.35);
+      display:flex; flex-direction:column;
+    }
+    .tut-top {
+      background:linear-gradient(135deg,#1a0a0f 0%,#2d1020 100%);
+      padding:14px 20px 10px; display:flex; align-items:center; justify-content:space-between;
+    }
+    .tut-brand { font-family:var(--ff-head); font-style:italic; color:#fff; font-size:1.1rem; letter-spacing:.1em; }
+    .tut-skip { font-size:.6rem; color:rgba(255,255,255,.45); background:none; border:none; cursor:pointer; letter-spacing:.08em; text-transform:uppercase; padding:4px 8px; border-radius:20px; transition:color .15s; }
+    .tut-skip:hover { color:rgba(255,255,255,.75); }
+    .tut-slides { position:relative; overflow:hidden; }
+    .tut-slide { display:none; flex-direction:column; }
+    .tut-slide.active { display:flex; }
+    .tut-img { width:100%; aspect-ratio:16/10; background:var(--blush-light); display:flex; align-items:center; justify-content:center; overflow:hidden; }
+    .tut-img svg { width:100%; height:100%; }
+    .tut-body { padding:18px 22px 14px; }
+    .tut-step-label { font-size:.58rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--rose); margin-bottom:5px; }
+    .tut-title { font-family:var(--ff-head); font-style:italic; font-size:1.15rem; color:var(--text-dark); margin-bottom:6px; line-height:1.2; }
+    .tut-desc { font-size:.76rem; color:var(--text-med); line-height:1.6; }
+    .tut-foot { padding:12px 22px 18px; display:flex; align-items:center; justify-content:space-between; border-top:1px solid var(--border); }
+    .tut-dots { display:flex; gap:6px; }
+    .tut-dot { width:7px; height:7px; border-radius:50%; background:var(--blush-mid); transition:background .2s,width .2s; }
+    .tut-dot.active { background:var(--rose); width:18px; border-radius:4px; }
+    .tut-btns { display:flex; gap:8px; }
+    .tut-prev { padding:8px 16px; border-radius:50px; border:1px solid var(--border); background:#fff; font-size:.68rem; color:var(--text-med); cursor:pointer; font-family:var(--ff-body); letter-spacing:.06em; }
+    .tut-prev:hover { border-color:var(--rose); color:var(--rose); }
+    .tut-next { padding:8px 20px; border-radius:50px; border:none; background:var(--rose); color:#fff; font-size:.68rem; font-weight:600; cursor:pointer; font-family:var(--ff-body); letter-spacing:.06em; transition:background .15s; }
+    .tut-next:hover { background:var(--rose-dark); }
+
+    /* ============================
        RESEÑAS (footer)
     ============================ */
     .footer-resenas {
@@ -5899,6 +5938,325 @@ document.addEventListener('keydown', e=>{
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
 }
+</script>
+
+<!-- ========== TUTORIAL ONBOARDING ========== -->
+<div class="tut-overlay" id="tutOverlay">
+  <div class="tut-box">
+    <div class="tut-top">
+      <span class="tut-brand">✦ DUBREM</span>
+      <button class="tut-skip" onclick="closeTutorial()">Omitir ✕</button>
+    </div>
+    <div class="tut-slides">
+
+      <!-- Paso 1 -->
+      <div class="tut-slide active">
+        <div class="tut-img">
+          <svg viewBox="0 0 420 260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="420" height="260" fill="#fdf8f5"/>
+            <!-- Header -->
+            <rect width="420" height="44" fill="#1a0a0f"/>
+            <text x="210" y="27" text-anchor="middle" fill="white" font-size="16" font-family="Georgia,serif" font-style="italic" letter-spacing="4">DUBREM</text>
+            <!-- Botón iniciar sesión destacado -->
+            <rect x="290" y="10" width="110" height="24" rx="12" fill="#c4566a"/>
+            <text x="345" y="26" text-anchor="middle" fill="white" font-size="9.5" font-family="Arial" letter-spacing="1">INICIAR SESIÓN</text>
+            <!-- Flecha señalando -->
+            <path d="M345 40 L345 52" stroke="#c4566a" stroke-width="2.5" stroke-dasharray="4,2"/>
+            <polygon points="345,58 340,50 350,50" fill="#c4566a"/>
+            <!-- Hero simple -->
+            <rect x="30" y="65" width="360" height="110" rx="14" fill="#f0e6ea"/>
+            <text x="210" y="110" text-anchor="middle" fill="#1a0a0f" font-size="22" font-family="Georgia,serif" font-style="italic">Estilos que</text>
+            <text x="210" y="135" text-anchor="middle" fill="#1a0a0f" font-size="22" font-family="Georgia,serif" font-style="italic">inspiran</text>
+            <!-- Categorías -->
+            <rect x="30" y="190" width="80" height="28" rx="8" fill="#e8d5da"/>
+            <text x="70" y="208" text-anchor="middle" fill="#6b3040" font-size="8.5" font-family="Arial">Mujer</text>
+            <rect x="120" y="190" width="80" height="28" rx="8" fill="#e8d5da"/>
+            <text x="160" y="208" text-anchor="middle" fill="#6b3040" font-size="8.5" font-family="Arial">Hombre</text>
+            <rect x="210" y="190" width="80" height="28" rx="8" fill="#e8d5da"/>
+            <text x="250" y="208" text-anchor="middle" fill="#6b3040" font-size="8.5" font-family="Arial">Juvenil</text>
+            <rect x="300" y="190" width="80" height="28" rx="8" fill="#e8d5da"/>
+            <text x="340" y="208" text-anchor="middle" fill="#6b3040" font-size="8.5" font-family="Arial">Niños</text>
+            <!-- Pulso animado -->
+            <circle cx="345" cy="22" r="14" fill="none" stroke="#c4566a" stroke-width="1.5" opacity="0.5">
+              <animate attributeName="r" values="14;20;14" dur="1.6s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.5;0;0.5" dur="1.6s" repeatCount="indefinite"/>
+            </circle>
+          </svg>
+        </div>
+        <div class="tut-body">
+          <div class="tut-step-label">Paso 1 de 6</div>
+          <div class="tut-title">Entra a Dubrem e inicia sesión</div>
+          <div class="tut-desc">Visita nuestra tienda y da clic en el botón <strong>Iniciar Sesión</strong> en la esquina superior derecha.</div>
+        </div>
+      </div>
+
+      <!-- Paso 2 -->
+      <div class="tut-slide">
+        <div class="tut-img">
+          <svg viewBox="0 0 420 260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="420" height="260" fill="#fdf8f5"/>
+            <!-- Modal login -->
+            <rect x="60" y="20" width="300" height="220" rx="16" fill="white" filter="url(#sh)"/>
+            <defs><filter id="sh"><feDropShadow dx="0" dy="4" stdDeviation="12" flood-color="#0008"/></filter></defs>
+            <text x="210" y="55" text-anchor="middle" fill="#1a0a0f" font-size="14" font-family="Georgia,serif" font-style="italic">Bienvenida</text>
+            <!-- Campo email -->
+            <rect x="80" y="68" width="260" height="28" rx="8" fill="#fdf8f5" stroke="#e0c8d0" stroke-width="1.2"/>
+            <text x="95" y="87" fill="#b0a0a6" font-size="9" font-family="Arial">Correo o teléfono</text>
+            <!-- Campo pass -->
+            <rect x="80" y="104" width="260" height="28" rx="8" fill="#fdf8f5" stroke="#e0c8d0" stroke-width="1.2"/>
+            <text x="95" y="123" fill="#b0a0a6" font-size="9" font-family="Arial">Contraseña</text>
+            <!-- Botón entrar -->
+            <rect x="80" y="142" width="260" height="30" rx="15" fill="#c4566a"/>
+            <text x="210" y="162" text-anchor="middle" fill="white" font-size="10" font-family="Arial" letter-spacing="1">ENTRAR</text>
+            <!-- Línea divisora -->
+            <line x1="80" y1="185" x2="170" y2="185" stroke="#e0c8d0" stroke-width="1"/>
+            <text x="210" y="189" text-anchor="middle" fill="#c0a0a8" font-size="8" font-family="Arial">o</text>
+            <line x1="250" y1="185" x2="340" y2="185" stroke="#e0c8d0" stroke-width="1"/>
+            <!-- Botón registrarte destacado -->
+            <rect x="80" y="196" width="260" height="30" rx="15" fill="none" stroke="#c4566a" stroke-width="2"/>
+            <text x="210" y="216" text-anchor="middle" fill="#c4566a" font-size="10" font-family="Arial" letter-spacing="1" font-weight="bold">REGÍSTRATE</text>
+            <!-- Flecha -->
+            <path d="M355 211 L375 211" stroke="#c4566a" stroke-width="2.5" stroke-dasharray="4,2"/>
+            <polygon points="380,211 372,207 372,215" fill="#c4566a"/>
+            <!-- Pulso -->
+            <circle cx="210" cy="211" r="16" fill="none" stroke="#c4566a" stroke-width="1.5" opacity="0.4">
+              <animate attributeName="r" values="16;24;16" dur="1.8s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.4;0;0.4" dur="1.8s" repeatCount="indefinite"/>
+            </circle>
+          </svg>
+        </div>
+        <div class="tut-body">
+          <div class="tut-step-label">Paso 2 de 6</div>
+          <div class="tut-title">Da clic en Regístrate</div>
+          <div class="tut-desc">Si no tienes cuenta, selecciona <strong>Regístrate</strong> para crear tu perfil y acceder a todos los beneficios.</div>
+        </div>
+      </div>
+
+      <!-- Paso 3 -->
+      <div class="tut-slide">
+        <div class="tut-img">
+          <svg viewBox="0 0 420 260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="420" height="260" fill="#fdf8f5"/>
+            <rect x="60" y="10" width="300" height="240" rx="16" fill="white" filter="url(#sh2)"/>
+            <defs><filter id="sh2"><feDropShadow dx="0" dy="4" stdDeviation="12" flood-color="#0008"/></filter></defs>
+            <text x="210" y="38" text-anchor="middle" fill="#1a0a0f" font-size="13" font-family="Georgia,serif" font-style="italic">Crear cuenta</text>
+            <!-- Campos -->
+            <rect x="80" y="48" width="260" height="26" rx="7" fill="#fdf8f5" stroke="#e0c8d0" stroke-width="1.2"/>
+            <text x="95" y="65" fill="#6b3040" font-size="8.5" font-family="Arial">María García ✓</text>
+            <rect x="80" y="82" width="260" height="26" rx="7" fill="#fdf8f5" stroke="#e0c8d0" stroke-width="1.2"/>
+            <text x="95" y="99" fill="#6b3040" font-size="8.5" font-family="Arial">maria@email.com ✓</text>
+            <rect x="80" y="116" width="260" height="26" rx="7" fill="#fdf8f5" stroke="#e0c8d0" stroke-width="1.2"/>
+            <text x="95" y="133" fill="#6b3040" font-size="8.5" font-family="Arial">55 1234 5678 ✓</text>
+            <rect x="80" y="150" width="125" height="26" rx="7" fill="#fdf8f5" stroke="#e0c8d0" stroke-width="1.2"/>
+            <text x="95" y="167" fill="#b0a0a6" font-size="8.5" font-family="Arial">••••••••</text>
+            <rect x="215" y="150" width="125" height="26" rx="7" fill="#fdf8f5" stroke="#e0c8d0" stroke-width="1.2"/>
+            <text x="230" y="167" fill="#b0a0a6" font-size="8.5" font-family="Arial">••••••••</text>
+            <!-- Botón crear cuenta destacado -->
+            <rect x="80" y="188" width="260" height="32" rx="16" fill="#c4566a"/>
+            <text x="210" y="209" text-anchor="middle" fill="white" font-size="10.5" font-family="Arial" letter-spacing="1">CREAR CUENTA</text>
+            <!-- Pulso -->
+            <circle cx="210" cy="204" r="18" fill="none" stroke="#c4566a" stroke-width="1.5" opacity="0.4">
+              <animate attributeName="r" values="18;26;18" dur="1.8s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.4;0;0.4" dur="1.8s" repeatCount="indefinite"/>
+            </circle>
+          </svg>
+        </div>
+        <div class="tut-body">
+          <div class="tut-step-label">Paso 3 de 6</div>
+          <div class="tut-title">Llena tus datos y crea tu cuenta</div>
+          <div class="tut-desc">Ingresa tu nombre, correo, teléfono y una contraseña. Da clic en <strong>Crear Cuenta</strong> para empezar.</div>
+        </div>
+      </div>
+
+      <!-- Paso 4 -->
+      <div class="tut-slide">
+        <div class="tut-img">
+          <svg viewBox="0 0 420 260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="420" height="260" fill="#fdf8f5"/>
+            <!-- Productos en grid -->
+            <rect x="20" y="20" width="170" height="170" rx="14" fill="white" stroke="#e0c8d0" stroke-width="1"/>
+            <rect x="20" y="20" width="170" height="110" rx="14" fill="#e8d5da"/>
+            <text x="105" y="85" text-anchor="middle" fill="#9b6070" font-size="28">👗</text>
+            <text x="35" y="148" fill="#1a0a0f" font-size="9.5" font-family="Georgia,serif" font-style="italic">Vestido floral</text>
+            <text x="35" y="163" fill="#c4566a" font-size="10" font-family="Arial" font-weight="bold">$380 MXN</text>
+            <!-- Botón agregar destacado -->
+            <circle cx="175" cy="178" r="16" fill="#c4566a"/>
+            <text x="175" y="183" text-anchor="middle" fill="white" font-size="16">+</text>
+            <circle cx="175" cy="178" r="18" fill="none" stroke="#c4566a" stroke-width="1.5" opacity="0.5">
+              <animate attributeName="r" values="18;26;18" dur="1.5s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.5;0;0.5" dur="1.5s" repeatCount="indefinite"/>
+            </circle>
+            <!-- Producto 2 -->
+            <rect x="205" y="20" width="170" height="170" rx="14" fill="white" stroke="#e0c8d0" stroke-width="1"/>
+            <rect x="205" y="20" width="170" height="110" rx="14" fill="#dde8f0"/>
+            <text x="290" y="85" text-anchor="middle" fill="#607090" font-size="28">👖</text>
+            <text x="220" y="148" fill="#1a0a0f" font-size="9.5" font-family="Georgia,serif" font-style="italic">Pantalón clásico</text>
+            <text x="220" y="163" fill="#c4566a" font-size="10" font-family="Arial" font-weight="bold">$290 MXN</text>
+            <!-- Carrito con badge -->
+            <rect x="150" y="210" width="120" height="36" rx="18" fill="#1a0a0f"/>
+            <text x="210" y="233" text-anchor="middle" fill="white" font-size="9.5" font-family="Arial" letter-spacing="1">🛒 CARRITO (1)</text>
+            <circle cx="270" cy="210" r="10" fill="#c4566a"/>
+            <text x="270" y="214" text-anchor="middle" fill="white" font-size="9" font-family="Arial" font-weight="bold">1</text>
+          </svg>
+        </div>
+        <div class="tut-body">
+          <div class="tut-step-label">Paso 4 de 6</div>
+          <div class="tut-title">Agrega productos y abre tu carrito</div>
+          <div class="tut-desc">Toca <strong>＋</strong> en los productos que te gusten. Luego abre el carrito y da clic en <strong>Siguiente</strong> para continuar.</div>
+        </div>
+      </div>
+
+      <!-- Paso 5 -->
+      <div class="tut-slide">
+        <div class="tut-img">
+          <svg viewBox="0 0 420 260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="420" height="260" fill="#fdf8f5"/>
+            <!-- Panel checkout -->
+            <rect x="30" y="10" width="360" height="240" rx="16" fill="white" filter="url(#sh3)"/>
+            <defs><filter id="sh3"><feDropShadow dx="0" dy="4" stdDeviation="10" flood-color="#0006"/></filter></defs>
+            <text x="210" y="38" text-anchor="middle" fill="#1a0a0f" font-size="13" font-family="Georgia,serif" font-style="italic">Proceso de compra</text>
+            <!-- Resumen -->
+            <rect x="50" y="48" width="320" height="50" rx="10" fill="#fdf8f5"/>
+            <text x="65" y="68" fill="#1a0a0f" font-size="9" font-family="Arial">Vestido floral × 1</text>
+            <text x="340" y="68" text-anchor="end" fill="#c4566a" font-size="9" font-family="Arial" font-weight="bold">$380</text>
+            <line x1="50" y1="82" x2="370" y2="82" stroke="#e0c8d0" stroke-width="0.8"/>
+            <text x="65" y="96" fill="#1a0a0f" font-size="10" font-family="Arial" font-weight="bold">Total</text>
+            <text x="340" y="96" text-anchor="end" fill="#c4566a" font-size="10" font-family="Arial" font-weight="bold">$380 MXN</text>
+            <!-- Métodos de pago -->
+            <text x="50" y="122" fill="#6b3040" font-size="8.5" font-family="Arial" font-weight="bold" letter-spacing="1">MÉTODO DE PAGO</text>
+            <rect x="50" y="130" width="145" height="36" rx="10" fill="#c4566a"/>
+            <text x="123" y="153" text-anchor="middle" fill="white" font-size="9" font-family="Arial">💳 Transferencia</text>
+            <rect x="205" y="130" width="145" height="36" rx="10" fill="#fdf8f5" stroke="#e0c8d0" stroke-width="1.2"/>
+            <text x="278" y="153" text-anchor="middle" fill="#6b3040" font-size="9" font-family="Arial">📦 Pago al recibir</text>
+            <!-- WhatsApp -->
+            <rect x="50" y="180" width="320" height="34" rx="12" fill="#25d366"/>
+            <text x="210" y="202" text-anchor="middle" fill="white" font-size="10" font-family="Arial" font-weight="bold">📱 Enviar comprobante a WhatsApp</text>
+            <!-- Pulso WhatsApp -->
+            <circle cx="210" cy="197" r="20" fill="none" stroke="#25d366" stroke-width="1.5" opacity="0.4">
+              <animate attributeName="r" values="20;28;20" dur="2s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.4;0;0.4" dur="2s" repeatCount="indefinite"/>
+            </circle>
+          </svg>
+        </div>
+        <div class="tut-body">
+          <div class="tut-step-label">Paso 5 de 6</div>
+          <div class="tut-title">Elige tu pago y envía el comprobante</div>
+          <div class="tut-desc">Selecciona tu método de pago preferido. Si pagas por transferencia, <strong>envía el comprobante por WhatsApp</strong> para gestionar tu pedido.</div>
+        </div>
+      </div>
+
+      <!-- Paso 6 -->
+      <div class="tut-slide">
+        <div class="tut-img">
+          <svg viewBox="0 0 420 260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="420" height="260" fill="#1a0a0f"/>
+            <!-- Panel pedidos oscuro -->
+            <rect x="0" y="0" width="420" height="44" fill="#120608"/>
+            <text x="30" y="28" fill="white" font-size="13" font-family="Georgia,serif" font-style="italic">📦 Mis Pedidos</text>
+            <!-- Botones header -->
+            <rect x="240" y="12" width="70" height="22" rx="11" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1"/>
+            <text x="275" y="27" text-anchor="middle" fill="rgba(255,255,255,.7)" font-size="8" font-family="Arial">👤 Mis Datos</text>
+            <rect x="318" y="12" width="74" height="22" rx="11" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1"/>
+            <text x="355" y="27" text-anchor="middle" fill="rgba(255,255,255,.7)" font-size="8" font-family="Arial">🔑 Contraseña</text>
+            <!-- Tarjeta pedido -->
+            <rect x="20" y="58" width="380" height="90" rx="14" fill="rgba(255,255,255,.06)" stroke="rgba(196,86,106,.3)" stroke-width="1"/>
+            <text x="40" y="82" fill="rgba(255,255,255,.5)" font-size="7.5" font-family="Arial">#PED-001 · 26 Sep 2026</text>
+            <!-- Badge estado -->
+            <rect x="300" y="68" width="80" height="18" rx="9" fill="rgba(251,191,36,.15)" stroke="rgba(251,191,36,.4)" stroke-width="1"/>
+            <text x="340" y="81" text-anchor="middle" fill="rgb(251,191,36)" font-size="7.5" font-family="Arial">⏳ En proceso</text>
+            <text x="40" y="102" fill="white" font-size="10" font-family="Georgia,serif" font-style="italic">Vestido floral</text>
+            <text x="40" y="118" fill="rgba(255,255,255,.5)" font-size="8" font-family="Arial">Talla M · × 1</text>
+            <text x="340" y="118" text-anchor="end" fill="#c4566a" font-size="10" font-family="Arial" font-weight="bold">$380 MXN</text>
+            <!-- Barra progreso -->
+            <text x="40" y="140" fill="rgba(255,255,255,.4)" font-size="7.5" font-family="Arial">Estado del pedido</text>
+            <rect x="40" y="148" width="340" height="6" rx="3" fill="rgba(255,255,255,.08)"/>
+            <rect x="40" y="148" width="200" height="6" rx="3" fill="#c4566a"/>
+            <!-- Pasos -->
+            <circle cx="40" cy="151" r="5" fill="#c4566a"/>
+            <circle cx="153" cy="151" r="5" fill="#c4566a"/>
+            <circle cx="267" cy="151" r="5" fill="rgba(255,255,255,.2)"/>
+            <circle cx="380" cy="151" r="5" fill="rgba(255,255,255,.2)"/>
+            <text x="40" y="168" text-anchor="middle" fill="#c4566a" font-size="6.5" font-family="Arial">Recibido</text>
+            <text x="153" y="168" text-anchor="middle" fill="#c4566a" font-size="6.5" font-family="Arial">Pago</text>
+            <text x="267" y="168" text-anchor="middle" fill="rgba(255,255,255,.3)" font-size="6.5" font-family="Arial">Enviado</text>
+            <text x="380" y="168" text-anchor="middle" fill="rgba(255,255,255,.3)" font-size="6.5" font-family="Arial">Entregado</text>
+            <!-- Avatar destacado -->
+            <circle cx="380" cy="22" r="14" fill="#c4566a"/>
+            <text x="380" y="27" text-anchor="middle" fill="white" font-size="9" font-family="Arial" font-weight="bold">A</text>
+            <circle cx="380" cy="22" r="16" fill="none" stroke="#c4566a" stroke-width="1.5" opacity="0.5">
+              <animate attributeName="r" values="16;22;16" dur="1.8s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.5;0;0.5" dur="1.8s" repeatCount="indefinite"/>
+            </circle>
+          </svg>
+        </div>
+        <div class="tut-body">
+          <div class="tut-step-label">Paso 6 de 6</div>
+          <div class="tut-title">Sigue tu pedido en tu perfil</div>
+          <div class="tut-desc">Da clic en tu nombre en la parte superior para ver <strong>Mis Pedidos</strong> y seguir el estado de tu compra en tiempo real.</div>
+        </div>
+      </div>
+
+    </div><!-- /tut-slides -->
+    <div class="tut-foot">
+      <div class="tut-dots" id="tutDots"></div>
+      <div class="tut-btns">
+        <button class="tut-prev" id="tutPrev" onclick="tutNav(-1)" style="display:none">← Anterior</button>
+        <button class="tut-next" id="tutNext" onclick="tutNav(1)">Siguiente →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const LS_TUT = 'dubrem_tut_v1';
+  let _tutStep = 0;
+  const TOTAL = 6;
+
+  function buildDots(){
+    const el = document.getElementById('tutDots');
+    el.innerHTML = Array.from({length:TOTAL},(_,i)=>`<div class="tut-dot${i===0?' active':''}" id="tutDot${i}"></div>`).join('');
+  }
+
+  window.openTutorial = function(){
+    try { if(localStorage.getItem(LS_TUT)==='1') return; } catch(e){}
+    _tutStep = 0;
+    buildDots();
+    updateTut();
+    document.getElementById('tutOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  };
+
+  window.closeTutorial = function(){
+    document.getElementById('tutOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+    try { localStorage.setItem(LS_TUT,'1'); } catch(e){}
+  };
+
+  window.tutNav = function(dir){
+    _tutStep = Math.min(TOTAL-1, Math.max(0, _tutStep + dir));
+    updateTut();
+    if(_tutStep === TOTAL-1 && dir===1) {
+      setTimeout(closeTutorial, 600);
+    }
+  };
+
+  function updateTut(){
+    document.querySelectorAll('.tut-slide').forEach((s,i)=> s.classList.toggle('active', i===_tutStep));
+    document.querySelectorAll('.tut-dot').forEach((d,i)=> d.classList.toggle('active', i===_tutStep));
+    document.getElementById('tutPrev').style.display = _tutStep===0 ? 'none' : '';
+    const nxt = document.getElementById('tutNext');
+    nxt.textContent = _tutStep===TOTAL-1 ? '¡Listo! ✓' : 'Siguiente →';
+  }
+
+  // Se activa la primera vez que entra a cualquier catálogo
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const orig = window.showCatalog;
+    if(typeof orig==='function'){
+      window.showCatalog = function(s,p){ orig(s,p); openTutorial(); };
+    }
+  });
+})();
 </script>
 
 </body>
