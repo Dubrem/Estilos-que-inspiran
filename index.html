@@ -4214,10 +4214,36 @@ document.addEventListener('DOMContentLoaded', () => {
       history.replaceState({}, '', location.pathname);
       if(pago === 'exitoso'){
         setTimeout(() => {
-          document.getElementById('orderNum').textContent = orden || '';
-          document.getElementById('btnWhatsApp').href = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`¡Hola! 🖤 Acabo de pagar mi pedido *${orden}* por MercadoPago. ¡Gracias! — DUBREM`)}`;
+          // Recuperar detalles del pedido guardados antes del redirect
+          let pending = null;
+          try { pending = JSON.parse(localStorage.getItem('dubrem_mp_pending') || 'null'); } catch(e){}
+          try { localStorage.removeItem('dubrem_mp_pending'); } catch(e){}
+
+          const numLabel = (pending && pending.num) || orden || '';
+          const total    = (pending && pending.total) ? `$${pending.total} MXN` : '';
+          const customer = (pending && pending.customer) ? pending.customer : '';
+          const itemsLine = pending && pending.items
+            ? pending.items.map(i => `• ${i.title} × ${i.quantity} — $${i.unit_price * i.quantity} MXN`).join('\n')
+            : '';
+
+          const waMsg = [
+            `¡Hola! 🖤 *Pago realizado por MercadoPago*`,
+            ``,
+            `👤 Cliente: *${customer}*`,
+            `📦 Pedido: *${numLabel}*`,
+            itemsLine ? `\n${itemsLine}` : '',
+            total ? `\n💰 Total: *${total}*` : '',
+            ``,
+            `Por favor confirmar el despacho. ¡Gracias! — DUBREM`,
+          ].filter(Boolean).join('\n');
+
+          const waUrl = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(waMsg)}`;
+          document.getElementById('orderNum').textContent = numLabel;
+          document.getElementById('btnWhatsApp').href = waUrl;
           document.getElementById('orderModal').classList.add('open');
           lockScroll();
+          // Abrir WhatsApp automáticamente
+          setTimeout(() => window.open(waUrl, '_blank'), 800);
         }, 300);
       } else if(pago === 'pendiente'){
         setTimeout(() => toast('Pago pendiente de confirmación. Te notificaremos pronto.', ''), 300);
@@ -5210,6 +5236,16 @@ async function confirmOrder(){
       });
       const data = await r.json();
       if(data.init_point){
+        // Guardar detalles del pedido para el mensaje de WhatsApp al volver
+        try {
+          localStorage.setItem('dubrem_mp_pending', JSON.stringify({
+            num,
+            total,
+            customer: S.user?.name || '',
+            phone:    S.user?.phone || '',
+            items: mpItems,
+          }));
+        } catch(e){}
         S.cart=[]; refreshCartUI();
         fbClearMyReservations();
         closeCheckoutModal();
