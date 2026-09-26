@@ -4812,7 +4812,8 @@ function addFromLightbox(){
 function addToCart(id, size) {
   const p = findProduct(id); if(!p || getEffectiveStock(p) === 0) return;
   const item = S.cart.find(x=>x.id===id && x.size===(size||null));
-  if(item) item.qty++; else S.cart.push({id, qty:1, size: size||null});
+  if(item) item.qty++;
+  else S.cart.push({id, qty:1, size: size||null, name: p.name, price: p.price});
   p.stock--;
   fbSetReservation(id, S.cart.filter(x=>x.id===id).reduce((s,x)=>s+x.qty, 0));
   refreshStockUI(p); refreshCartUI();
@@ -5142,7 +5143,7 @@ async function confirmOrder(){
   // Guardar pedido en S.orders para el panel admin
   const orderItems = S.cart.map(item=>{
     const p = findProduct(item.id);
-    return { id:item.id, name:p?p.name:'', qty:item.qty, price:p?p.price:0, done:false };
+    return { id:item.id, name:p?.name||item.name||'', qty:item.qty, price:p?.price||item.price||0, size:item.size||null, done:false };
   });
   const newOrder = {
     num,
@@ -5192,7 +5193,9 @@ async function confirmOrder(){
     try {
       const mpItems = S.cart.map(item => {
         const p = findProduct(item.id);
-        return { id: String(item.id), title: p ? p.name : 'Producto', quantity: item.qty, unit_price: p ? p.price : 0 };
+        const name  = (p && p.name)  || item.name  || 'Producto';
+        const price = (p && p.price) || item.price || 1;
+        return { id: String(item.id), title: name, quantity: item.qty, unit_price: Math.round(price * 100) / 100 };
       });
       if(S.shipCost > 0) mpItems.push({ id:'envio', title:'Envío', quantity:1, unit_price: S.shipCost });
       const r = await fetch('/api/create-preference', {
