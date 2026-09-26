@@ -5159,32 +5159,31 @@ async function confirmOrder(){
   S.orders.push(newOrder);
   fbSaveOrder(newOrder); // guardar en Firebase
 
-  // Descontar stock de cada producto comprado directamente en Firebase
-  for (const item of S.cart) {
+  // Descontar stock en paralelo (sin await secuencial)
+  const stockUpdates = S.cart.map(item => {
     const prod = PRODUCT_OVERRIDES[item.id];
-    if (prod && FIREBASE_DB_URL) {
-      const newStock = Math.max(0, (prod.stock || 0) - item.qty);
-      // Actualizar solo el campo stock
-      await fetch(`${FIREBASE_DB_URL}/products/${item.id}/stock.json`, {
-        method: 'PUT',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify(newStock)
-      }).catch(()=>{});
-      if (newStock <= 0) {
-        await fetch(`${FIREBASE_DB_URL}/products/${item.id}/hidden.json`, {
-          method: 'PUT',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify(true)
-        }).catch(()=>{});
-      }
-      // Actualizar local también
-      prod.stock = newStock;
-      if (newStock <= 0) prod.hidden = true;
-    }
-  }
-  // Recargar productos desde Firebase y refrescar catálogo
-  await fbLoadProductOverrides();
-  if (document.querySelector('.products-section.catalog-visible')) renderGrid(_currentFilter);
+    if (!prod || !FIREBASE_DB_URL) return Promise.resolve();
+    const newStock = Math.max(0, (prod.stock || 0) - item.qty);
+    prod.stock = newStock;
+    if (newStock <= 0) prod.hidden = true;
+    const updates = [
+      fetch(`${FIREBASE_DB_URL}/products/${item.id}/stock.json`, {
+        method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newStock)
+      }).catch(()=>{})
+    ];
+    if (newStock <= 0) updates.push(
+      fetch(`${FIREBASE_DB_URL}/products/${item.id}/hidden.json`, {
+        method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(true)
+      }).catch(()=>{})
+    );
+    return Promise.all(updates);
+  });
+  Promise.all(stockUpdates).then(() => {
+    // Recargar en background sin bloquear el pago
+    fbLoadProductOverrides().then(() => {
+      if (document.querySelector('.products-section.catalog-visible')) renderGrid(_currentFilter);
+    });
+  });
 
   if(S.payMethod === 'mp'){
     // Pago con MercadoPago — redirigir a su checkout
@@ -5773,21 +5772,17 @@ function confirmSetStatus(orderNum, status){
 async function cancelOrder(orderNum){
   const order = S.orders.find(o=>o.num===orderNum);
   if(!order) return;
-  for(const item of order.items){
+  await Promise.all(order.items.map(item => {
     const prod = PRODUCT_OVERRIDES[item.id];
-    if(prod && FIREBASE_DB_URL){
-      const newStock = (prod.stock || 0) + item.qty;
-      await fetch(`${FIREBASE_DB_URL}/products/${item.id}/stock.json`,{
-        method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newStock)
-      }).catch(()=>{});
-      await fetch(`${FIREBASE_DB_URL}/products/${item.id}/hidden.json`,{
-        method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(false)
-      }).catch(()=>{});
-      prod.stock = newStock;
-      prod.hidden = false;
-    }
-  }
-  await fbLoadProductOverrides();
+    if(!prod || !FIREBASE_DB_URL) return Promise.resolve();
+    const newStock = (prod.stock || 0) + item.qty;
+    prod.stock = newStock; prod.hidden = false;
+    return Promise.all([
+      fetch(`${FIREBASE_DB_URL}/products/${item.id}/stock.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(newStock)}).catch(()=>{}),
+      fetch(`${FIREBASE_DB_URL}/products/${item.id}/hidden.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(false)}).catch(()=>{})
+    ]);
+  }));
+  fbLoadProductOverrides().catch(()=>{});
   order.status = 'cancelado';
   await fbUpdateOrderStatus(orderNum, 'cancelado');
   renderAdminOrders();
