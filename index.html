@@ -43,10 +43,12 @@
     "hasMap": "https://maps.google.com/?q=Tula+de+Allende+Hidalgo+Mexico"
   }
   </script>
+  <link rel="preconnect" href="https://images.unsplash.com">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
-  <link rel="preconnect" href="https://bella-esencial-default-rtdb.firebaseio.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400;1,600&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="dns-prefetch" href="https://bella-esencial-default-rtdb.firebaseio.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400;1,600&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=Bebas+Neue&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400;1,600&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=Bebas+Neue&display=swap" rel="stylesheet"></noscript>
 
   <style>
     /* ============================
@@ -1679,7 +1681,7 @@
     .lb-thumb { width:36px; height:44px; border-radius:5px; object-fit:cover; cursor:pointer; opacity:.55; border:2px solid transparent; transition:all .15s; flex-shrink:0; }
     .lb-thumb.active { opacity:1; border-color:var(--rose); }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js" defer></script>
 </head>
 <body>
 
@@ -2028,7 +2030,7 @@ function cerrarApertura(){}
 
   <!-- Panel Mujer -->
   <div class="hero-panel" onclick="heroTransitionTo('mujer',event,this)">
-    <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1200&q=80" alt="Colección Mujer" loading="eager" fetchpriority="high">
+    <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1200&q=80" alt="Colección Mujer" fetchpriority="high">
     <div class="hero-panel-info">
       <span class="hero-panel-label">Mujer</span>
       <button class="hero-panel-cta">Ver Colección</button>
@@ -2037,7 +2039,7 @@ function cerrarApertura(){}
 
   <!-- Panel Hombre -->
   <div class="hero-panel" onclick="heroTransitionTo('hombre',event,this)">
-    <img src="https://images.unsplash.com/photo-1488161628813-04466f872be2?auto=format&fit=crop&w=800&h=1200&q=80" alt="Colección Hombre" loading="lazy" style="object-position:center top;">
+    <img src="https://images.unsplash.com/photo-1488161628813-04466f872be2?auto=format&fit=crop&w=800&h=1200&q=80" alt="Colección Hombre" fetchpriority="high" style="object-position:center top;">
     <div class="hero-panel-info">
       <span class="hero-panel-label">Hombre</span>
       <button class="hero-panel-cta">Ver Colección</button>
@@ -2046,7 +2048,7 @@ function cerrarApertura(){}
 
   <!-- Panel Niños -->
   <div class="hero-panel" onclick="heroTransitionTo('ninos',event,this)">
-    <img src="https://images.unsplash.com/photo-1618325521029-dbf6d9708035?auto=format&fit=crop&w=1200&q=80" alt="Colección Niños" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1618325521029-dbf6d9708035?auto=format&fit=crop&w=1200&q=80" alt="Colección Niños" fetchpriority="high">
     <div class="hero-panel-info">
       <span class="hero-panel-label">Niños</span>
       <button class="hero-panel-cta">Ver Colección</button>
@@ -2055,7 +2057,7 @@ function cerrarApertura(){}
 
   <!-- Panel Juvenil -->
   <div class="hero-panel" onclick="heroTransitionTo('juvenil',event,this)">
-    <img src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=800&h=1200&q=80" alt="Colección Juvenil" loading="lazy" style="object-position:center top;">
+    <img src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=800&h=1200&q=80" alt="Colección Juvenil" fetchpriority="high" style="object-position:center top;">
     <div class="hero-panel-info">
       <span class="hero-panel-label">Juvenil</span>
       <button class="hero-panel-cta">Ver Colección</button>
@@ -3055,12 +3057,22 @@ async function fbGetUserOrders(email){
 /* ──────────────────────────────────────────────────────
    FIREBASE — PRODUCTOS (subir fotos / editar / agregar)
 ────────────────────────────────────────────────────── */
-let PRODUCT_OVERRIDES = {};   // { fbKey: { name, price, stock, cat, desc, img } }
-// Carga rápida: solo metadatos sin imágenes (34 KB vs 36 MB)
+let PRODUCT_OVERRIDES = {};   // { fbKey: { name, price, stock, cat, desc, pics, img?, imgs? } }
+const LS_PRODUCTS = 'dubrem_products_slim_v3';
 try {
-  const slim = localStorage.getItem('dubrem_products_slim_v2');
+  localStorage.removeItem('dubrem_products_slim_v2');
+  const slim = localStorage.getItem(LS_PRODUCTS);
   if (slim) PRODUCT_OVERRIDES = JSON.parse(slim);
 } catch(e) {}
+
+// img/imgs (base64) solo están en memoria cuando el admin abre un producto; los clientes usan pics (/api/img)
+function prodPics(p) {
+  if (!p) return [];
+  if (p.imgs && p.imgs.length) return p.imgs;
+  if (p.img) return [p.img];
+  return p.pics || [];
+}
+function prodThumb(p) { return prodPics(p)[0] || ''; }
 
 let CAT_HEROES = {}; // { mujer: ['prodId1','prodId2'], hombre: [...] }
 try {
@@ -3155,20 +3167,20 @@ function startCatBannerSlideshow(section) {
   _heroSlides = ids.map(id => {
     const p = getMergedProducts().find(x => String(x.id) === String(id));
     if (!p) return null;
-    const src = (p.imgs && p.imgs[0]) ? p.imgs[0] : (p.img || null);
+    const src = prodThumb(p);
     return src ? { src, id: String(p.id) } : null;
   }).filter(Boolean);
 
   // Fallback mujer
   if (!_heroSlides.length && section === 'mujer') {
-    _heroSlides = [{ src: 'img/Photoroom_20260713_221353.PNG', id: 'new_1784002709501' }];
+    _heroSlides = [{ src: 'img/hero-mujer.jpg', id: 'new_1784002709501' }];
   }
   if (!_heroSlides.length) { banner.style.display = 'none'; return; }
   banner.style.display = 'block';
 
   // Cada slide es clickeable y abre su producto
   track.innerHTML = _heroSlides.map((s, i) =>
-    `<div class="cat-banner-slide${i===0?' active':''}" onclick="catBannerSlideClick(${i})" style="cursor:pointer"><img src="${s.src}" alt=""></div>`
+    `<div class="cat-banner-slide${i===0?' active':''}" onclick="catBannerSlideClick(${i})" style="cursor:pointer"><img src="${s.src}" alt="" decoding="async"${i===0?'':' loading="lazy"'}></div>`
   ).join('');
 
   // Dots
@@ -3241,47 +3253,49 @@ function updateSubcatOptions(cat, selected) {
 }
 
 let _fbLoadError = false;
-let _fbProductsPromise = null;
+let _productsJson = '';
 
-// Descarga completa (36 MB) — solo para panel admin que necesita editar imágenes
-async function fbLoadProductOverrides(){
-  _fbLoadError = false;
-  _fbProductsPromise = (async () => {
-    try {
-      const data = await fbFetch('products');
-      if (data && typeof data === 'object') {
-        PRODUCT_OVERRIDES = data;
-        // Guardar slim (34 KB) en localStorage para clientes
-        const slim = Object.fromEntries(
-          Object.entries(data).map(([k,v]) => { const {img,imgs,...r}=v; return [k,r]; })
-        );
-        try { localStorage.setItem('dubrem_products_slim_v2', JSON.stringify(slim)); } catch(e) {}
-        if (_heroSection) startCatBannerSlideshow(_heroSection);
-      } else { _fbLoadError = true; }
-    } catch(e){ _fbLoadError = true; }
-    finally { _fbProductsPromise = null; }
-  })();
-  return _fbProductsPromise;
+async function fetchProductMeta(fresh) {
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 20000);
+    const r = await fetch('/api/products' + (fresh ? `?fresh=${Date.now()}` : ''), { signal: ctrl.signal });
+    clearTimeout(timer);
+    if (r.ok) return await r.json();
+  } catch(e) {}
+  // Respaldo si la API no está disponible (p. ej. sin Vercel): descarga completa de Firebase
+  return fbFetch('products');
 }
 
-// Descarga ligera de metadatos (34 KB guardados) — solo refresca stock/precio
-// NO descarga imágenes, NO bloquea el catálogo
-async function fbRefreshProductMeta(){
-  try {
-    const data = await fbFetch('products');
-    if (!data) return;
-    const slim = Object.fromEntries(
-      Object.entries(data).map(([k,v]) => { const {img,imgs,...r}=v; return [k,r]; })
-    );
-    // Solo actualizar campos de metadatos, preservar imágenes ya cargadas en memoria
-    Object.entries(slim).forEach(([k,v]) => {
-      PRODUCT_OVERRIDES[k] = PRODUCT_OVERRIDES[k]
-        ? { ...v, img: PRODUCT_OVERRIDES[k].img, imgs: PRODUCT_OVERRIDES[k].imgs }
-        : v;
-    });
-    try { localStorage.setItem('dubrem_products_slim_v2', JSON.stringify(slim)); } catch(e) {}
-    if (document.querySelector('.products-section.catalog-visible')) renderGrid(_currentFilter);
-  } catch(e){}
+// Catálogo sin fotos (~40 KB, cacheado en el CDN). fresh=true salta el CDN (panel admin).
+async function fbRefreshProductMeta({ fresh = false } = {}){
+  const data = await fetchProductMeta(fresh);
+  if (!data || typeof data !== 'object') {
+    _fbLoadError = !Object.keys(PRODUCT_OVERRIDES).length;
+    return;
+  }
+  _fbLoadError = false;
+  const entries = Object.entries(data).filter(([,v]) => v && typeof v === 'object');
+  const slim = Object.fromEntries(entries.map(([k,v]) => { const {img,imgs,...r}=v; return [k,r]; }));
+  const json = JSON.stringify(slim);
+  if (json === _productsJson) return;
+  _productsJson = json;
+  // Conservar fotos base64 ya cargadas en memoria (edición en panel admin)
+  entries.forEach(([k,v]) => {
+    const old = PRODUCT_OVERRIDES[k];
+    PRODUCT_OVERRIDES[k] = { ...slim[k], img: v.img || old?.img, imgs: v.imgs || old?.imgs };
+  });
+  try { localStorage.setItem(LS_PRODUCTS, json); } catch(e) {}
+  if (_heroSection) startCatBannerSlideshow(_heroSection);
+  if (document.querySelector('.products-section.catalog-visible')) renderGrid(_currentFilter);
+}
+
+// Fotos completas de un producto (solo para editarlo en el panel admin)
+async function fbLoadFullProduct(key) {
+  const full = await fbFetch(`products/${key}`);
+  if (!full || typeof full !== 'object') return null;
+  PRODUCT_OVERRIDES[key] = { ...PRODUCT_OVERRIDES[key], img: full.img, imgs: full.imgs };
+  return PRODUCT_OVERRIDES[key];
 }
 async function fbLoadCatHeroes() {
   try {
@@ -3303,11 +3317,12 @@ async function fbSaveCatHero(cat, ids) {
 }
 async function fbSaveProductOverride(fbKey, data){
   if (!FIREBASE_DB_URL) return false;
+  const { pics, ...record } = data;
   try {
     const r = await fetch(`${FIREBASE_DB_URL}/products/${fbKey}.json`, {
       method: 'PUT',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(data)
+      body: JSON.stringify(record)
     });
     if(r.status === 401 || r.status === 403){
       toast('Sesión expirada — vuelve a iniciar sesión como admin','err');
@@ -3379,7 +3394,7 @@ async function fbLoadReservations() {
       for (const [key, r] of Object.entries(items || {})) {
         if (r.expiresAt <= now) {
           delete ALL_RESERVATIONS[sid][key];
-          try { await fetch(`${FIREBASE_DB_URL}/reservations/${sid}/${key}.json`, { method:'DELETE' }); } catch(e) {}
+          fetch(`${FIREBASE_DB_URL}/reservations/${sid}/${key}.json`, { method:'DELETE' }).catch(() => {});
         }
       }
     }
@@ -3405,6 +3420,7 @@ function getMergedProducts(){
 ────────────────────────────────────────────────────── */
 let _editingProductId = null;  // null = nuevo, else id
 let _adminImgs = [];
+let _adminImgsPromise = null;
 
 function renderAdminImgGrid() {
   const grid = document.getElementById('adminImgGrid');
@@ -3540,7 +3556,7 @@ function renderAdminHeroes(activeCat) {
         selected.map(id => {
           const p = getMergedProducts().find(x => String(x.id)===String(id));
           if (!p) return '';
-          const src = (p.imgs && p.imgs[0]) ? p.imgs[0] : (p.img||'');
+          const src = prodThumb(p);
           return `<div class="hero-thumb-wrap"><img src="${src}" alt="${p.name}"><button class="hero-thumb-remove" onclick="removeHero('${activeCat}','${id}')">✕</button></div>`;
         }).join('')
       }
@@ -3549,10 +3565,10 @@ function renderAdminHeroes(activeCat) {
     <div class="hero-prod-grid">
       ${prods.length === 0 ? `<p style="font-size:.72rem;color:var(--text-light)">Sin productos en esta categoría.</p>` :
         prods.map(p => {
-          const src = (p.imgs && p.imgs[0]) ? p.imgs[0] : (p.img||'');
+          const src = prodThumb(p);
           const isSel = selected.includes(String(p.id));
           return `<div class="hero-prod-item${isSel?' hero-selected':''}" onclick="toggleHero('${activeCat}','${p.id}')">
-            <img src="${src}" alt="${p.name}" onerror="this.style.background='#eee'">
+            <img src="${src}" alt="${p.name}" loading="lazy" onerror="this.style.background='#eee'">
             <div class="hero-check">✓</div>
             <div class="hero-prod-name">${p.name}</div>
           </div>`;
@@ -3644,11 +3660,11 @@ function buildAdminCards() {
   }
 
   return all.map(p => {
-    const imgSrc = p.img || '';
+    const imgSrc = prodThumb(p);
     const stkColor = p.stock === 0 ? 'color:#c0392b' : p.stock <= 5 ? 'color:#856404' : '';
     return `
       <div class="prod-admin-card" onclick='openProductEditModal(${JSON.stringify(p.id)})'>
-        <img class="prod-admin-img" src="${imgSrc}" alt="${p.name}" onerror="this.style.background='var(--blush)'">
+        <img class="prod-admin-img" src="${imgSrc}" alt="${p.name}" loading="lazy" onerror="this.style.background='var(--blush)'">
         <div class="prod-admin-info">
           <div class="prod-admin-name">${p.name}</div>
           <div class="prod-admin-meta">${fmtMXN(p.price)}</div>
@@ -3781,6 +3797,20 @@ function openProductEditModal(id) {
   document.getElementById('prodImgStatus').textContent = '';
   // Load images array
   _adminImgs = p ? (p.imgs && p.imgs.length ? [...p.imgs] : (p.img ? [p.img] : [])) : [];
+  _adminImgsPromise = null;
+  if (p && !_adminImgs.length && p.pics && p.pics.length) {
+    const status = document.getElementById('prodImgStatus');
+    status.textContent = 'Cargando fotos…';
+    _adminImgsPromise = fbLoadFullProduct(pKey(id)).then(full => {
+      if (_editingProductId !== id) return;
+      const saved = full ? prodPics(full).filter(s => !s.startsWith('/api/')) : [];
+      _adminImgs = [...saved, ..._adminImgs.filter(s => !saved.includes(s))];
+      status.textContent = full ? '' : '✗ No se pudieron cargar las fotos';
+      renderAdminImgGrid();
+      if (!full) throw new Error('fotos');
+    });
+    _adminImgsPromise.catch(() => {});
+  }
   renderAdminImgGrid();
   // SKU
   showSkuField(p ? (p.sku || '') : '');
@@ -4041,6 +4071,16 @@ async function saveProductEdit() {
   const btn = document.getElementById('prodSaveBtn');
   btn.textContent = 'Guardando…'; btn.disabled = true;
 
+  // Sin las fotos actuales cargadas, guardar borraría las fotos del producto
+  if (_adminImgsPromise) {
+    try { await _adminImgsPromise; }
+    catch(e) {
+      toast('No se pudieron cargar las fotos actuales. Intenta de nuevo.', 'err');
+      btn.textContent = 'Guardar'; btn.disabled = false;
+      return;
+    }
+  }
+
   const name  = document.getElementById('prodEditName').value.trim();
   const price = parseFloat(document.getElementById('prodEditPrice').value) || 0;
   const stock = parseInt(document.getElementById('prodEditStock').value)   || 0;
@@ -4227,8 +4267,8 @@ document.addEventListener('DOMContentLoaded', () => {
   loadCart();
   renderLoginArea();
   refreshCartUI();
-  spawnParticles();
-  setTimeout(() => syncUsers(), 4000);
+  // Login, registro y recuperar contraseña sincronizan usuarios al usarse; aquí solo si ya hay sesión
+  if (S.user) setTimeout(() => syncUsers(), 4000);
 
   // Restaurar sección desde hash en URL (para refresh y navegación directa)
   const _initHash = location.hash.slice(1);
@@ -4281,10 +4321,11 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => fbLoadCatHeroes(), 2000);
   // Limpiar reservas antiguas y cargar reservas activas (diferido)
   setTimeout(() => fbClearMyReservations().then(() => fbLoadReservations()), 3000);
-  // Refrescar solo metadatos (34 KB) cada 2 minutos — sin descargar imágenes
-  setTimeout(() => fbRefreshProductMeta(), 6000); // 6 seg después de carga
+  // Catálogo ligero (~40 KB desde el CDN): precargar y refrescar cada 2 min mientras la pestaña esté visible
+  setTimeout(() => fbRefreshProductMeta(), 1500);
   setInterval(() => {
-    fbRefreshProductMeta();
+    if (document.hidden) return;
+    fbRefreshProductMeta({ fresh: !!document.getElementById('adminPanel')?.classList.contains('open') });
     fbLoadReservations();
   }, 120000);
 
@@ -4311,33 +4352,6 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ──────────────────────────────────────────────────────
    UTILIDADES
 ────────────────────────────────────────────────────── */
-/* ──────────────────────────────────────────────────────
-   HERO PARTICLES
-────────────────────────────────────────────────────── */
-function spawnParticles() {
-  const container = document.getElementById('heroParticles');
-  if (!container) return;
-  // emojis de ropa y moda
-  const pool = ['👕','👗','🧥','👖','👔','✨','💫','🌟','🛍️','👕','👗','🧥','✨','👖','💫','👔','🌟','🛍️','✨','👕'];
-  const isMobile = window.innerWidth < 480;
-  const count = isMobile ? 10 : 20;
-
-  for (let i = 0; i < count; i++) {
-    const el = document.createElement('span');
-    el.className = 'ptcl';
-    el.textContent = pool[i % pool.length];
-    const size   = isMobile ? (.8 + Math.random() * .9) : (1.2 + Math.random() * 1.6);
-    const delay  = (Math.random() * 10).toFixed(2);
-    const dur    = (7 + Math.random() * 9).toFixed(2);
-    const left   = (2 + Math.random() * 94).toFixed(1);
-    el.style.cssText =
-      `left:${left}%;font-size:${size}rem;` +
-      `animation-duration:${dur}s;animation-delay:${delay}s;` +
-      `filter:drop-shadow(0 2px 6px rgba(208,128,144,.35));`;
-    container.appendChild(el);
-  }
-}
-
 function fmtMXN(n){ return '$' + n.toLocaleString('es-MX'); }
 
 function triggerMpSuccess(orden, pending) {
@@ -4625,7 +4639,6 @@ function renderGrid(subcat) {
     return;
   }
   grid.innerHTML = list.map(cardHTML).join('');
-  setupLazyImages();
 }
 function cardHTML(p) {
   const eff = getEffectiveStock(p);
@@ -4640,10 +4653,7 @@ function cardHTML(p) {
   return `
     <div class="product-card" id="card${p.id}">
       <div class="product-img-wrap" onclick="openLightbox(${idArg})">
-        ${p.img
-          ? `<img src="${p.img}" alt="${p.name}" onerror="imgErr(this)" data-prod-img="${p.id}" loading="lazy">`
-          : `<img alt="${p.name}" onerror="imgErr(this)" data-prod-img="${p.id}" data-lazy="1" loading="lazy" style="width:100%;height:100%;object-fit:cover;background:var(--blush-light)">`
-        }
+        <img src="${prodThumb(p) || IMG_FALLBACK}" alt="${p.name}" onerror="imgErr(this)" loading="lazy" decoding="async">
         <span class="cat-badge">${catLabel(p.subcat || p.cat)}</span>
         <button class="card-quick-add" id="badd${p.id}" onclick="event.stopPropagation();addToCart(${idArg})" ${eff===0?'disabled':''}>${quickLbl}</button>
       </div>
@@ -4659,43 +4669,6 @@ function cardHTML(p) {
         </div>
       </div>
     </div>`;
-}
-
-/* ──────────────────────────────────────────────────────
-   LAZY IMAGE LOADING — carga imágenes al entrar en pantalla
-────────────────────────────────────────────────────── */
-let _imgObserver = null;
-const _loadingImgs = new Set();
-
-async function loadCardImage(id) {
-  if (_loadingImgs.has(id)) return;
-  _loadingImgs.add(id);
-  try {
-    const data = await fbFetch(`products/${id}`);
-    if (data?.img) {
-      PRODUCT_OVERRIDES[id] = { ...PRODUCT_OVERRIDES[id], ...data };
-      const el = document.querySelector(`[data-prod-img="${id}"]`);
-      if (el) el.src = data.img;
-    }
-  } finally { _loadingImgs.delete(id); }
-}
-
-function setupLazyImages() {
-  if (_imgObserver) _imgObserver.disconnect();
-  _imgObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (!entry.isIntersecting) return;
-      const img = entry.target;
-      const id = img.dataset.prodImg;
-      if (id) {
-        loadCardImage(id);
-        _imgObserver.unobserve(img);
-      }
-    });
-  }, { rootMargin: '200px' });
-  document.querySelectorAll('[data-lazy="1"]').forEach(img => {
-    _imgObserver.observe(img);
-  });
 }
 
 /* ──────────────────────────────────────────────────────
@@ -4721,24 +4694,10 @@ async function openLightbox(id) {
   S.lbId = id;
   S.lbSize = null;
   let _scrollLocked = false;
-  // Si no hay imagen aún (carga slim), obtenerla de Firebase al momento
-  if (!p.img) {
-    document.getElementById('lbImg').src = '';
-    document.getElementById('lightbox').classList.add('open');
-    lockScroll(); _scrollLocked = true;
-    const fbKey = typeof id === 'string' && id.startsWith('new_') ? id : `new_${id}`;
-    const full = await fbFetch(`products/${fbKey}`);
-    if (full) {
-      PRODUCT_OVERRIDES[fbKey] = { ...PRODUCT_OVERRIDES[fbKey], ...full };
-      p = getMergedProducts().find(x=>x.id===id) || p;
-      const cardImg = document.querySelector(`[data-prod-img="${id}"]`);
-      if (cardImg && full.img) cardImg.src = full.img;
-    }
-  }
-  document.getElementById('lbImg').src   = p.img || '';
-  document.getElementById('lbImg').alt   = p.name;
   // Set up gallery
-  _lbImgs = p.imgs && p.imgs.length ? p.imgs : (p.img ? [p.img] : []);
+  _lbImgs = prodPics(p);
+  document.getElementById('lbImg').src   = _lbImgs[0] || IMG_FALLBACK;
+  document.getElementById('lbImg').alt   = p.name;
   _lbIdx = 0;
   const thumbsEl = document.getElementById('lbThumbs');
   const prevEl = document.getElementById('lbPrev');
@@ -4796,7 +4755,7 @@ function renderLbSuggestions(p) {
     const idArg = typeof s.id === 'number' ? s.id : `'${s.id}'`;
     return `<div onclick="openLightbox(${idArg})" style="cursor:pointer;border-radius:10px;overflow:hidden;background:var(--blush-light)">
       <div style="aspect-ratio:3/4;overflow:hidden">
-        <img src="${s.img||''}" alt="${s.name}" style="width:100%;height:100%;object-fit:cover" onerror="imgErr(this)" loading="lazy">
+        <img src="${prodThumb(s)}" alt="${s.name}" style="width:100%;height:100%;object-fit:cover" onerror="imgErr(this)" loading="lazy">
       </div>
       <div style="padding:6px 8px">
         <div style="font-size:.65rem;font-weight:600;color:var(--text-dark);line-height:1.2;margin-bottom:3px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${s.name}</div>
@@ -4945,7 +4904,7 @@ function renderCartBody() {
     const idArg = typeof p.id === 'number' ? p.id : `'${p.id}'`;
     return `
       <div class="cart-item">
-        <img class="cart-item-img" src="${p.img||''}" alt="${p.name}" onerror="imgErr(this)">
+        <img class="cart-item-img" src="${prodThumb(p)}" loading="lazy" alt="${p.name}" onerror="imgErr(this)">
         <div class="cart-item-info">
           <div class="cart-item-name">${p.name}</div>
           ${item.size ? `<div class="cart-item-unit" style="color:var(--rose);font-weight:700">Talla: ${item.size}</div>` : ''}
@@ -5210,6 +5169,25 @@ async function confirmOrder(){
   confirmBtn.disabled = true;
   confirmBtn.textContent = '⏳ Procesando…';
 
+  // El catálogo puede venir del CDN con ~1 min de antigüedad: confirmar stock real antes de vender
+  const need = {};
+  S.cart.forEach(item => { need[item.id] = (need[item.id] || 0) + item.qty; });
+  const ids = Object.keys(need).filter(id => PRODUCT_OVERRIDES[id]);
+  const freshStocks = await Promise.all(ids.map(id => fbFetch(`products/${id}/stock`)));
+  let soldOutId = null;
+  ids.forEach((id, i) => {
+    if (typeof freshStocks[i] !== 'number') return;
+    PRODUCT_OVERRIDES[id].stock = freshStocks[i];
+    if (!soldOutId && freshStocks[i] < need[id]) soldOutId = id;
+  });
+  if (soldOutId) {
+    const prod = PRODUCT_OVERRIDES[soldOutId];
+    toast(prod.stock > 0 ? `Solo quedan ${prod.stock} de "${prod.name}"` : `"${prod.name}" se acaba de agotar`, 'err');
+    confirmBtn.disabled = false;
+    setPayMethod(S.payMethod);
+    return;
+  }
+
   const num='BE-'+String(Date.now()).slice(-6)+'-'+String(Math.floor(Math.random()*900)+100);
   document.getElementById('orderNum').textContent=num;
 
@@ -5255,10 +5233,7 @@ async function confirmOrder(){
     return Promise.all(updates);
   });
   Promise.all(stockUpdates).then(() => {
-    // Recargar en background sin bloquear el pago
-    fbLoadProductOverrides().then(() => {
-      if (document.querySelector('.products-section.catalog-visible')) renderGrid(_currentFilter);
-    });
+    if (document.querySelector('.products-section.catalog-visible')) renderGrid(_currentFilter);
   });
 
   if(S.payMethod === 'mp'){
@@ -5343,6 +5318,7 @@ function openForgotModal(){
   document.getElementById('forgotModal').classList.add('open');
   lockScroll();
   setTimeout(()=>document.getElementById('forgotInput').focus(),200);
+  syncUsers();
 }
 function closeForgotModal(){ document.getElementById('forgotModal').classList.remove('open'); unlockScroll(); }
 
@@ -5575,7 +5551,7 @@ async function openAdmin(){
   document.getElementById('adminBody').innerHTML =
     `<div class="admin-empty"><div class="admin-empty-icon">⏳</div><p>Cargando pedidos…</p></div>`;
   // load both in parallel
-  await Promise.all([syncAdminOrders(), fbLoadProductOverrides()]);
+  await Promise.all([syncAdminOrders(), fbRefreshProductMeta({ fresh: true })]);
   renderAdminOrders();
   // Polling cada 12s para detectar pagos automáticos
   clearInterval(window._adminPollInterval);
@@ -5870,7 +5846,7 @@ async function cancelOrder(orderNum){
       fetch(`${FIREBASE_DB_URL}/products/${item.id}/hidden.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(false)}).catch(()=>{})
     ]);
   }));
-  fbLoadProductOverrides().catch(()=>{});
+  fbRefreshProductMeta({ fresh: true });
   order.status = 'cancelado';
   await fbUpdateOrderStatus(orderNum, 'cancelado');
   renderAdminOrders();

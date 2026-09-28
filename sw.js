@@ -1,62 +1,56 @@
-const CACHE = 'dubrem-v3';
-const SHELL = ['/'];
+const CACHE = 'dubrem-v4';
+const IMG_CACHE = 'dubrem-img-v1';
+const IMG_MAX = 300;
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)));
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/'])));
   self.skipWaiting();
 });
 
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+      Promise.all(keys.filter(k => k !== CACHE && k !== IMG_CACHE).map(k => caches.delete(k)))
     )
   );
   self.clients.claim();
 });
 
+async function trimImages(cache) {
+  const keys = await cache.keys();
+  for (let i = 0; i < keys.length - IMG_MAX; i++) await cache.delete(keys[i]);
+}
+
 self.addEventListener('fetch', e => {
-  const url = new URL(e.request.url);
+  const req = e.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
 
-  // Firebase, MercadoPago y APIs externas → siempre red
-  if (
-    url.hostname.includes('firebase') ||
-    url.hostname.includes('googleapis') ||
-    url.hostname.includes('mercadopago') ||
-    url.hostname.includes('vercel') ||
-    e.request.method !== 'GET'
-  ) return;
-
-  // Para la página HTML: caché primero, actualiza en segundo plano
-  if (e.request.mode === 'navigate') {
+  // Página: red primero para mostrar siempre la versión publicada; caché solo sin conexión
+  if (req.mode === 'navigate') {
     e.respondWith(
-      caches.match('/').then(cached => {
-        const fresh = fetch(e.request)
-          .then(res => {
-            caches.open(CACHE).then(c => c.put('/', res.clone()));
-            return res;
-          })
-          .catch(() => cached);
-        return cached || fresh;
-      })
+      fetch(req)
+        .then(res => {
+          if (res.ok) {
+            const copy = res.clone();
+            e.waitUntil(caches.open(CACHE).then(c => c.put('/', copy)));
+          }
+          return res;
+        })
+        .catch(() => caches.match('/'))
     );
     return;
   }
 
-  // Imágenes y fuentes: caché primero
-  if (
-    e.request.destination === 'image' ||
-    e.request.destination === 'font' ||
-    e.request.destination === 'style' ||
-    e.request.destination === 'script'
-  ) {
+  // Fotos de productos: la URL lleva versión (v=hash), así que nunca cambian
+  if (url.origin === self.location.origin && url.pathname === '/api/img' && url.searchParams.has('v')) {
     e.respondWith(
-      caches.match(e.request).then(cached => {
-        if (cached) return cached;
-        return fetch(e.request).then(res => {
-          caches.open(CACHE).then(c => c.put(e.request, res.clone()));
-          return res;
-        });
+      caches.open(IMG_CACHE).then(async cache => {
+        const hit = await cache.match(req);
+        if (hit) return hit;
+        const res = await fetch(req);
+        if (res.ok) e.waitUntil(cache.put(req, res.clone()).then(() => trimImages(cache)));
+        return res;
       })
     );
   }
