@@ -44,6 +44,8 @@
   }
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
+  <link rel="preconnect" href="https://bella-esencial-default-rtdb.firebaseio.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400;1,600&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=Bebas+Neue&display=swap" rel="stylesheet">
 
   <style>
@@ -2026,7 +2028,7 @@ function cerrarApertura(){}
 
   <!-- Panel Mujer -->
   <div class="hero-panel" onclick="heroTransitionTo('mujer',event,this)">
-    <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=2560&q=95" alt="Colección Mujer" loading="eager">
+    <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1200&q=80" alt="Colección Mujer" loading="eager" fetchpriority="high">
     <div class="hero-panel-info">
       <span class="hero-panel-label">Mujer</span>
       <button class="hero-panel-cta">Ver Colección</button>
@@ -2035,7 +2037,7 @@ function cerrarApertura(){}
 
   <!-- Panel Hombre -->
   <div class="hero-panel" onclick="heroTransitionTo('hombre',event,this)">
-    <img src="https://images.unsplash.com/photo-1488161628813-04466f872be2?auto=format&fit=crop&w=1400&h=2100&q=95" alt="Colección Hombre" loading="eager" style="object-position:center top;">
+    <img src="https://images.unsplash.com/photo-1488161628813-04466f872be2?auto=format&fit=crop&w=800&h=1200&q=80" alt="Colección Hombre" loading="lazy" style="object-position:center top;">
     <div class="hero-panel-info">
       <span class="hero-panel-label">Hombre</span>
       <button class="hero-panel-cta">Ver Colección</button>
@@ -2044,7 +2046,7 @@ function cerrarApertura(){}
 
   <!-- Panel Niños -->
   <div class="hero-panel" onclick="heroTransitionTo('ninos',event,this)">
-    <img src="https://images.unsplash.com/photo-1618325521029-dbf6d9708035?auto=format&fit=crop&w=2560&q=95" alt="Colección Niños" loading="eager">
+    <img src="https://images.unsplash.com/photo-1618325521029-dbf6d9708035?auto=format&fit=crop&w=1200&q=80" alt="Colección Niños" loading="lazy">
     <div class="hero-panel-info">
       <span class="hero-panel-label">Niños</span>
       <button class="hero-panel-cta">Ver Colección</button>
@@ -2053,7 +2055,7 @@ function cerrarApertura(){}
 
   <!-- Panel Juvenil -->
   <div class="hero-panel" onclick="heroTransitionTo('juvenil',event,this)">
-    <img src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1400&h=2100&q=95" alt="Colección Juvenil" loading="eager" style="object-position:center top;">
+    <img src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=800&h=1200&q=80" alt="Colección Juvenil" loading="lazy" style="object-position:center top;">
     <div class="hero-panel-info">
       <span class="hero-panel-label">Juvenil</span>
       <button class="hero-panel-cta">Ver Colección</button>
@@ -2087,7 +2089,7 @@ function cerrarApertura(){}
   <video
     id="heroBannerVideo"
     src="hero.mp4"
-    autoplay muted loop playsinline
+    autoplay muted loop playsinline preload="none"
     style="width:100%;height:100%;max-height:80vh;object-fit:cover;display:block;opacity:0;transition:opacity .6s"
     oncanplay="this.style.opacity=1"
   ></video>
@@ -4243,7 +4245,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderLoginArea();
   refreshCartUI();
   spawnParticles();
-  syncUsers();
+  setTimeout(() => syncUsers(), 4000);
 
   // Restaurar sección desde hash en URL (para refresh y navegación directa)
   const _initHash = location.hash.slice(1);
@@ -4292,12 +4294,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   })();
 
-  // Cargar héroes de Firebase al iniciar
-  fbLoadCatHeroes();
-  // Limpiar reservas antiguas (carrito vacío en carga) y cargar reservas activas
-  fbClearMyReservations().then(() => fbLoadReservations());
+  // Cargar héroes de Firebase al iniciar (diferido para no competir con render inicial)
+  setTimeout(() => fbLoadCatHeroes(), 2000);
+  // Limpiar reservas antiguas y cargar reservas activas (diferido)
+  setTimeout(() => fbClearMyReservations().then(() => fbLoadReservations()), 3000);
   // Refrescar solo metadatos (34 KB) cada 2 minutos — sin descargar imágenes
-  setTimeout(() => fbRefreshProductMeta(), 3000); // 3 seg después de carga
+  setTimeout(() => fbRefreshProductMeta(), 6000); // 6 seg después de carga
   setInterval(() => {
     fbRefreshProductMeta();
     fbLoadReservations();
@@ -4656,8 +4658,8 @@ function cardHTML(p) {
     <div class="product-card" id="card${p.id}">
       <div class="product-img-wrap" onclick="openLightbox(${idArg})">
         ${p.img
-          ? `<img src="${p.img}" alt="${p.name}" onerror="imgErr(this)" data-prod-img="${p.id}">`
-          : `<img alt="${p.name}" onerror="imgErr(this)" data-prod-img="${p.id}" data-lazy="1" style="width:100%;height:100%;object-fit:cover;background:var(--blush-light)">`
+          ? `<img src="${p.img}" alt="${p.name}" onerror="imgErr(this)" data-prod-img="${p.id}" loading="lazy">`
+          : `<img alt="${p.name}" onerror="imgErr(this)" data-prod-img="${p.id}" data-lazy="1" loading="lazy" style="width:100%;height:100%;object-fit:cover;background:var(--blush-light)">`
         }
         <span class="cat-badge">${catLabel(p.subcat || p.cat)}</span>
         <button class="card-quick-add" id="badd${p.id}" onclick="event.stopPropagation();addToCart(${idArg})" ${eff===0?'disabled':''}>${quickLbl}</button>
