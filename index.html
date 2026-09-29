@@ -5798,7 +5798,8 @@ function buildOrderCard(o){
   const footHtml = st==='completado'
     ? `<div class="completado-badge">🎉 Pedido completado satisfactoriamente</div>`
     : st==='cancelado'
-    ? `<div style="background:#fde2e2;border-radius:10px;padding:12px 16px;text-align:center;font-size:.8rem;font-weight:600;color:#8b0000">❌ Pedido cancelado — stock liberado al catálogo</div>`
+    ? `<div style="background:#fde2e2;border-radius:10px;padding:12px 16px;text-align:center;font-size:.8rem;font-weight:600;color:#8b0000">❌ Pedido cancelado — stock liberado al catálogo</div>
+       <button onclick="deleteOrder('${o.num}')" style="width:100%;margin-top:8px;padding:10px;border-radius:10px;border:1.5px solid #c0392b;background:transparent;color:#c0392b;font-family:var(--ff-body);font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer">🗑 Borrar del historial</button>`
     : `<div class="order-card-foot" style="flex-wrap:wrap">
         <button class="btn-status btn-status-pendiente" onclick="setOrderStatus('${o.num}','pendiente')"
           style="${st==='pendiente'?'outline:2px solid #856404':''}">🕐 Pendiente</button>
@@ -5905,7 +5906,11 @@ async function cancelOrder(orderNum){
 }
 
 async function deleteOrder(orderNum){
-  if(!confirm(`¿Eliminar el pedido ${orderNum}? Esta acción no se puede deshacer.`)) return;
+  if(!confirm(
+    `¿Borrar el pedido ${orderNum} del historial?\n\n` +
+    `Solo desaparece de esta lista. El stock ya se devolvió al catálogo ` +
+    `cuando lo cancelaste y no se toca.\n\nEsto no se puede deshacer.`
+  )) return;
   S.orders = S.orders.filter(o => o.num !== orderNum);
   try {
     if(FIREBASE_DB_URL)
