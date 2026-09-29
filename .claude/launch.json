@@ -4,9 +4,8 @@
     {
       "name": "bella-esencia",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["serve", "."],
-      "port": 4321,
-      "autoPort": true
+      "runtimeArgs": ["serve", "-p", "4321", "."],
+      "port": 4321
     }
   ]
 }
