@@ -2084,11 +2084,13 @@ function cerrarApertura(){}
 
 <!-- ========== VIDEO BANNER ========== -->
 <div id="videoBanner" style="position:relative;width:100%;overflow:hidden;background:#0a0406">
+  <!-- data-src en vez de src: el video (4 MB) solo se descarga al acercarse
+       a la pantalla, para no robarle ancho de banda al catálogo -->
   <video
     id="heroBannerVideo"
-    src="hero.mp4"
-    autoplay muted loop playsinline
-    style="width:100%;height:100%;max-height:80vh;object-fit:cover;display:block;opacity:0;transition:opacity .6s"
+    data-src="hero.mp4"
+    muted loop playsinline preload="none"
+    style="width:100%;aspect-ratio:16/9;max-height:80vh;object-fit:cover;display:block;opacity:0;transition:opacity .6s"
     oncanplay="this.style.opacity=1"
   ></video>
   <!-- Overlay de marca encima del video -->
@@ -3070,11 +3072,18 @@ async function fbGetUserOrders(email){
 /* ──────────────────────────────────────────────────────
    FIREBASE — PRODUCTOS (subir fotos / editar / agregar)
 ────────────────────────────────────────────────────── */
-let PRODUCT_OVERRIDES = {};   // { fbKey: { name, price, stock, cat, desc, img } }
-// Carga rápida: solo metadatos sin imágenes (34 KB vs 36 MB)
+/* Los datos viven en tres nodos separados de Firebase:
+     productMeta/        → nombre, precio, stock, SKU… de TODO el catálogo (~97 KB)
+     productThumb/<key>  → portada reducida ~20 KB, se pide al ver la tarjeta
+     products/<key>      → producto completo con galería, solo al abrir la ficha
+   Antes todo vivía en products/ y cada carga bajaba 117 MB. */
+let PRODUCT_OVERRIDES = {};   // { fbKey: { name, price, stock, cat, desc, ... } }
+let PRODUCT_THUMBS    = {};   // { fbKey: dataURL }  portadas ligeras en memoria
+const LS_PROD_META = 'dubrem_products_meta_v3';
 try {
-  const slim = localStorage.getItem('dubrem_products_slim_v2');
-  if (slim) PRODUCT_OVERRIDES = JSON.parse(slim);
+  const cached = localStorage.getItem(LS_PROD_META);
+  if (cached) PRODUCT_OVERRIDES = JSON.parse(cached);
+  localStorage.removeItem('dubrem_products_slim_v2'); // caché vieja
 } catch(e) {}
 
 let CAT_HEROES = {}; // { mujer: ['prodId1','prodId2'], hombre: [...] }
@@ -3170,9 +3179,18 @@ function startCatBannerSlideshow(section) {
   _heroSlides = ids.map(id => {
     const p = getMergedProducts().find(x => String(x.id) === String(id));
     if (!p) return null;
-    const src = (p.imgs && p.imgs[0]) ? p.imgs[0] : (p.img || null);
+    const src = PRODUCT_THUMBS[p.id] || (p.imgs && p.imgs[0]) || p.img || null;
     return src ? { src, id: String(p.id) } : null;
   }).filter(Boolean);
+
+  // Si falta alguna portada, se pide su miniatura y se rearma el carrusel
+  const missing = ids.filter(id => !PRODUCT_THUMBS[id] &&
+    !_heroSlides.some(s => s.id === String(id)));
+  if (missing.length && !_heroThumbsPending) {
+    _heroThumbsPending = true;
+    Promise.all(missing.map(id => fbFetch(`productThumb/${id}`).then(t => { if (t) PRODUCT_THUMBS[id] = t; })))
+      .then(() => { _heroThumbsPending = false; if (_heroSection === section) startCatBannerSlideshow(section); });
+  }
 
   // Fallback mujer
   if (!_heroSlides.length && section === 'mujer') {
@@ -3257,20 +3275,28 @@ function updateSubcatOptions(cat, selected) {
 
 let _fbLoadError = false;
 let _fbProductsPromise = null;
+let _heroThumbsPending = false;
 
-// Descarga completa (36 MB) — solo para panel admin que necesita editar imágenes
-async function fbLoadProductOverrides(){
+/** Descarga los metadatos de TODO el catálogo (~97 KB, sin imágenes).
+ *  Las fotos viajan aparte y bajo demanda: productThumb/<key> para las
+ *  tarjetas y products/<key> para la ficha completa. */
+async function fbLoadProductMeta(){
+  if (_fbProductsPromise) return _fbProductsPromise;  // evita descargas duplicadas
   _fbLoadError = false;
   _fbProductsPromise = (async () => {
     try {
-      const data = await fbFetch('products');
+      const data = await fbFetch('productMeta');
       if (data && typeof data === 'object') {
-        PRODUCT_OVERRIDES = data;
-        // Guardar slim (34 KB) en localStorage para clientes
-        const slim = Object.fromEntries(
-          Object.entries(data).map(([k,v]) => { const {img,imgs,...r}=v; return [k,r]; })
-        );
-        try { localStorage.setItem('dubrem_products_slim_v2', JSON.stringify(slim)); } catch(e) {}
+        // Borrar los que ya no existen en Firebase
+        Object.keys(PRODUCT_OVERRIDES).forEach(k => { if (!data[k]) delete PRODUCT_OVERRIDES[k]; });
+        // Fusionar conservando las imágenes que ya estén en memoria
+        Object.entries(data).forEach(([k, v]) => {
+          const prev = PRODUCT_OVERRIDES[k];
+          PRODUCT_OVERRIDES[k] = (prev && (prev.img || prev.imgs))
+            ? { ...v, img: prev.img, imgs: prev.imgs }
+            : v;
+        });
+        try { localStorage.setItem(LS_PROD_META, JSON.stringify(data)); } catch(e) {}
         if (_heroSection) startCatBannerSlideshow(_heroSection);
       } else { _fbLoadError = true; }
     } catch(e){ _fbLoadError = true; }
@@ -3278,25 +3304,12 @@ async function fbLoadProductOverrides(){
   })();
   return _fbProductsPromise;
 }
+// El panel admin ya no necesita bajar las imágenes: edita una a la vez
+function fbLoadProductOverrides(){ return fbLoadProductMeta(); }
 
-// Descarga ligera de metadatos (34 KB guardados) — solo refresca stock/precio
-// NO descarga imágenes, NO bloquea el catálogo
 async function fbRefreshProductMeta(){
-  try {
-    const data = await fbFetch('products');
-    if (!data) return;
-    const slim = Object.fromEntries(
-      Object.entries(data).map(([k,v]) => { const {img,imgs,...r}=v; return [k,r]; })
-    );
-    // Solo actualizar campos de metadatos, preservar imágenes ya cargadas en memoria
-    Object.entries(slim).forEach(([k,v]) => {
-      PRODUCT_OVERRIDES[k] = PRODUCT_OVERRIDES[k]
-        ? { ...v, img: PRODUCT_OVERRIDES[k].img, imgs: PRODUCT_OVERRIDES[k].imgs }
-        : v;
-    });
-    try { localStorage.setItem('dubrem_products_slim_v2', JSON.stringify(slim)); } catch(e) {}
-    if (document.querySelector('.products-section.catalog-visible')) renderGrid(_currentFilter);
-  } catch(e){}
+  await fbLoadProductMeta();
+  if (document.querySelector('.products-section.catalog-visible')) renderGrid(_currentFilter);
 }
 async function fbLoadCatHeroes() {
   try {
@@ -3316,25 +3329,64 @@ async function fbSaveCatHero(cat, ids) {
     try { localStorage.setItem('dubrem_cat_heroes_v1', JSON.stringify(CAT_HEROES)); } catch(e) {}
   } catch(e) {}
 }
+/** Reduce una foto base64 a ~420 px de lado mayor para usarla de miniatura. */
+function makeThumbDataURL(dataUrl, maxSide = 420){
+  return new Promise(resolve => {
+    if (!dataUrl || !/^data:image/i.test(dataUrl)) return resolve(dataUrl || '');
+    const im = new Image();
+    im.onload = () => {
+      const scale = Math.min(1, maxSide / Math.max(im.width, im.height));
+      const c = document.createElement('canvas');
+      c.width  = Math.round(im.width  * scale);
+      c.height = Math.round(im.height * scale);
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+      try {
+        const out = c.toDataURL('image/jpeg', 0.58);
+        resolve(out.length < dataUrl.length ? out : dataUrl);
+      } catch(e){ resolve(dataUrl); }
+    };
+    im.onerror = () => resolve(dataUrl);
+    im.src = dataUrl;
+  });
+}
+
+function fbPut(path, body){
+  return fetch(`${FIREBASE_DB_URL}/${path}.json`, {
+    method: 'PUT',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(body)
+  });
+}
+
+// Guarda el producto en los tres nodos: completo, metadatos y miniatura
 async function fbSaveProductOverride(fbKey, data){
   if (!FIREBASE_DB_URL) return false;
   try {
-    const r = await fetch(`${FIREBASE_DB_URL}/products/${fbKey}.json`, {
-      method: 'PUT',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(data)
-    });
-    if(r.status === 401 || r.status === 403){
+    const { img, imgs, ...meta } = data;
+    const n = Array.isArray(imgs) ? imgs.length : 0;
+    meta.nimgs = n || (img ? 1 : 0);   // cuántas fotos guarda products/<key>
+
+    const thumb = await makeThumbDataURL(img || (Array.isArray(imgs) && imgs[0]) || '');
+    const [rFull, rMeta] = await Promise.all([
+      fbPut(`products/${fbKey}`,     data),
+      fbPut(`productMeta/${fbKey}`,  meta),
+      fbPut(`productThumb/${fbKey}`, thumb),
+    ]);
+    if(rFull.status === 401 || rFull.status === 403){
       toast('Sesión expirada — vuelve a iniciar sesión como admin','err');
       clearAdminSession(); closeAdmin(); return false;
     }
-    return r.ok;
+    if (rFull.ok) PRODUCT_THUMBS[fbKey] = thumb;
+    return rFull.ok && rMeta.ok;
   } catch(e) { return false; }
 }
 async function fbDeleteProductOverride(fbKey){
   try {
     if(!FIREBASE_DB_URL) return;
-    await fetch(`${FIREBASE_DB_URL}/products/${fbKey}.json`, { method:'DELETE' });
+    delete PRODUCT_THUMBS[fbKey];
+    await Promise.all(['products','productMeta','productThumb'].map(n =>
+      fetch(`${FIREBASE_DB_URL}/${n}/${fbKey}.json`, { method:'DELETE' })
+    ));
   } catch(e){}
 }
 
@@ -3555,8 +3607,8 @@ function renderAdminHeroes(activeCat) {
         selected.map(id => {
           const p = getMergedProducts().find(x => String(x.id)===String(id));
           if (!p) return '';
-          const src = (p.imgs && p.imgs[0]) ? p.imgs[0] : (p.img||'');
-          return `<div class="hero-thumb-wrap"><img src="${src}" alt="${p.name}"><button class="hero-thumb-remove" onclick="removeHero('${activeCat}','${id}')">✕</button></div>`;
+          const src = PRODUCT_THUMBS[p.id] || (p.imgs && p.imgs[0]) || p.img || '';
+          return `<div class="hero-thumb-wrap"><img src="${src}" alt="${p.name}" data-prod-img="${p.id}" ${src?'':'data-lazy="1"'}><button class="hero-thumb-remove" onclick="removeHero('${activeCat}','${id}')">✕</button></div>`;
         }).join('')
       }
     </div>
@@ -3564,16 +3616,17 @@ function renderAdminHeroes(activeCat) {
     <div class="hero-prod-grid">
       ${prods.length === 0 ? `<p style="font-size:.72rem;color:var(--text-light)">Sin productos en esta categoría.</p>` :
         prods.map(p => {
-          const src = (p.imgs && p.imgs[0]) ? p.imgs[0] : (p.img||'');
+          const src = PRODUCT_THUMBS[p.id] || (p.imgs && p.imgs[0]) || p.img || '';
           const isSel = selected.includes(String(p.id));
           return `<div class="hero-prod-item${isSel?' hero-selected':''}" onclick="toggleHero('${activeCat}','${p.id}')">
-            <img src="${src}" alt="${p.name}" onerror="this.style.background='#eee'">
+            <img src="${src}" alt="${p.name}" data-prod-img="${p.id}" ${src?'':'data-lazy="1"'} onerror="this.style.background='#eee'">
             <div class="hero-check">✓</div>
             <div class="hero-prod-name">${p.name}</div>
           </div>`;
         }).join('')
       }
     </div>`;
+  setupLazyImages();
 }
 function toggleHero(cat, id) {
   const ids = [...(CAT_HEROES[cat] || [])];
@@ -3659,11 +3712,11 @@ function buildAdminCards() {
   }
 
   return all.map(p => {
-    const imgSrc = p.img || '';
+    const imgSrc = PRODUCT_THUMBS[p.id] || p.img || '';
     const stkColor = p.stock === 0 ? 'color:#c0392b' : p.stock <= 5 ? 'color:#856404' : '';
     return `
       <div class="prod-admin-card" onclick='openProductEditModal(${JSON.stringify(p.id)})'>
-        <img class="prod-admin-img" src="${imgSrc}" alt="${p.name}" onerror="this.style.background='var(--blush)'">
+        <img class="prod-admin-img" src="${imgSrc}" alt="${p.name}" data-prod-img="${p.id}" ${imgSrc?'':'data-lazy="1"'} onerror="this.style.background='var(--blush)'">
         <div class="prod-admin-info">
           <div class="prod-admin-name">${p.name}</div>
           <div class="prod-admin-meta">${fmtMXN(p.price)}</div>
@@ -3724,6 +3777,7 @@ function renderAdminProducts() {
       <div class="admin-prods-grid" id="adminProdsGrid">${buildAdminCards()}</div>
     ` : `<p style="font-size:.8rem;color:rgba(255,255,255,.35);text-align:center;margin-top:40px">Aún no hay productos. ¡Agrega el primero!</p>`}
   `;
+  setupLazyImages();
 }
 
 function skuLetters(idx) {
@@ -3794,9 +3848,20 @@ function openProductEditModal(id) {
   updateSubcatOptions(editCat, p ? (p.subcat || '') : '');
   document.getElementById('prodEditDesc').value  = p ? (p.desc || '') : '';
   document.getElementById('prodImgStatus').textContent = '';
-  // Load images array
+  // Las fotos no vienen en los metadatos: se bajan solo de este producto
   _adminImgs = p ? (p.imgs && p.imgs.length ? [...p.imgs] : (p.img ? [p.img] : [])) : [];
   renderAdminImgGrid();
+  if (p && !_adminImgs.length && (p.nimgs > 0 || typeof id === 'string')) {
+    const fbKey = typeof id === 'string' ? id : `p${id}`;
+    document.getElementById('prodImgStatus').textContent = 'Cargando fotos…';
+    fbFetch(`products/${fbKey}`).then(full => {
+      if (!full || _editingProductId !== id) return;   // cambió de producto mientras cargaba
+      PRODUCT_OVERRIDES[fbKey] = { ...PRODUCT_OVERRIDES[fbKey], ...full };
+      _adminImgs = full.imgs && full.imgs.length ? [...full.imgs] : (full.img ? [full.img] : []);
+      document.getElementById('prodImgStatus').textContent = '';
+      renderAdminImgGrid();
+    });
+  }
   // SKU
   showSkuField(p ? (p.sku || '') : '');
   // Cargar tallas
@@ -4066,8 +4131,20 @@ async function saveProductEdit() {
 
   // If no new images and editing existing, keep existing
   if (_adminImgs.length === 0 && _editingProductId !== null) {
-    const existing = findProduct(_editingProductId);
-    if (existing) _adminImgs = existing.imgs && existing.imgs.length ? [...existing.imgs] : (existing.img ? [existing.img] : []);
+    const existing = findProduct(_editingProductId) || {};
+    let imgs = existing.imgs && existing.imgs.length ? [...existing.imgs] : (existing.img ? [existing.img] : []);
+    // Las fotos viven en products/<key>, no en los metadatos. Si aún no se han
+    // descargado hay que traerlas ahora o el guardado las borraría.
+    if (!imgs.length && existing.nimgs > 0) {
+      const fbKey = typeof _editingProductId === 'string' ? _editingProductId : `p${_editingProductId}`;
+      const full = await fbFetch(`products/${fbKey}`);
+      if (full) imgs = full.imgs && full.imgs.length ? [...full.imgs] : (full.img ? [full.img] : []);
+      if (!imgs.length) {
+        toast('No se pudieron cargar las fotos actuales. Reintenta para no perderlas.', 'err');
+        btn.textContent = 'Guardar'; btn.disabled = false; return;
+      }
+    }
+    _adminImgs = imgs;
   }
   const img = _adminImgs[0] || '';
 
@@ -4292,6 +4369,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   })();
 
+  // El video del banner se descarga solo cuando el usuario se acerca a él
+  (function(){
+    const v = document.getElementById('heroBannerVideo');
+    if (!v || !v.dataset.src) return;
+    const start = () => {
+      if (v.src) return;
+      v.src = v.dataset.src;
+      v.play().catch(()=>{});   // si el navegador bloquea el autoplay, se queda en el primer frame
+    };
+    if (!('IntersectionObserver' in window)) return start();
+    const io = new IntersectionObserver(es => {
+      if (es.some(e => e.isIntersecting)) { start(); io.disconnect(); }
+    }, { rootMargin: '300px' });
+    io.observe(v);
+  })();
+
   // Cargar héroes de Firebase al iniciar
   fbLoadCatHeroes();
   // Limpiar reservas antiguas (carrito vacío en carga) y cargar reservas activas
@@ -4444,7 +4537,7 @@ function showCatalog(section, pushHistory = true) {
   _fbFetching = !hasData;
   renderGrid('all');
   if (!hasData) {
-    // Primera visita sin caché: descarga metadatos (36MB) una sola vez, guarda slim
+    // Primera visita sin caché: baja los metadatos (~97 KB) y los guarda
     fbRefreshProductMeta().then(() => { _fbFetching = false; renderGrid('all'); });
   }
   setTimeout(() => document.getElementById('catalogo').scrollIntoView({behavior:'smooth'}), 50);
@@ -4655,8 +4748,8 @@ function cardHTML(p) {
   return `
     <div class="product-card" id="card${p.id}">
       <div class="product-img-wrap" onclick="openLightbox(${idArg})">
-        ${p.img
-          ? `<img src="${p.img}" alt="${p.name}" onerror="imgErr(this)" data-prod-img="${p.id}">`
+        ${(PRODUCT_THUMBS[p.id] || p.img)
+          ? `<img src="${PRODUCT_THUMBS[p.id] || p.img}" alt="${p.name}" onerror="imgErr(this)" data-prod-img="${p.id}">`
           : `<img alt="${p.name}" onerror="imgErr(this)" data-prod-img="${p.id}" data-lazy="1" style="width:100%;height:100%;object-fit:cover;background:var(--blush-light)">`
         }
         <span class="cat-badge">${catLabel(p.subcat || p.cat)}</span>
@@ -4682,15 +4775,18 @@ function cardHTML(p) {
 let _imgObserver = null;
 const _loadingImgs = new Set();
 
+// Pide solo la miniatura (~20 KB), no el producto completo (~1 MB)
 async function loadCardImage(id) {
-  if (_loadingImgs.has(id)) return;
+  if (_loadingImgs.has(id) || PRODUCT_THUMBS[id]) return;
   _loadingImgs.add(id);
   try {
-    const data = await fbFetch(`products/${id}`);
-    if (data?.img) {
-      PRODUCT_OVERRIDES[id] = { ...PRODUCT_OVERRIDES[id], ...data };
-      const el = document.querySelector(`[data-prod-img="${id}"]`);
-      if (el) el.src = data.img;
+    const thumb = await fbFetch(`productThumb/${id}`);
+    if (thumb) {
+      PRODUCT_THUMBS[id] = thumb;
+      document.querySelectorAll(`[data-prod-img="${id}"]`).forEach(el => {
+        el.src = thumb;
+        el.removeAttribute('data-lazy');
+      });
     }
   } finally { _loadingImgs.delete(id); }
 }
@@ -4736,9 +4832,10 @@ async function openLightbox(id) {
   S.lbId = id;
   S.lbSize = null;
   let _scrollLocked = false;
-  // Si no hay imagen aún (carga slim), obtenerla de Firebase al momento
+  // Solo tenemos metadatos + miniatura: mostramos la miniatura al instante
+  // y descargamos la galería completa en segundo plano.
   if (!p.img) {
-    document.getElementById('lbImg').src = '';
+    document.getElementById('lbImg').src = PRODUCT_THUMBS[id] || '';
     document.getElementById('lightbox').classList.add('open');
     lockScroll(); _scrollLocked = true;
     const fbKey = typeof id === 'string' && id.startsWith('new_') ? id : `new_${id}`;
@@ -4746,8 +4843,6 @@ async function openLightbox(id) {
     if (full) {
       PRODUCT_OVERRIDES[fbKey] = { ...PRODUCT_OVERRIDES[fbKey], ...full };
       p = getMergedProducts().find(x=>x.id===id) || p;
-      const cardImg = document.querySelector(`[data-prod-img="${id}"]`);
-      if (cardImg && full.img) cardImg.src = full.img;
     }
   }
   document.getElementById('lbImg').src   = p.img || '';
@@ -4811,7 +4906,7 @@ function renderLbSuggestions(p) {
     const idArg = typeof s.id === 'number' ? s.id : `'${s.id}'`;
     return `<div onclick="openLightbox(${idArg})" style="cursor:pointer;border-radius:10px;overflow:hidden;background:var(--blush-light)">
       <div style="aspect-ratio:3/4;overflow:hidden">
-        <img src="${s.img||''}" alt="${s.name}" style="width:100%;height:100%;object-fit:cover" onerror="imgErr(this)" loading="lazy">
+        <img src="${PRODUCT_THUMBS[s.id]||s.img||''}" alt="${s.name}" data-prod-img="${s.id}" ${(PRODUCT_THUMBS[s.id]||s.img)?'':'data-lazy="1"'} style="width:100%;height:100%;object-fit:cover" onerror="imgErr(this)" loading="lazy">
       </div>
       <div style="padding:6px 8px">
         <div style="font-size:.65rem;font-weight:600;color:var(--text-dark);line-height:1.2;margin-bottom:3px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${s.name}</div>
@@ -4820,6 +4915,7 @@ function renderLbSuggestions(p) {
     </div>`;
   }).join('');
   wrap.style.display = 'block';
+  setupLazyImages();
 }
 
 function selectSize(size, btn) {
@@ -4947,6 +5043,7 @@ function refreshCartUI() {
   renderCartBody();
   buildSummaries();
   saveCart();
+  setupLazyImages();
 }
 function renderCartBody() {
   const body = document.getElementById('cartBody');
@@ -4960,7 +5057,7 @@ function renderCartBody() {
     const idArg = typeof p.id === 'number' ? p.id : `'${p.id}'`;
     return `
       <div class="cart-item">
-        <img class="cart-item-img" src="${p.img||''}" alt="${p.name}" onerror="imgErr(this)">
+        <img class="cart-item-img" src="${PRODUCT_THUMBS[p.id]||p.img||''}" alt="${p.name}" data-prod-img="${p.id}" ${(PRODUCT_THUMBS[p.id]||p.img)?'':'data-lazy="1"'} onerror="imgErr(this)">
         <div class="cart-item-info">
           <div class="cart-item-name">${p.name}</div>
           ${item.size ? `<div class="cart-item-unit" style="color:var(--rose);font-weight:700">Talla: ${item.size}</div>` : ''}
@@ -5589,9 +5686,13 @@ async function openAdmin(){
   document.getElementById('adminProdsSection').style.display = 'none';
   document.getElementById('adminBody').innerHTML =
     `<div class="admin-empty"><div class="admin-empty-icon">⏳</div><p>Cargando pedidos…</p></div>`;
-  // load both in parallel
-  await Promise.all([syncAdminOrders(), fbLoadProductOverrides()]);
+  // Los pedidos pesan ~2 KB: se muestran de inmediato.
+  // El catálogo se refresca aparte para no retrasarlos.
+  await syncAdminOrders();
   renderAdminOrders();
+  fbLoadProductMeta().then(() => {
+    if (document.getElementById('adminPanel')?.classList.contains('open')) renderAdminOrders();
+  });
   // Polling cada 12s para detectar pagos automáticos
   clearInterval(window._adminPollInterval);
   window._adminPollInterval = setInterval(async () => {
@@ -5748,6 +5849,7 @@ function renderAdminOrders(){
       <div class="filter-result-count" style="margin-top:12px">${filtered.length} pedido${filtered.length!==1?'s':''} encontrado${filtered.length!==1?'s':''}</div>
       <div class="admin-orders-grid">${filtered.map(orderCardHTML).join('')}</div>`;
   }
+  setupLazyImages();
 }
 
 function orderCardHTML(o){
@@ -5759,12 +5861,12 @@ function orderCardHTML(o){
   };
   const checkItems = o.items.map((it,idx)=>{
     const prod = findProduct(it.id);
-    const img  = prod ? (prod.img || '') : '';
+    const img  = PRODUCT_THUMBS[it.id] || (prod && prod.img) || '';
     const sub  = prod ? catLabel(prod.subcat || prod.cat) : '';
     return `
     <label class="check-item${it.done?' checked':''}">
       <input type="checkbox" ${it.done?'checked':''} onchange="toggleCheck('${o.num}',${idx},this.checked)">
-      ${img ? `<img class="check-item-img" src="${img}" alt="${it.name}" onerror="this.style.display='none'">` : ''}
+      <img class="check-item-img" src="${img}" alt="${it.name}" data-prod-img="${it.id}" ${img?'':'data-lazy="1"'} onerror="this.style.visibility='hidden'">
       <div class="check-item-info">
         <span class="check-item-name">${it.name}${it.qty>1?' <em style=\'font-weight:400\'>× '+it.qty+'</em>':''}</span>
         ${sub ? `<span class="check-item-sub">${sub}</span>` : ''}
