@@ -756,7 +756,7 @@
     .lb-box { position:relative; z-index:1; background:#fff; border-radius:20px; overflow:hidden; max-width:720px; width:100%; display:flex; box-shadow:0 40px 80px rgba(196,86,106,.2); animation:popIn .3s ease; }
     @keyframes popIn { from{opacity:0;transform:scale(.95) translateY(22px)} to{opacity:1;transform:scale(1) translateY(0)} }
     /* lb-img-wrap and lb-img now defined in multi-image section below */
-    .img-zoom-overlay { display:none; position:fixed; inset:0; z-index:600; background:rgba(0,0,0,.92); align-items:center; justify-content:center; cursor:zoom-out; }
+    .img-zoom-overlay { display:none; position:fixed; inset:0; z-index:700; background:rgba(0,0,0,.92); align-items:center; justify-content:center; cursor:zoom-out; }
     .img-zoom-overlay.open { display:flex; }
     .img-zoom-overlay img { max-width:95vw; max-height:95vh; object-fit:contain; border-radius:6px; user-select:none; pointer-events:none; }
     .img-zoom-close { position:absolute; top:16px; right:16px; width:36px; height:36px; border-radius:50%; border:none; background:rgba(255,255,255,.15); color:#fff; font-size:16px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background .15s; z-index:1; }
@@ -1084,9 +1084,11 @@
       flex-shrink:0; cursor:pointer;
     }
     .check-item-img {
-      width:48px; height:48px; object-fit:cover; border-radius:8px;
+      width:60px; height:60px; object-fit:cover; border-radius:8px;
       flex-shrink:0; background:var(--blush); border:1px solid var(--border);
+      cursor:zoom-in; transition:transform .12s, border-color .12s;
     }
+    .check-item-img:hover { transform:scale(1.06); border-color:var(--rose); }
     .check-item-info { display:flex; flex-direction:column; gap:2px; flex:1; min-width:0; }
     .check-item-name { font-weight:600; font-size:.8rem; color:var(--text-dark); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .check-item-sub  { font-size:.68rem; color:var(--rose); font-weight:500; text-transform:uppercase; letter-spacing:.05em; }
@@ -4872,6 +4874,18 @@ function openImgZoom() {
   _syncZoomArrows();
   document.getElementById('imgZoomOverlay').classList.add('open');
 }
+/** Abre a pantalla completa la foto de un producto del pedido.
+ *  Usa el visor existente pero sin flechas: aqui es una sola foto. */
+function openItemPhoto(id){
+  const p = findProduct(id);
+  if (!p) return;
+  const src = prodPics(p)[0] || prodThumb(p);   // la completa; si no hay, la miniatura
+  if (!src) return;
+  document.getElementById('imgZoomImg').src = src;
+  document.getElementById('imgZoomPrev').classList.add('hidden');
+  document.getElementById('imgZoomNext').classList.add('hidden');
+  document.getElementById('imgZoomOverlay').classList.add('open');
+}
 function closeImgZoom() { document.getElementById('imgZoomOverlay').classList.remove('open'); }
 function zoomGoto(idx) {
   if (!_lbImgs.length) return;
@@ -5829,12 +5843,15 @@ function buildOrderCard(o){
   };
   const checkItems = o.items.map((it,idx)=>{
     const prod = findProduct(it.id);
-    const img  = prod ? (prod.img || '') : '';
+    // prod.img ya no viaja en el catalogo: la portada es prodThumb (/api/img?i=t)
+    const img  = prod ? prodThumb(prod) : '';
     const sub  = prod ? catLabel(prod.subcat || prod.cat) : '';
     return `
     <label class="check-item${it.done?' checked':''}">
       <input type="checkbox" ${it.done?'checked':''} onchange="toggleCheck('${o.num}',${idx},this.checked)">
-      ${img ? `<img class="check-item-img" src="${img}" alt="${it.name}" onerror="this.style.display='none'">` : ''}
+      ${img ? `<img class="check-item-img" src="${img}" alt="${it.name}" title="Toca para ver la foto"
+        onclick="event.preventDefault();event.stopPropagation();openItemPhoto('${it.id}')"
+        onerror="this.style.visibility='hidden'">` : ''}
       <div class="check-item-info">
         <span class="check-item-name">${it.name}${it.qty>1?' <em style=\'font-weight:400\'>× '+it.qty+'</em>':''}</span>
         ${sub ? `<span class="check-item-sub">${sub}</span>` : ''}
