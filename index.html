@@ -2087,6 +2087,25 @@ function cerrarApertura(){}
 </section>
 
 
+<!-- ========== VIDEO BANNER ========== -->
+<div id="videoBanner" style="position:relative;width:100%;overflow:hidden;background:#0a0406">
+  <!-- data-src en vez de src: el video (4 MB) solo se descarga cuando el
+       usuario se acerca a él, para no competir con la carga del catálogo -->
+  <video
+    id="heroBannerVideo"
+    data-src="hero.mp4"
+    muted loop playsinline preload="none"
+    style="width:100%;aspect-ratio:16/9;max-height:80vh;object-fit:cover;display:block;opacity:0;transition:opacity .6s"
+    oncanplay="this.style.opacity=1"
+  ></video>
+  <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(8,4,6,.55) 0%,transparent 60%);pointer-events:none;display:flex;align-items:flex-end;justify-content:center;padding-bottom:32px">
+    <div style="text-align:center">
+      <div style="font-family:var(--ff-display);font-size:clamp(1.8rem,5vw,4rem);letter-spacing:.32em;color:#fff;text-transform:uppercase;text-shadow:0 2px 20px rgba(0,0,0,.6)">DUB<span style="color:var(--rose-light)">REM</span></div>
+      <div style="font-family:var(--ff-script);font-size:clamp(.85rem,2vw,1.4rem);color:rgba(255,255,255,.75);margin-top:4px">Estilos que inspiran</div>
+    </div>
+  </div>
+</div>
+
 <!-- ========== TICKER ========== -->
 <div class="hero-ticker" aria-hidden="true">
   <div class="hero-ticker-track">
@@ -3072,7 +3091,13 @@ function prodPics(p) {
   if (p.img) return [p.img];
   return p.pics || [];
 }
-function prodThumb(p) { return prodPics(p)[0] || ''; }
+// Para las tarjetas usamos la miniatura de 420 px (~20 KB), no la foto completa
+function prodThumb(p) {
+  if (!p) return '';
+  if (p.imgs && p.imgs.length) return p.imgs[0];   // admin editando: base64 en memoria
+  if (p.img) return p.img;
+  return p.thumb || (p.pics && p.pics[0]) || '';
+}
 
 let CAT_HEROES = {}; // { mujer: ['prodId1','prodId2'], hombre: [...] }
 try {
@@ -3263,8 +3288,9 @@ async function fetchProductMeta(fresh) {
     clearTimeout(timer);
     if (r.ok) return await r.json();
   } catch(e) {}
-  // Respaldo si la API no está disponible (p. ej. sin Vercel): descarga completa de Firebase
-  return fbFetch('products');
+  // Respaldo si la API no está disponible (p. ej. sin Vercel): mismo nodo,
+  // directo de Firebase. Nunca `products`, que pesa 117 MB por las fotos.
+  return fbFetch('productMeta');
 }
 
 // Catálogo sin fotos (~40 KB, cacheado en el CDN). fresh=true salta el CDN (panel admin).
@@ -3315,26 +3341,89 @@ async function fbSaveCatHero(cat, ids) {
     try { localStorage.setItem('dubrem_cat_heroes_v1', JSON.stringify(CAT_HEROES)); } catch(e) {}
   } catch(e) {}
 }
+/** sha1 corto — debe coincidir con el hash de api/products.js y api/img.js */
+async function shortHash(str){
+  const buf = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(str));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,'0')).join('').slice(0,12);
+}
+
+/** Reduce una foto base64 a 420 px de lado mayor para usarla de miniatura. */
+function makeThumbDataURL(dataUrl, maxSide = 420){
+  return new Promise(resolve => {
+    if (!dataUrl || !/^data:image/i.test(dataUrl)) return resolve(dataUrl || '');
+    const im = new Image();
+    im.onload = () => {
+      const scale = Math.min(1, maxSide / Math.max(im.width, im.height));
+      const c = document.createElement('canvas');
+      c.width  = Math.round(im.width  * scale);
+      c.height = Math.round(im.height * scale);
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+      try {
+        const out = c.toDataURL('image/jpeg', 0.58);
+        resolve(out.length < dataUrl.length ? out : dataUrl);
+      } catch(e){ resolve(dataUrl); }
+    };
+    im.onerror = () => resolve(dataUrl);
+    im.src = dataUrl;
+  });
+}
+
+const SAFE_PIC_URL = /^(https?:\/\/|\/|[\w-]+\/)[^\s"'<>]*$/i;
+
+/** Escribe el producto en sus tres nodos:
+ *    products/<key>      foto(s) completas
+ *    productThumb/<key>  miniatura reducida
+ *    productMeta/<key>   datos + URLs de /api/img ya resueltas  */
 async function fbSaveProductOverride(fbKey, data){
   if (!FIREBASE_DB_URL) return false;
-  const { pics, ...record } = data;
+  const { pics, thumb, ...record } = data;
+  const put = (path, body) => fetch(`${FIREBASE_DB_URL}/${path}.json`, {
+    method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+  });
   try {
-    const r = await fetch(`${FIREBASE_DB_URL}/products/${fbKey}.json`, {
-      method: 'PUT',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(record)
-    });
-    if(r.status === 401 || r.status === 403){
+    const { img, imgs, ...meta } = record;
+
+    // URLs de la galería, igual que las construye api/products.js
+    const list = Array.isArray(imgs) && imgs.length ? imgs : (img ? [img] : []);
+    const fromImg = !(Array.isArray(imgs) && imgs.length);
+    const newPics = [];
+    for (let i = 0; i < list.length; i++) {
+      const src = list[i];
+      if (typeof src !== 'string' || !src) continue;
+      if (/^data:image\//i.test(src)) {
+        newPics.push(`/api/img?id=${encodeURIComponent(fbKey)}&i=${fromImg ? 'm' : i}&v=${await shortHash(src)}`);
+      } else if (SAFE_PIC_URL.test(src)) {
+        newPics.push(src);
+      }
+    }
+    if (newPics.length) meta.pics = newPics;
+    meta.nimgs = newPics.length;
+
+    const thumbData = await makeThumbDataURL(img || list[0] || '');
+    if (thumbData) {
+      meta.thumb = /^data:image\//i.test(thumbData)
+        ? `/api/img?id=${encodeURIComponent(fbKey)}&i=t&v=${await shortHash(thumbData)}`
+        : (SAFE_PIC_URL.test(thumbData) ? thumbData : undefined);
+    }
+
+    const [rFull, rMeta] = await Promise.all([
+      put(`products/${fbKey}`,     record),
+      put(`productMeta/${fbKey}`,  meta),
+      put(`productThumb/${fbKey}`, thumbData),
+    ]);
+    if(rFull.status === 401 || rFull.status === 403){
       toast('Sesión expirada — vuelve a iniciar sesión como admin','err');
       clearAdminSession(); closeAdmin(); return false;
     }
-    return r.ok;
+    return rFull.ok && rMeta.ok;
   } catch(e) { return false; }
 }
 async function fbDeleteProductOverride(fbKey){
   try {
     if(!FIREBASE_DB_URL) return;
-    await fetch(`${FIREBASE_DB_URL}/products/${fbKey}.json`, { method:'DELETE' });
+    await Promise.all(['products','productMeta','productThumb'].map(n =>
+      fetch(`${FIREBASE_DB_URL}/${n}/${fbKey}.json`, { method:'DELETE' })
+    ));
   } catch(e){}
 }
 
@@ -4315,6 +4404,22 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => toast('El pago no se completó. Puedes intentarlo de nuevo.', 'err'), 300);
       }
     }
+  })();
+
+  // El video del banner se descarga solo cuando el usuario se acerca a él
+  (function(){
+    const v = document.getElementById('heroBannerVideo');
+    if (!v || !v.dataset.src) return;
+    const start = () => {
+      if (v.src) return;
+      v.src = v.dataset.src;
+      v.play().catch(()=>{});   // si el navegador bloquea el autoplay se queda en el primer frame
+    };
+    if (!('IntersectionObserver' in window)) return start();
+    const io = new IntersectionObserver(es => {
+      if (es.some(e => e.isIntersecting)) { start(); io.disconnect(); }
+    }, { rootMargin: '300px' });
+    io.observe(v);
   })();
 
   // Cargar héroes de Firebase al iniciar (diferido para no competir con render inicial)
@@ -5550,9 +5655,13 @@ async function openAdmin(){
   document.getElementById('adminProdsSection').style.display = 'none';
   document.getElementById('adminBody').innerHTML =
     `<div class="admin-empty"><div class="admin-empty-icon">⏳</div><p>Cargando pedidos…</p></div>`;
-  // load both in parallel
-  await Promise.all([syncAdminOrders(), fbRefreshProductMeta({ fresh: true })]);
+  // Los pedidos pesan ~2 KB: se pintan en cuanto llegan, sin esperar al
+  // catálogo. El catálogo se refresca aparte y vuelve a pintar al terminar.
+  await syncAdminOrders();
   renderAdminOrders();
+  fbRefreshProductMeta({ fresh: true }).then(() => {
+    if (document.getElementById('adminPanel')?.classList.contains('open')) renderAdminOrders();
+  });
   // Polling cada 12s para detectar pagos automáticos
   clearInterval(window._adminPollInterval);
   window._adminPollInterval = setInterval(async () => {

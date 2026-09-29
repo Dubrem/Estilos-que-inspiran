@@ -2,9 +2,16 @@
   "version": 2,
   "outputDirectory": ".",
   "functions": {
-    "api/products.js": { "maxDuration": 30 }
+    "api/products.js": { "maxDuration": 30 },
+    "api/img.js": { "maxDuration": 30 }
   },
   "headers": [
+    {
+      "source": "/hero.mp4",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=604800, immutable" }
+      ]
+    },
     {
       "source": "/img/(.*)",
       "headers": [

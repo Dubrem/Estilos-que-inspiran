@@ -8,10 +8,14 @@ export default async function handler(req, res) {
   const id = String(req.query.id || '');
   const i = String(req.query.i ?? '0');
   const v = String(req.query.v || '');
-  if (!/^[\w-]{1,80}$/.test(id) || !/^(m|\d{1,2})$/.test(i)) return res.status(400).end();
+  if (!/^[\w-]{1,80}$/.test(id) || !/^(t|m|\d{1,2})$/.test(i)) return res.status(400).end();
 
   try {
-    const path = i === 'm' ? `products/${id}/img` : `products/${id}/imgs/${i}`;
+    // i=t -> miniatura reducida (~20 KB) para las tarjetas del catálogo
+    // i=m -> portada a tamaño completo   |   i=<n> -> foto n de la galería
+    const path = i === 't' ? `productThumb/${id}`
+               : i === 'm' ? `products/${id}/img`
+               : `products/${id}/imgs/${i}`;
     const r = await fetch(`${DB}/${path}.json`);
     const src = r.ok ? await r.json() : null;
     const m = typeof src === 'string' && /^data:(image\/[a-z+.-]+);base64,/i.exec(src);
