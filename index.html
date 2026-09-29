@@ -205,7 +205,36 @@
       display: flex; align-items: center; justify-content: center;
       font-size: 9px; color: #fff; font-family: var(--ff-display); letter-spacing: .06em;
     }
-    .user-logout { font-size: .58rem; color: rgba(255,255,255,.35); }
+    .user-caret { font-size:.5rem; color:rgba(255,255,255,.45); transition:transform .18s; }
+    .user-chip.open .user-caret { transform:rotate(180deg); }
+    /* Menu de perfil */
+    .user-menu-wrap { position:relative; }
+    .user-menu {
+      display:none; position:absolute; top:calc(100% + 8px); right:0; z-index:250;
+      min-width:196px; padding:6px; border-radius:12px; background:#fff;
+      border:1px solid var(--border); box-shadow:0 10px 32px rgba(0,0,0,.18);
+      animation:userMenuIn .14s ease-out;
+    }
+    .user-menu.open { display:block; }
+    @keyframes userMenuIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:none} }
+    .user-menu-head {
+      padding:9px 12px 10px; border-bottom:1px solid var(--border); margin-bottom:5px;
+    }
+    .user-menu-name { font-size:.8rem; font-weight:700; color:var(--text-dark); line-height:1.2;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .user-menu-mail { font-size:.64rem; color:var(--text-light); margin-top:2px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-transform:none; letter-spacing:0; }
+    .user-menu-item {
+      display:flex; align-items:center; gap:10px; width:100%; padding:10px 12px;
+      border:none; background:none; border-radius:8px; cursor:pointer; text-align:left;
+      font-family:var(--ff-body); font-size:.76rem; color:var(--text-dark);
+      letter-spacing:.02em; text-transform:none; transition:background .13s;
+    }
+    .user-menu-item:hover { background:var(--blush-light); }
+    .user-menu-item .umi-ico { font-size:.95rem; width:18px; text-align:center; flex-shrink:0; }
+    .user-menu-sep { height:1px; background:var(--border); margin:5px 0; }
+    .user-menu-item.danger { color:#c0392b; font-weight:600; }
+    .user-menu-item.danger:hover { background:#fde2e2; }
     /* Hamburger */
     .hamburger { display: none; flex-direction: column; gap: 5px; background: none; border: none; padding: 6px; }
     .hamburger span { display: block; width: 22px; height: 1px; background: rgba(255,255,255,.7); }
@@ -1631,7 +1660,8 @@
       .btn-login  { padding:4px 9px; font-size:.52rem; letter-spacing:.06em; white-space:nowrap; }
       .user-chip  { padding:4px 8px; font-size:.52rem; gap:4px; white-space:nowrap; }
       .user-avatar { width:15px; height:15px; font-size:7px; }
-      .user-logout { font-size:.48rem; }
+      .user-caret { font-size:.42rem; }
+      .user-menu { min-width:184px; }
     }
 
     /* Multi-image admin grid */
@@ -5104,11 +5134,52 @@ function closeConfirm(yes){
   overlay.style.display = 'none';
   if (yes && overlay._onYes) overlay._onYes();
 }
+/* ── Menú de perfil ──────────────────────────────────
+   Antes el nombre y "Salir" eran dos zonas de un mismo chip y la gente
+   tocaba una creyendo tocar la otra. Ahora el chip solo abre este menú. */
+function toggleUserMenu(force){
+  const menu = document.getElementById('userMenu');
+  const chip = document.getElementById('userChip');
+  if (!menu) return;
+  const open = force !== undefined ? force : !menu.classList.contains('open');
+  menu.classList.toggle('open', open);
+  if (chip) {
+    chip.classList.toggle('open', open);
+    chip.setAttribute('aria-expanded', String(open));
+  }
+}
+function closeUserMenu(){ toggleUserMenu(false); }
+/** Cierra el menú y ejecuta la opción elegida. */
+function userMenuGo(fn){
+  closeUserMenu();
+  if (typeof fn === 'function') fn();
+}
+// Tocar fuera o Escape lo cierra
+document.addEventListener('click', closeUserMenu);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeUserMenu(); });
+
 function renderLoginArea(){
   const area=document.getElementById('loginArea');
   area.innerHTML = S.user
     ? `<button class="btn-orders" onclick="openOrdersPanel()">Mis Pedidos</button>
-       <button class="user-chip" onclick="openOrdersPanel()"><div class="user-avatar" style="font-family:var(--ff-display);font-size:.7rem">${S.user.name.charAt(0).toUpperCase()}</div><span>${S.user.name.split(' ')[0]}</span><span class="user-logout" onclick="event.stopPropagation();doLogout()">Salir</span></button>`
+       <div class="user-menu-wrap">
+         <button class="user-chip" id="userChip" onclick="event.stopPropagation();toggleUserMenu()" aria-haspopup="true" aria-expanded="false">
+           <div class="user-avatar" style="font-family:var(--ff-display);font-size:.7rem">${S.user.name.charAt(0).toUpperCase()}</div>
+           <span>${S.user.name.split(' ')[0]}</span>
+           <span class="user-caret">▼</span>
+         </button>
+         <div class="user-menu" id="userMenu" onclick="event.stopPropagation()">
+           <div class="user-menu-head">
+             <div class="user-menu-name">${S.user.name}</div>
+             <div class="user-menu-mail">${S.user.email || ''}</div>
+           </div>
+           <button class="user-menu-item" onclick="userMenuGo(openOrdersPanel)"><span class="umi-ico">📦</span> Mis pedidos</button>
+           <button class="user-menu-item" onclick="userMenuGo(openEditProfile)"><span class="umi-ico">👤</span> Mis datos</button>
+           <button class="user-menu-item" onclick="userMenuGo(openChangePassword)"><span class="umi-ico">🔒</span> Contraseña</button>
+           <div class="user-menu-sep"></div>
+           <button class="user-menu-item danger" onclick="userMenuGo(doLogout)"><span class="umi-ico">⏻</span> Cerrar sesión</button>
+         </div>
+       </div>`
     : `<button class="btn-login" onclick="openLoginModal()">Iniciar Sesión</button>`;
 
   // Sidebar footer: muestra Mis Pedidos y Carrito en móvil
