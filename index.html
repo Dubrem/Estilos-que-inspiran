@@ -924,6 +924,12 @@
     .bank-lbl { font-size:.62rem; color:var(--text-light); font-weight:600; text-transform:uppercase; letter-spacing:.1em; }
     .bank-val { font-size:.84rem; font-weight:700; color:var(--text-dark); text-align:right; }
     .bank-clabe { font-size:1rem; font-weight:700; color:var(--text-dark); letter-spacing:1.5px; }
+    .btn-copy { display:inline-flex; align-items:center; gap:5px; padding:6px 13px; border-radius:50px;
+      border:1.5px solid var(--rose); background:#fff; color:var(--rose); font-family:var(--ff-body);
+      font-size:.64rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase; cursor:pointer;
+      white-space:nowrap; transition:background .15s,color .15s; }
+    .btn-copy:hover { background:var(--rose); color:#fff; }
+    .btn-copy:disabled { border-color:#0a5931; color:#0a5931; background:#e8f5ec; cursor:default; }
     .pay-note { background:#fff; border-radius:10px; border:1px solid var(--border); padding:10px 14px; font-size:.74rem; color:var(--text-med); line-height:1.55; margin-bottom:16px; }
     .pay-method-opts { display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
     .pay-opt { display:flex; align-items:center; gap:14px; border:2px solid var(--border); border-radius:14px; padding:14px 16px; cursor:pointer; transition:all .2s; background:#fff; }
@@ -2356,7 +2362,13 @@ function cerrarApertura(){}
         <h4>🏦 Datos de Transferencia</h4>
         <div class="bank-row"><span class="bank-lbl">Banco</span><span class="bank-val">Mercado Pago</span></div>
         <div class="bank-row"><span class="bank-lbl">Titular</span><span class="bank-val">DUBREM</span></div>
-        <div class="bank-row" style="align-items:flex-start"><span class="bank-lbl" style="padding-top:3px">CLABE</span><span class="bank-clabe">722969010264030571</span></div>
+        <div class="bank-row" style="align-items:flex-start">
+          <span class="bank-lbl" style="padding-top:3px">CLABE</span>
+          <span style="display:flex;flex-direction:column;align-items:flex-end;gap:7px">
+            <span class="bank-clabe" data-clabe>722969010264030571</span>
+            <button type="button" class="btn-copy" onclick="copyClabe(this)">📋 Copiar CLABE</button>
+          </span>
+        </div>
         <p class="pay-note" style="margin-top:10px;margin-bottom:0">⚠️ Transfiere exactamente el monto total. Incluye tu número de orden en el concepto.</p>
       </div>
       <div class="summary-box" id="sum2"></div>
@@ -2393,7 +2405,12 @@ function cerrarApertura(){}
       <h4>📋 Pasos para completar tu pago:</h4>
       <ol>
         <li>Realiza la transferencia a <strong>Mercado Pago</strong></li>
-        <li>CLABE: <strong>722969010264030571</strong></li>
+        <li>
+          <span style="display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap">
+            CLABE: <strong data-clabe>722969010264030571</strong>
+            <button type="button" class="btn-copy" onclick="copyClabe(this)">📋 Copiar</button>
+          </span>
+        </li>
         <li>Incluye tu número de pedido en el concepto</li>
         <li>Toca el botón de abajo y <strong>envía tu comprobante por WhatsApp</strong></li>
         <li>¡Listo! Confirmaremos tu pedido en breve 🌸</li>
@@ -2873,6 +2890,41 @@ const S = {
 };
 const SHIP_COST  = 110;
 const WA_NUMBER  = '525563723284';   // destino de los comprobantes
+
+/** Copia al portapapeles la CLABE que se muestra junto al botón.
+ *  Lee el valor del DOM para que nunca se copie algo distinto de lo visible. */
+async function copyClabe(btn){
+  const el = btn.parentElement.querySelector('[data-clabe]')
+          || document.querySelector('[data-clabe]');
+  const clabe = (el ? el.textContent : '').replace(/\s+/g, '');
+  if (!clabe) return;
+
+  let ok = false;
+  try {
+    await navigator.clipboard.writeText(clabe);
+    ok = true;
+  } catch(e) {
+    // Safari puede negar la API moderna: respaldo con textarea
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = clabe;
+      ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, clabe.length);   // iOS necesita el rango explícito
+      ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch(e2) { ok = false; }
+  }
+
+  const prev = btn.innerHTML;
+  btn.innerHTML = ok ? '✓ Copiada' : '✕ No se pudo';
+  btn.disabled  = true;
+  setTimeout(() => { btn.innerHTML = prev; btn.disabled = false; }, 1800);
+  toast(ok ? 'CLABE copiada al portapapeles' : 'No se pudo copiar — selecciona el número a mano',
+        ok ? 'ok' : 'err');
+}
 const FIREBASE_API_KEY = 'AIzaSyAQMv0-dkJq76rXPZQGFuJBSUUn43JcuOE';
 // ← Cambia esta dirección por la real de tu tienda
 const SHIP_LOCAL = 20;
