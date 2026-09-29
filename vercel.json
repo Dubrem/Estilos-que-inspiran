@@ -7,12 +7,6 @@
   },
   "headers": [
     {
-      "source": "/hero.mp4",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=604800, immutable" }
-      ]
-    },
-    {
       "source": "/img/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }
