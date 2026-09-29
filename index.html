@@ -2168,7 +2168,7 @@ function cerrarApertura(){}
   <div class="lb-overlay" onclick="closeLightbox()"></div>
   <div class="lb-box">
     <div class="lb-img-wrap" id="lbImgWrap">
-      <img class="lb-img" id="lbImg" src="" alt="" onerror="imgErr(this)" onclick="openImgZoom()" title="Toca para ampliar">
+      <img class="lb-img" id="lbImg" alt="" onerror="imgErr(this)" onclick="openImgZoom()" title="Toca para ampliar">
       <button class="lb-arrow lb-prev hidden" id="lbPrev" onclick="lbGoto(_lbIdx-1)">&#8249;</button>
       <button class="lb-arrow lb-next hidden" id="lbNext" onclick="lbGoto(_lbIdx+1)">&#8250;</button>
       <div class="lb-thumbs hidden" id="lbThumbs"></div>
@@ -4418,7 +4418,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!('IntersectionObserver' in window)) return start();
     const io = new IntersectionObserver(es => {
       if (es.some(e => e.isIntersecting)) { start(); io.disconnect(); }
-    }, { rootMargin: '300px' });
+    // margen negativo: el banner queda justo en el pliegue, así que solo
+    // cuenta como visible cuando el usuario ya bajó hasta él
+    }, { rootMargin: '-80px' });
     io.observe(v);
   })();
 
@@ -4527,6 +4529,7 @@ function closeMobileNav(){ document.getElementById('mobileNav').classList.remove
 function showCatalog(section, pushHistory = true) {
   if (pushHistory) history.pushState({ section }, '', '#' + section);
   document.getElementById('inicio').style.display = 'none';
+  document.getElementById('videoBanner').style.display = 'none';  // acompaña al hero
   document.querySelector('.filter-bar').classList.add('catalog-visible');
   document.querySelector('.products-section').classList.add('catalog-visible');
   document.querySelector('.footer').classList.add('catalog-visible');
@@ -4562,6 +4565,7 @@ function reintentarCarga() {
 function showHero() {
   clearInterval(_heroInterval);
   document.getElementById('inicio').style.display = '';
+  document.getElementById('videoBanner').style.display = '';
   document.querySelector('.filter-bar').classList.remove('catalog-visible');
   document.querySelector('.products-section').classList.remove('catalog-visible');
   document.querySelector('.footer').classList.remove('catalog-visible');
