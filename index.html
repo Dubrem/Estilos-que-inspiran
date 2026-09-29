@@ -6086,6 +6086,26 @@ function customerOrderCard(o){
 
   const deliveryTxt = DELIVERY_LABELS[o.delivery] || '🏪 Recoger en tienda';
 
+  // Mientras el pago no este confirmado, el cliente puede mandar su
+  // comprobante al WhatsApp de la tienda sin depender del modal de compra,
+  // que desaparece en cuanto lo cierra.
+  const waMsg = `¡Hola! 🖤 Les envío el comprobante de mi pedido *${o.num}*.\n\n`
+    + `👤 ${o.customer || ''}\n`
+    + `💰 Total: *${fmtMXN(o.total)} MXN*\n`
+    + `${deliveryTxt}\n\n`
+    + `📦 Productos:\n`
+    + o.items.map(it => `• ${it.name} × ${it.qty}`).join('\n')
+    + `\n\nAdjunto mi comprobante de pago. ¡Gracias!`;
+  const comprobanteHtml = st === 'pendiente' ? `
+    <a class="btn-whatsapp" style="margin:14px 0 0"
+       href="https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(waMsg)}"
+       target="_blank" rel="noopener">
+      <span class="btn-whatsapp-icon">💬</span> Enviar comprobante por WhatsApp
+    </a>
+    <p style="font-size:.66rem;color:var(--text-light);text-align:center;margin:7px 0 0;line-height:1.5">
+      Adjunta la captura de tu transferencia o de tu pago en Mercado Pago
+    </p>` : '';
+
   return `
     <div class="corder-card">
       <div class="corder-head">
@@ -6111,6 +6131,7 @@ function customerOrderCard(o){
           <span>Total</span><span class="corder-item-price">${fmtMXN(o.total)} MXN</span>
         </div>
       </div>
+      ${comprobanteHtml}
     </div>`;
 }
 
