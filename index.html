@@ -5688,8 +5688,13 @@ function renderAdminOrders(){
   const listos    = S.orders.filter(o=>o.status==='listo').length;
   const cancelados= S.orders.filter(o=>o.status==='cancelado').length;
   const complet   = S.orders.filter(o=>o.status==='completado').length;
-  // Un pedido cancelado no entro dinero: no cuenta como ingreso
-  const revenue  = S.orders.filter(o=>o.status!=='cancelado').reduce((s,o)=>s+o.total,0);
+  // Un pedido cancelado no entro dinero: queda fuera de los dos totales.
+  // Cobrado = ya se pago (y todo lo que viene despues de pagar).
+  // Por cobrar = el resto de los vivos, o sea los pendientes.
+  const COBRADOS = ['pagado','listo','enviado','despachado','completado'];
+  const vivos     = S.orders.filter(o=>o.status!=='cancelado');
+  const cobrado   = vivos.filter(o=> COBRADOS.includes(o.status)).reduce((s,o)=>s+o.total,0);
+  const porCobrar = vivos.filter(o=>!COBRADOS.includes(o.status)).reduce((s,o)=>s+o.total,0);
 
   stats.innerHTML = `
     <div class="stat-card" style="cursor:pointer" onclick="setOrderStatusFilter('all')"         title="Ver todos"><div class="stat-val">${total}</div><div class="stat-lbl">Total</div></div>
@@ -5698,7 +5703,8 @@ function renderAdminOrders(){
     <div class="stat-card" style="cursor:pointer" onclick="setOrderStatusFilter('listo')"       title="Filtrar listos"><div class="stat-val">${listos}</div><div class="stat-lbl">Listos</div></div>
     <div class="stat-card" style="cursor:pointer" onclick="setOrderStatusFilter('cancelado')"  title="Filtrar cancelados"><div class="stat-val">${cancelados}</div><div class="stat-lbl">Cancelados</div></div>
     <div class="stat-card" style="cursor:pointer" onclick="setOrderStatusFilter('completado')"  title="Filtrar completados"><div class="stat-val">${complet}</div><div class="stat-lbl">Completados</div></div>
-    <div class="stat-card"><div class="stat-val">${fmtMXN(revenue)}</div><div class="stat-lbl">Ingresos</div></div>
+    <div class="stat-card" style="border-top:2px solid #0a5931" title="Pedidos ya pagados, listos, enviados y completados"><div class="stat-val" style="color:#0a5931">${fmtMXN(cobrado)}</div><div class="stat-lbl">Ingresos cobrados</div></div>
+    <div class="stat-card" style="border-top:2px solid #856404" title="Pedidos pendientes de pago"><div class="stat-val" style="color:#856404">${fmtMXN(porCobrar)}</div><div class="stat-lbl">Ingresos pendientes</div></div>
     <div class="stat-card" style="border-top:2px solid var(--rose)" title="Prendas subidas al catálogo"><div class="stat-val" style="color:var(--rose)">${getMergedProducts().filter(p=>!p.hidden).length}</div><div class="stat-lbl">Prendas</div></div>`;
 
   const sf = _orderStatusFilter, df = _orderDateFilter;
