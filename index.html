@@ -5689,7 +5689,8 @@ function renderAdminOrders(){
   const listos    = S.orders.filter(o=>o.status==='listo').length;
   const cancelados= S.orders.filter(o=>o.status==='cancelado').length;
   const complet   = S.orders.filter(o=>o.status==='completado').length;
-  const revenue  = S.orders.reduce((s,o)=>s+o.total,0);
+  // Un pedido cancelado no entro dinero: no cuenta como ingreso
+  const revenue  = S.orders.filter(o=>o.status!=='cancelado').reduce((s,o)=>s+o.total,0);
 
   stats.innerHTML = `
     <div class="stat-card" style="cursor:pointer" onclick="setOrderStatusFilter('all')"         title="Ver todos"><div class="stat-val">${total}</div><div class="stat-lbl">Total</div></div>
