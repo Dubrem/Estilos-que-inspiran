@@ -3781,7 +3781,7 @@ function findProduct(id) {
 function switchAdminTab(tab, mantenerFiltro) {
   // Al entrar por la pestaña se ven todas; el filtro solo llega desde
   // la tarjeta de Agotadas, que pide mantenerlo
-  if (!mantenerFiltro) _soloAgotadas = false;
+  if (!mantenerFiltro) _filtroStock = 'todos';
   guardarVista({ panel:'admin', tab });
   document.querySelectorAll('.admin-tab').forEach(b => {
     b.classList.toggle('active', b.dataset.tab === tab);
@@ -3912,10 +3912,17 @@ function matchAdminSearch(p) {
 /** El catalogo del cliente esconde lo agotado, pero el panel tiene que
  *  verlo: si no, una prenda que se vendio ya no se puede editar ni
  *  reactivar cuando vuelve a haber existencias. */
-let _soloAgotadas = false;
+let _filtroStock = 'todos';   // todos | disponibles | agotados
+const estaAgotada = p => p.hidden || (p.stock || 0) <= 0;
 function adminProducts() {
   const todos = getMergedProducts();
-  return _soloAgotadas ? todos.filter(p => p.name && (p.hidden || (p.stock || 0) <= 0)) : todos;
+  if (_filtroStock === 'agotados')    return todos.filter(p => p.name && estaAgotada(p));
+  if (_filtroStock === 'disponibles') return todos.filter(p => p.name && !estaAgotada(p));
+  return todos;
+}
+function filtrarStock(v){
+  _filtroStock = v;
+  renderAdminProducts();
 }
 
 function buildAdminCards() {
@@ -3999,6 +4006,21 @@ function renderAdminProducts() {
       box-shadow:0 1px 4px rgba(0,0,0,.1);
     ">${s.label}</button>`).join('');
 
+  const nDisp = prendasDisponibles(), nAgot = prendasAgotadas();
+  const stockBtns = [
+    { val:'todos',       label:`Todas (${nDisp + nAgot})`, color:'var(--rose)' },
+    { val:'disponibles', label:`✓ Disponibles (${nDisp})`, color:'#0a5931' },
+    { val:'agotados',    label:`✕ Agotadas (${nAgot})`,    color:'#c0392b' },
+  ].map(s => `
+    <button onclick="filtrarStock('${s.val}')" style="
+      padding:7px 14px;border-radius:20px;border:2px solid;font-size:.68rem;font-weight:600;
+      font-family:var(--ff-body);cursor:pointer;white-space:nowrap;transition:all .18s;
+      background:${_filtroStock===s.val?s.color:'#fff'};
+      color:${_filtroStock===s.val?'#fff':'#444'};
+      border-color:${_filtroStock===s.val?s.color:'#bbb'};
+      box-shadow:0 1px 4px rgba(0,0,0,.1);
+    ">${s.label}</button>`).join('');
+
   sec.innerHTML = `
     <div style="margin-bottom:20px">
       <button onclick="openNewProductModal()" style="
@@ -4022,20 +4044,14 @@ function renderAdminProducts() {
         <svg style="position:absolute;left:14px;top:50%;transform:translateY(-50%);pointer-events:none;opacity:.4" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         <span id="adminSearchCount" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:.65rem;color:var(--rose);font-weight:600"></span>
       </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
+        <span style="font-size:.62rem;color:#888;letter-spacing:.1em;text-transform:uppercase;margin-right:4px;font-weight:600">Mostrar</span>
+        ${stockBtns}
+      </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
         <span style="font-size:.62rem;color:#888;letter-spacing:.1em;text-transform:uppercase;margin-right:4px;font-weight:600">Ordenar</span>
         ${sortBtns}
       </div>
-      ${_soloAgotadas ? `
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
-                    background:#fde2e2;border-radius:10px;padding:10px 14px;margin-bottom:14px">
-          <span style="font-size:.72rem;font-weight:700;color:#8b0000;letter-spacing:.04em">
-            Mostrando solo prendas agotadas (${prendasAgotadas()})
-          </span>
-          <button onclick="_soloAgotadas=false;renderAdminProducts()" style="padding:6px 14px;border:1.5px solid #c0392b;
-            background:transparent;color:#c0392b;border-radius:50px;font-size:.64rem;font-weight:700;cursor:pointer;
-            letter-spacing:.06em;text-transform:uppercase;font-family:var(--ff-body)">← Ver todas</button>
-        </div>` : ''}
       <div class="admin-prods-grid" id="adminProdsGrid">${buildAdminCards()}</div>
     ` : `<p style="font-size:.8rem;color:rgba(255,255,255,.35);text-align:center;margin-top:40px">Aún no hay productos. ¡Agrega el primero!</p>`}
   `;
@@ -6097,12 +6113,12 @@ function _filterOrders(){
 
 /* Una prenda esta agotada cuando se quedo sin existencias; el catalogo
    la esconde pero sigue en el panel para poder reponerla. */
-function prendasDisponibles(){ return getMergedProducts().filter(p => p.name && !p.hidden && (p.stock || 0) > 0).length; }
-function prendasAgotadas(){    return getMergedProducts().filter(p => p.name && (p.hidden || (p.stock || 0) <= 0)).length; }
+function prendasDisponibles(){ return getMergedProducts().filter(p => p.name && !estaAgotada(p)).length; }
+function prendasAgotadas(){    return getMergedProducts().filter(p => p.name &&  estaAgotada(p)).length; }
 
 /** Atajo desde la tarjeta: abre Productos filtrando las agotadas. */
 function verAgotadas(){
-  _soloAgotadas = true;
+  _filtroStock = 'agotados';
   switchAdminTab('products', true);
 }
 
