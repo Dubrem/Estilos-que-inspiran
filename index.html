@@ -1612,8 +1612,11 @@
       .filter-bar { padding:68px 1.2rem 14px; }
       .cat-banner {
         height:60vh; min-height:340px; max-height:620px;
-        width:auto; max-width:none;
-        margin:0 -1.2rem 14px;      /* anula el padding de .filter-bar */
+        width:100vw; max-width:none;
+        /* Llega a los bordes sin depender del padding de los contenedores
+           (.filter-bar tiene 1.2rem y .section-wrap otros 40px) */
+        margin-left:calc(50% - 50vw); margin-right:calc(50% - 50vw);
+        margin-bottom:14px;
         border-radius:0;
       }
       .filter-dropdown-wrap { max-width:100%; }
