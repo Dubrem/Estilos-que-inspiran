@@ -5945,6 +5945,20 @@ async function doAdminLogin(){
     if(btn){ btn.disabled = false; btn.textContent = 'Entrar'; }
   }
 }
+/** renderAdminOrders vuelve a mostrar las estadisticas y los filtros de
+ *  pedidos, asi que solo debe correr si esa pestana esta activa: si no,
+ *  los refrescos de fondo los pintan encima de Productos o Heroes. */
+function pestanaAdminActiva(){
+  return document.querySelector('.admin-tab.active')?.dataset.tab || 'orders';
+}
+function refrescarPedidosSiVisible(){
+  const panel = document.getElementById('adminPanel');
+  if (!panel?.classList.contains('open')) return false;
+  if (pestanaAdminActiva() !== 'orders') return false;
+  renderAdminOrders();
+  return true;
+}
+
 async function openAdmin(){
   document.getElementById('adminPanel').classList.add('open');
   guardarVista({ panel:'admin', tab:'orders' });
@@ -5959,15 +5973,13 @@ async function openAdmin(){
   // catálogo. El catálogo se refresca aparte y vuelve a pintar al terminar.
   await syncAdminOrders();
   renderAdminOrders();
-  fbRefreshProductMeta({ fresh: true }).then(() => {
-    if (document.getElementById('adminPanel')?.classList.contains('open')) renderAdminOrders();
-  });
+  fbRefreshProductMeta({ fresh: true }).then(refrescarPedidosSiVisible);
   // Polling cada 12s para detectar pagos automáticos
   clearInterval(window._adminPollInterval);
   window._adminPollInterval = setInterval(async () => {
     if(!document.getElementById('adminPanel')?.classList.contains('open')) return;
     await syncAdminOrders();
-    renderAdminOrders();
+    refrescarPedidosSiVisible();
   }, 12000);
 }
 /* ── Recordar en que pantalla estabas al recargar ───────
