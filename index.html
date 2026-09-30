@@ -3491,6 +3491,23 @@ async function fbSaveProductOverride(fbKey, data){
     return rFull.ok && rMeta.ok;
   } catch(e) { return false; }
 }
+/** Escribe stock (y el flag hidden) en LOS DOS nodos.
+ *  products/ es la fuente completa y productMeta/ es lo que lee el
+ *  catalogo: si solo se actualiza uno, lo vendido sigue apareciendo. */
+async function fbSetStock(id, stock, hidden){
+  if (!FIREBASE_DB_URL) return;
+  const prod = PRODUCT_OVERRIDES[id];
+  if (prod) { prod.stock = stock; if (hidden !== undefined) prod.hidden = hidden; }
+  const w = (ruta, valor) => fetch(`${FIREBASE_DB_URL}/${ruta}.json`, {
+    method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(valor)
+  }).catch(()=>{});
+  const tareas = [ w(`products/${id}/stock`, stock), w(`productMeta/${id}/stock`, stock) ];
+  if (hidden !== undefined) {
+    tareas.push(w(`products/${id}/hidden`, hidden), w(`productMeta/${id}/hidden`, hidden));
+  }
+  return Promise.all(tareas);
+}
+
 async function fbDeleteProductOverride(fbKey){
   try {
     if(!FIREBASE_DB_URL) return;
@@ -5575,19 +5592,8 @@ async function confirmOrder(){
     const prod = PRODUCT_OVERRIDES[item.id];
     if (!prod || !FIREBASE_DB_URL) return Promise.resolve();
     const newStock = Math.max(0, (prod.stock || 0) - item.qty);
-    prod.stock = newStock;
-    if (newStock <= 0) prod.hidden = true;
-    const updates = [
-      fetch(`${FIREBASE_DB_URL}/products/${item.id}/stock.json`, {
-        method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newStock)
-      }).catch(()=>{})
-    ];
-    if (newStock <= 0) updates.push(
-      fetch(`${FIREBASE_DB_URL}/products/${item.id}/hidden.json`, {
-        method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(true)
-      }).catch(()=>{})
-    );
-    return Promise.all(updates);
+    // Al llegar a 0 se oculta del catalogo; vuelve si se cancela el pedido
+    return fbSetStock(item.id, newStock, newStock <= 0 ? true : undefined);
   });
   Promise.all(stockUpdates).then(() => {
     if (document.querySelector('.products-section.catalog-visible')) renderGrid(_currentFilter);
@@ -6223,12 +6229,7 @@ async function cancelOrder(orderNum){
   await Promise.all(order.items.map(item => {
     const prod = PRODUCT_OVERRIDES[item.id];
     if(!prod || !FIREBASE_DB_URL) return Promise.resolve();
-    const newStock = (prod.stock || 0) + item.qty;
-    prod.stock = newStock; prod.hidden = false;
-    return Promise.all([
-      fetch(`${FIREBASE_DB_URL}/products/${item.id}/stock.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(newStock)}).catch(()=>{}),
-      fetch(`${FIREBASE_DB_URL}/products/${item.id}/hidden.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(false)}).catch(()=>{})
-    ]);
+    return fbSetStock(item.id, (prod.stock || 0) + item.qty, false);
   }));
   fbRefreshProductMeta({ fresh: true });
   order.status = 'cancelado';
