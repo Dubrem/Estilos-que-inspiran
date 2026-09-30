@@ -6151,8 +6151,8 @@ function renderAdminOrders(){
     <div class="stat-card" style="cursor:pointer" onclick="setOrderStatusFilter('completado')"  title="Filtrar completados"><div class="stat-val">${complet}</div><div class="stat-lbl">Completados</div></div>
     <div class="stat-card" style="border-top:2px solid #0a5931" title="Pedidos ya pagados, listos, enviados y completados"><div class="stat-val" style="color:#0a5931">${fmtMXN(cobrado)}</div><div class="stat-lbl">Ingresos cobrados</div></div>
     <div class="stat-card" style="border-top:2px solid #856404" title="Pedidos pendientes de pago"><div class="stat-val" style="color:#856404">${fmtMXN(porCobrar)}</div><div class="stat-lbl">Ingresos pendientes</div></div>
-    <div class="stat-card" style="border-top:2px solid var(--rose)" title="Prendas disponibles en el catálogo"><div class="stat-val" style="color:var(--rose)">${prendasDisponibles()}</div><div class="stat-lbl">Prendas</div></div>
-    <div class="stat-card" style="cursor:pointer;border-top:2px solid #c0392b" onclick="verAgotadas()" title="Sin existencias — toca para verlas en Productos"><div class="stat-val" style="color:#c0392b">${prendasAgotadas()}</div><div class="stat-lbl">Agotadas</div></div>`;
+    <div class="stat-card" style="border-top:2px solid var(--rose)" title="Prendas disponibles en el catálogo"><div class="stat-val" style="color:var(--rose)">${prendasDisponibles()}</div><div class="stat-lbl">Prendas disponibles</div></div>
+    <div class="stat-card" style="cursor:pointer;border-top:2px solid #c0392b" onclick="verAgotadas()" title="Sin existencias — toca para verlas en Productos"><div class="stat-val" style="color:#c0392b">${prendasAgotadas()}</div><div class="stat-lbl">Prendas agotadas</div></div>`;
 
   const sf = _orderStatusFilter, df = _orderDateFilter;
   const filterActive = _isFilterActive();
