@@ -1118,6 +1118,14 @@
       transition:background .15s; font-size:.8rem; color:var(--text-dark);
       border-bottom:1px solid var(--border);
     }
+    .check-item-del {
+      flex-shrink:0; width:26px; height:26px; border-radius:50%;
+      border:1.5px solid #e4b9b9; background:#fff; color:#c0392b;
+      font-size:.7rem; line-height:1; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      transition:background .15s, color .15s, border-color .15s;
+    }
+    .check-item-del:hover { background:#c0392b; color:#fff; border-color:#c0392b; }
     .check-item:last-child { border-bottom:none; }
     .check-item:hover { background:var(--nude-light); }
     .check-item input[type="checkbox"] {
@@ -6171,6 +6179,10 @@ function buildOrderCard(o){
     despachado:'🚚 Enviado',   completado:'🎉 Completado',
     cancelado:'❌ Cancelado'
   };
+  // Quitar prendas sueltas solo tiene sentido con el pedido vivo y con mas
+  // de una prenda: si es la unica, lo que toca es cancelar el pedido.
+  const estado = o.status || 'pendiente';
+  const puedeQuitar = estado !== 'cancelado' && o.items.length > 1;
   const checkItems = o.items.map((it,idx)=>{
     const prod = findProduct(it.id);
     // prod.img ya no viaja en el catalogo: la portada es prodThumb (/api/img?i=t)
@@ -6188,6 +6200,8 @@ function buildOrderCard(o){
         ${prod && prod.sku ? `<span style="font-size:.62rem;color:var(--text-light);letter-spacing:.06em">${prod.sku}</span>` : ''}
       </div>
       <span class="check-qty">${fmtMXN(it.price*it.qty)}</span>
+      ${puedeQuitar ? `<button class="check-item-del" title="Quitar esta prenda del pedido"
+        onclick="event.preventDefault();event.stopPropagation();removeOrderItem('${o.num}',${idx})">✕</button>` : ''}
     </label>`;
   }).join('');
 
@@ -6249,6 +6263,57 @@ function toggleCheck(orderNum, itemIdx, checked){
   }
 }
 
+/** Quita una prenda del pedido: la devuelve al stock, la descuenta del
+ *  total y la saca del conteo de ingresos. Para cuando el cliente aparta
+ *  varias y al final solo paga algunas. */
+async function removeOrderItem(orderNum, idx){
+  const order = S.orders.find(o => o.num === orderNum);
+  if (!order || !order.items || !order.items[idx]) return;
+  if ((order.status || 'pendiente') === 'cancelado') {
+    toast('El pedido ya está cancelado: su stock ya se liberó', 'err'); return;
+  }
+  if (order.items.length === 1) {
+    toast('Es la única prenda del pedido — usa Cancelar', 'err'); return;
+  }
+  const item = order.items[idx];
+  if (!confirm(
+    `¿Quitar "${item.name}" del pedido ${orderNum}?\n\n` +
+    `• Vuelve al stock del catálogo\n` +
+    `• Deja de contar en el total del pedido\n\n` +
+    `Esto no se puede deshacer.`
+  )) return;
+
+  const prod = PRODUCT_OVERRIDES[item.id];
+  if (prod) await fbSetStock(item.id, (prod.stock || 0) + (item.qty || 1), false);
+
+  order.items.splice(idx, 1);
+  order.total = Math.max(0, (order.total || 0) - (item.price || 0) * (item.qty || 1));
+  await fbSaveOrder(order);
+  renderAdminOrders();
+  toast(`"${item.name}" quitado — stock liberado`, 'ok');
+}
+
+/** Al confirmar el pago, lo vendido sale del hero: un banner de portada
+ *  que anuncia una prenda agotada no sirve de nada. */
+async function quitarDelHeroSiAgotado(order){
+  let cambio = false;
+  for (const [cat, ids] of Object.entries(CAT_HEROES || {})) {
+    const lista = ids || [];
+    const quedan = lista.filter(id => {
+      if (!order.items.some(it => String(it.id) === String(id))) return true;
+      const p = PRODUCT_OVERRIDES[id];
+      return !(p && (p.stock === 0 || p.hidden));
+    });
+    if (quedan.length !== lista.length) {
+      CAT_HEROES[cat] = quedan;
+      await fbSaveCatHero(cat, quedan);
+      cambio = true;
+    }
+  }
+  if (cambio && _heroSection) startCatBannerSlideshow(_heroSection);
+  return cambio;
+}
+
 function setOrderStatus(orderNum, status){
   const order = S.orders.find(o=>o.num===orderNum);
   if(!order) return;
@@ -6284,6 +6349,7 @@ function confirmSetStatus(orderNum, status){
   } else {
     setOrderStatus(orderNum, status);
     const order = S.orders.find(o=>o.num===orderNum);
+    if(order && status === 'pagado') quitarDelHeroSiAgotado(order);
     if(order && order.phone && (status==='pagado' || status==='listo')){
       sendWhatsAppNotification(order, status);
     }
