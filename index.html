@@ -3771,6 +3771,7 @@ function findProduct(id) {
 }
 
 function switchAdminTab(tab) {
+  guardarVista({ panel:'admin', tab });
   document.querySelectorAll('.admin-tab').forEach(b => {
     b.classList.toggle('active', b.dataset.tab === tab);
   });
@@ -4568,6 +4569,22 @@ document.addEventListener('DOMContentLoaded', () => {
   } else {
     history.replaceState({}, '', location.pathname);
   }
+
+  // Reabrir el panel que estaba abierto antes de recargar
+  (function(){
+    const v = leerVista();
+    if (!v) return;
+    if (v.panel === 'admin') {
+      // Solo si la sesión de admin sigue siendo válida
+      if (!hasAdminSession()) { guardarVista(null); return; }
+      openAdmin().then(() => {
+        if (v.tab && v.tab !== 'orders') switchAdminTab(v.tab);
+      });
+    } else if (v.panel === 'pedidos') {
+      if (!S.user) { guardarVista(null); return; }   // sin sesión no hay pedidos que ver
+      openOrdersPanel();
+    }
+  })();
 
   // Retorno desde MercadoPago
   (function(){
@@ -5930,6 +5947,7 @@ async function doAdminLogin(){
 }
 async function openAdmin(){
   document.getElementById('adminPanel').classList.add('open');
+  guardarVista({ panel:'admin', tab:'orders' });
   // reset to orders tab visually
   document.querySelectorAll('.admin-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === 'orders'));
   document.getElementById('adminStats').style.display = '';
@@ -5952,9 +5970,22 @@ async function openAdmin(){
     renderAdminOrders();
   }, 12000);
 }
+/* ── Recordar en que pantalla estabas al recargar ───────
+   La seccion del catalogo ya viaja en el hash de la URL; esto guarda
+   ademas los paneles que se abren encima (admin con su pestana, y
+   Mis Pedidos), que antes se perdian con cada F5. */
+const LS_VISTA = 'dubrem_vista_v1';
+function guardarVista(v){
+  try { v ? localStorage.setItem(LS_VISTA, JSON.stringify(v)) : localStorage.removeItem(LS_VISTA); } catch(e){}
+}
+function leerVista(){
+  try { return JSON.parse(localStorage.getItem(LS_VISTA) || 'null'); } catch(e){ return null; }
+}
+
 function closeAdmin(){
   clearInterval(window._adminPollInterval);
   document.getElementById('adminPanel').classList.remove('open');
+  guardarVista(null);
 }
 
 /* ── filtros de pedidos ── */
@@ -6281,10 +6312,12 @@ async function deleteOrder(orderNum){
    PANEL MIS PEDIDOS (CLIENTE)
 ────────────────────────────────────────────────────── */
 function openOrdersPanel(){
+  guardarVista({ panel:'pedidos' });
   document.getElementById('customerPanel').classList.add('open');
   loadOrdersPanel();
 }
 function closeOrdersPanel(){
+  guardarVista(null);
   document.getElementById('customerPanel').classList.remove('open');
 }
 async function loadOrdersPanel(){
