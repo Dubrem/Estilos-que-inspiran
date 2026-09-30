@@ -1666,7 +1666,20 @@
 
     /* Multi-image admin grid */
     .admin-img-grid { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; }
-    .admin-img-slot { width:72px; height:90px; border-radius:10px; overflow:hidden; position:relative; flex-shrink:0; }
+    .admin-img-slot { width:72px; height:90px; border-radius:10px; overflow:hidden; position:relative; flex-shrink:0;
+      touch-action:none; cursor:grab; user-select:none; -webkit-user-select:none; }
+    .admin-img-slot.is-main { outline:2px solid var(--rose); outline-offset:-2px; }
+    .admin-img-slot .ai-num {
+      position:absolute; bottom:3px; left:3px; min-width:17px; height:17px; padding:0 5px;
+      border-radius:9px; background:rgba(0,0,0,.6); color:#fff; font-size:.55rem; font-weight:700;
+      display:flex; align-items:center; justify-content:center; line-height:1; pointer-events:none;
+    }
+    .admin-img-slot.is-main .ai-num { background:var(--rose); }
+    .admin-img-slot.dragging {
+      opacity:.9; box-shadow:0 10px 26px rgba(0,0,0,.35); z-index:5; cursor:grabbing;
+    }
+    .admin-img-grid.reordering .admin-img-slot:not(.dragging) { transition:transform .16s ease; }
+    .ai-hint { width:100%; font-size:.6rem; color:var(--text-light); margin:-2px 0 8px; letter-spacing:.02em; }
     .admin-img-slot img { width:100%; height:100%; object-fit:cover; display:block; }
     .admin-img-slot .ai-remove { position:absolute; top:3px; right:3px; width:18px; height:18px; border-radius:50%; background:rgba(0,0,0,.55); color:#fff; font-size:10px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1; }
     .admin-img-add { width:72px; height:90px; border-radius:10px; border:1.5px dashed var(--rose-light); background:var(--blush-light); display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; gap:4px; color:var(--rose); font-size:.6rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; flex-shrink:0; }
@@ -3545,9 +3558,12 @@ function renderAdminImgGrid() {
   const grid = document.getElementById('adminImgGrid');
   if (!grid) return;
   const preview = document.getElementById('prodEditImgPreview');
-  let html = _adminImgs.map((src, i) => `
-    <div class="admin-img-slot">
-      <img src="${src}" alt="foto ${i+1}">
+  let html = _adminImgs.length > 1
+    ? `<div class="ai-hint">Arrastra las fotos para cambiar su orden · la 1ª es la portada</div>` : '';
+  html += _adminImgs.map((src, i) => `
+    <div class="admin-img-slot${i === 0 ? ' is-main' : ''}" data-idx="${i}">
+      <img src="${src}" alt="foto ${i+1}" draggable="false">
+      <span class="ai-num">${i === 0 ? '1 · Portada' : i + 1}</span>
       <button class="ai-remove" onclick="removeAdminImg(${i})" title="Quitar">&#x2715;</button>
     </div>`).join('');
   if (_adminImgs.length < 5) {
@@ -3561,6 +3577,71 @@ function renderAdminImgGrid() {
     if (_adminImgs.length) { preview.src = _adminImgs[0]; preview.style.display = 'block'; }
     else { preview.src = ''; preview.style.display = 'none'; }
   }
+  initAdminImgDrag();
+}
+
+/* Reordenar las fotos arrastrandolas. Pointer events para que funcione
+   igual con el dedo y con el raton; mientras se arrastra manda el orden
+   del DOM, y al soltar se vuelca a _adminImgs. */
+function initAdminImgDrag(){
+  const grid = document.getElementById('adminImgGrid');
+  if (!grid || grid.dataset.dragReady) return;
+  grid.dataset.dragReady = '1';
+
+  let slot = null, previo = null, x0 = 0, y0 = 0, arrastrando = false;
+  const slots = () => [...grid.querySelectorAll('.admin-img-slot')];
+
+  grid.addEventListener('pointerdown', e => {
+    if (e.target.closest('.ai-remove')) return;       // la ✕ borra, no arrastra
+    const s = e.target.closest('.admin-img-slot');
+    if (!s || _adminImgs.length < 2) return;
+    slot = s; x0 = e.clientX; y0 = e.clientY; arrastrando = false;
+    previo = [..._adminImgs];
+    try { slot.setPointerCapture(e.pointerId); } catch(err) {}
+  });
+
+  grid.addEventListener('pointermove', e => {
+    if (!slot) return;
+    const dx = e.clientX - x0, dy = e.clientY - y0;
+    if (!arrastrando) {
+      if (Math.hypot(dx, dy) < 8) return;             // un toque no es un arrastre
+      arrastrando = true;
+      slot.classList.add('dragging');
+      grid.classList.add('reordering');
+    }
+    slot.style.transform = `translate(${dx}px, ${dy}px)`;
+
+    const sobre = slots().find(o => {
+      if (o === slot) return false;
+      const r = o.getBoundingClientRect();
+      return e.clientX >= r.left && e.clientX <= r.right
+          && e.clientY >= r.top  && e.clientY <= r.bottom;
+    });
+    if (sobre) {
+      const lista = slots();
+      const iba_antes = lista.indexOf(slot) < lista.indexOf(sobre);
+      sobre.parentNode.insertBefore(slot, iba_antes ? sobre.nextSibling : sobre);
+      // El nodo ya ocupa el hueco destino: se recalibra para que siga bajo el dedo
+      x0 = e.clientX; y0 = e.clientY;
+      slot.style.transform = '';
+    }
+  });
+
+  const soltar = () => {
+    if (!slot) return;
+    const hubo = arrastrando;
+    slot.classList.remove('dragging');
+    slot.style.transform = '';
+    grid.classList.remove('reordering');
+    if (hubo) {
+      const orden = slots().map(el => Number(el.dataset.idx));
+      _adminImgs = orden.map(i => previo[i]);
+    }
+    slot = null; arrastrando = false;
+    if (hubo) renderAdminImgGrid();
+  };
+  grid.addEventListener('pointerup', soltar);
+  grid.addEventListener('pointercancel', soltar);
 }
 
 function removeAdminImg(idx) {
