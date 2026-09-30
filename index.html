@@ -3778,7 +3778,10 @@ function findProduct(id) {
   return PRODUCT_OVERRIDES[id] || null;
 }
 
-function switchAdminTab(tab) {
+function switchAdminTab(tab, mantenerFiltro) {
+  // Al entrar por la pestaña se ven todas; el filtro solo llega desde
+  // la tarjeta de Agotadas, que pide mantenerlo
+  if (!mantenerFiltro) _soloAgotadas = false;
   guardarVista({ panel:'admin', tab });
   document.querySelectorAll('.admin-tab').forEach(b => {
     b.classList.toggle('active', b.dataset.tab === tab);
@@ -3909,8 +3912,10 @@ function matchAdminSearch(p) {
 /** El catalogo del cliente esconde lo agotado, pero el panel tiene que
  *  verlo: si no, una prenda que se vendio ya no se puede editar ni
  *  reactivar cuando vuelve a haber existencias. */
+let _soloAgotadas = false;
 function adminProducts() {
-  return getMergedProducts();
+  const todos = getMergedProducts();
+  return _soloAgotadas ? todos.filter(p => p.name && (p.hidden || (p.stock || 0) <= 0)) : todos;
 }
 
 function buildAdminCards() {
@@ -4021,6 +4026,16 @@ function renderAdminProducts() {
         <span style="font-size:.62rem;color:#888;letter-spacing:.1em;text-transform:uppercase;margin-right:4px;font-weight:600">Ordenar</span>
         ${sortBtns}
       </div>
+      ${_soloAgotadas ? `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+                    background:#fde2e2;border-radius:10px;padding:10px 14px;margin-bottom:14px">
+          <span style="font-size:.72rem;font-weight:700;color:#8b0000;letter-spacing:.04em">
+            Mostrando solo prendas agotadas (${prendasAgotadas()})
+          </span>
+          <button onclick="_soloAgotadas=false;renderAdminProducts()" style="padding:6px 14px;border:1.5px solid #c0392b;
+            background:transparent;color:#c0392b;border-radius:50px;font-size:.64rem;font-weight:700;cursor:pointer;
+            letter-spacing:.06em;text-transform:uppercase;font-family:var(--ff-body)">← Ver todas</button>
+        </div>` : ''}
       <div class="admin-prods-grid" id="adminProdsGrid">${buildAdminCards()}</div>
     ` : `<p style="font-size:.8rem;color:rgba(255,255,255,.35);text-align:center;margin-top:40px">Aún no hay productos. ¡Agrega el primero!</p>`}
   `;
@@ -6080,6 +6095,17 @@ function _filterOrders(){
   return list.sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
 }
 
+/* Una prenda esta agotada cuando se quedo sin existencias; el catalogo
+   la esconde pero sigue en el panel para poder reponerla. */
+function prendasDisponibles(){ return getMergedProducts().filter(p => p.name && !p.hidden && (p.stock || 0) > 0).length; }
+function prendasAgotadas(){    return getMergedProducts().filter(p => p.name && (p.hidden || (p.stock || 0) <= 0)).length; }
+
+/** Atajo desde la tarjeta: abre Productos filtrando las agotadas. */
+function verAgotadas(){
+  _soloAgotadas = true;
+  switchAdminTab('products', true);
+}
+
 function renderAdminOrders(){
   const stats   = document.getElementById('adminStats');
   const filtersEl = document.getElementById('adminFilters');
@@ -6109,7 +6135,8 @@ function renderAdminOrders(){
     <div class="stat-card" style="cursor:pointer" onclick="setOrderStatusFilter('completado')"  title="Filtrar completados"><div class="stat-val">${complet}</div><div class="stat-lbl">Completados</div></div>
     <div class="stat-card" style="border-top:2px solid #0a5931" title="Pedidos ya pagados, listos, enviados y completados"><div class="stat-val" style="color:#0a5931">${fmtMXN(cobrado)}</div><div class="stat-lbl">Ingresos cobrados</div></div>
     <div class="stat-card" style="border-top:2px solid #856404" title="Pedidos pendientes de pago"><div class="stat-val" style="color:#856404">${fmtMXN(porCobrar)}</div><div class="stat-lbl">Ingresos pendientes</div></div>
-    <div class="stat-card" style="border-top:2px solid var(--rose)" title="Prendas subidas al catálogo"><div class="stat-val" style="color:var(--rose)">${getMergedProducts().filter(p=>!p.hidden).length}</div><div class="stat-lbl">Prendas</div></div>`;
+    <div class="stat-card" style="border-top:2px solid var(--rose)" title="Prendas disponibles en el catálogo"><div class="stat-val" style="color:var(--rose)">${prendasDisponibles()}</div><div class="stat-lbl">Prendas</div></div>
+    <div class="stat-card" style="cursor:pointer;border-top:2px solid #c0392b" onclick="verAgotadas()" title="Sin existencias — toca para verlas en Productos"><div class="stat-val" style="color:#c0392b">${prendasAgotadas()}</div><div class="stat-lbl">Agotadas</div></div>`;
 
   const sf = _orderStatusFilter, df = _orderDateFilter;
   const filterActive = _isFilterActive();
