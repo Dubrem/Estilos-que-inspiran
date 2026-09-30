@@ -3235,7 +3235,9 @@ function startCatBannerSlideshow(section) {
   _heroSlides = ids.map(id => {
     const p = getMergedProducts().find(x => String(x.id) === String(id));
     if (!p) return null;
-    const src = prodThumb(p);
+    // La foto completa, no la miniatura: aqui se muestra a pantalla casi
+    // completa y una de 420px se ve pixeleada en cualquier telefono.
+    const src = prodPics(p)[0] || prodThumb(p);
     return src ? { src, id: String(p.id) } : null;
   }).filter(Boolean);
 
@@ -4222,7 +4224,7 @@ async function handleProductImageUpload(input) {
   for (const file of files) {
     if (_adminImgs.length >= 5) break;
     try {
-      const b64 = await compressImage(file, 900, 0.78);
+      const b64 = await compressImage(file, 1600, 0.82);
       _adminImgs.push(b64);
       added++;
     } catch(e) {}
