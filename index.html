@@ -1189,9 +1189,18 @@
     .prod-admin-card {
       background: #fff; border-radius: 12px; overflow: hidden;
       border: 1px solid var(--border); cursor: pointer;
+      position: relative;            /* ancla la cinta de estado */
       transition: box-shadow .2s, transform .2s;
     }
     .prod-admin-card:hover { box-shadow: 0 6px 20px var(--shadow-md); transform: translateY(-3px); }
+    .prod-admin-card.esta-oculto { opacity:.62; }
+    .prod-admin-card.esta-oculto:hover { opacity:1; }
+    .prod-admin-tag {
+      position:absolute; top:6px; left:6px; z-index:2; padding:3px 8px; border-radius:20px;
+      font-size:.52rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#fff;
+    }
+    .prod-admin-tag.tag-agotado    { background:#c0392b; }
+    .prod-admin-tag.tag-incompleto { background:#856404; }
     .prod-admin-img { width: 100%; aspect-ratio: 3/4; object-fit: cover; display: block; background: var(--blush-light); }
     .prod-admin-info { padding: 10px 12px 12px; }
     .prod-admin-name { font-size: .76rem; font-weight: 600; color: var(--text-dark); margin-bottom: 3px; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -3876,7 +3885,7 @@ function searchAdminProducts(q) {
   if (grid) grid.innerHTML = buildAdminCards();
   const count = document.getElementById('adminSearchCount');
   if (count) {
-    const n = getMergedProducts().filter(p => !p.hidden && matchAdminSearch(p)).length;
+    const n = adminProducts().filter(matchAdminSearch).length;
     count.textContent = _adminSearch ? `${n} resultado${n!==1?'s':''}` : '';
   }
 }
@@ -3888,8 +3897,15 @@ function matchAdminSearch(p) {
       || String(p.price||'').includes(q)
       || (p.subcat||'').toLowerCase().includes(q);
 }
+/** El catalogo del cliente esconde lo agotado, pero el panel tiene que
+ *  verlo: si no, una prenda que se vendio ya no se puede editar ni
+ *  reactivar cuando vuelve a haber existencias. */
+function adminProducts() {
+  return getMergedProducts();
+}
+
 function buildAdminCards() {
-  let all = getMergedProducts().filter(p => !p.hidden).filter(matchAdminSearch);
+  let all = adminProducts().filter(matchAdminSearch);
 
   if (_adminSort === 'newest') {
     all = all.slice().sort((a, b) => {
@@ -3928,11 +3944,19 @@ function buildAdminCards() {
   return all.map(p => {
     const imgSrc = prodThumb(p);
     const stkColor = p.stock === 0 ? 'color:#c0392b' : p.stock <= 5 ? 'color:#856404' : '';
+    // Sin nombre = registro a medias; agotado = fuera del catalogo pero
+    // editable, para poder reactivarlo cuando vuelva a haber existencias
+    const sinTerminar = !p.name;
+    const agotado = !sinTerminar && (p.stock === 0 || p.hidden);
+    const cinta = sinTerminar
+      ? `<span class="prod-admin-tag tag-incompleto">Sin terminar</span>`
+      : agotado ? `<span class="prod-admin-tag tag-agotado">Agotado</span>` : '';
     return `
-      <div class="prod-admin-card" onclick='openProductEditModal(${JSON.stringify(p.id)})'>
-        <img class="prod-admin-img" src="${imgSrc}" alt="${p.name}" loading="lazy" onerror="this.style.background='var(--blush)'">
+      <div class="prod-admin-card${agotado||sinTerminar?' esta-oculto':''}" onclick='openProductEditModal(${JSON.stringify(p.id)})'>
+        ${cinta}
+        <img class="prod-admin-img" src="${imgSrc}" alt="${p.name||''}" loading="lazy" onerror="this.style.background='var(--blush)'">
         <div class="prod-admin-info">
-          <div class="prod-admin-name">${p.name}</div>
+          <div class="prod-admin-name">${p.name || '<em style="color:#c0392b;font-style:normal">(sin nombre)</em>'}</div>
           <div class="prod-admin-meta">${fmtMXN(p.price)}</div>
           <div class="prod-admin-stock" style="${stkColor}">${p.stock} en stock</div>
           <div style="font-size:.58rem;margin-top:3px;${p.subcat?'color:#5a9e5a':'color:#c0392b;font-weight:700'}">${p.subcat ? catLabel(p.subcat) : '⚠ Sin sub-cat'}</div>
@@ -3944,7 +3968,7 @@ function buildAdminCards() {
 
 function renderAdminProducts() {
   const sec = document.getElementById('adminProdsSection');
-  const all = getMergedProducts().filter(p => !p.hidden);
+  const all = adminProducts();
 
   const sortBtns = [
     { val:'newest',     label:'🕐 Más recientes' },
