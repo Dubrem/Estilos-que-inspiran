@@ -569,7 +569,17 @@
     .hero-cat-tab.active { background:var(--rose); border-color:var(--rose); color:#fff; }
     .hero-current { display:flex; gap:10px; flex-wrap:wrap; align-items:flex-start; margin-bottom:18px; min-height:50px; padding:12px; background:var(--blush-light); border-radius:12px; }
     .hero-current-empty { font-size:.72rem; color:var(--text-light); align-self:center; }
-    .hero-thumb-wrap { position:relative; width:72px; height:96px; border-radius:10px; overflow:hidden; border:2px solid var(--border); flex-shrink:0; }
+    .hero-thumb-wrap { position:relative; width:72px; height:96px; border-radius:10px; overflow:hidden; border:2px solid var(--border); flex-shrink:0;
+      touch-action:none; cursor:grab; user-select:none; -webkit-user-select:none; }
+    .hero-thumb-wrap.is-first { border-color:var(--rose); }
+    .hero-thumb-num {
+      position:absolute; bottom:3px; left:3px; min-width:17px; height:17px; padding:0 5px;
+      border-radius:9px; background:rgba(0,0,0,.6); color:#fff; font-size:.55rem; font-weight:700;
+      display:flex; align-items:center; justify-content:center; line-height:1; pointer-events:none;
+    }
+    .hero-thumb-wrap.is-first .hero-thumb-num { background:var(--rose); }
+    .hero-thumb-wrap.dragging { opacity:.9; box-shadow:0 10px 26px rgba(0,0,0,.35); z-index:5; cursor:grabbing; }
+    .hero-current.reordering .hero-thumb-wrap:not(.dragging) { transition:transform .16s ease; }
     .hero-thumb-wrap img { width:100%;height:100%;object-fit:cover; }
     .hero-thumb-remove { position:absolute;top:3px;right:3px;background:rgba(0,0,0,.65);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1; }
     .hero-prod-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(80px,1fr)); gap:10px; }
@@ -3597,23 +3607,21 @@ function renderAdminImgGrid() {
   initAdminImgDrag();
 }
 
-/* Reordenar las fotos arrastrandolas. Pointer events para que funcione
-   igual con el dedo y con el raton; mientras se arrastra manda el orden
-   del DOM, y al soltar se vuelca a _adminImgs. */
-function initAdminImgDrag(){
-  const grid = document.getElementById('adminImgGrid');
+/* Reordenar arrastrando. Generico: lo usan las fotos del producto y los
+   heroes de categoria. Mientras se arrastra manda el orden del DOM; al
+   soltar se entrega el nuevo orden de indices (los data-idx del render). */
+function initDragReorder(grid, itemSel, alSoltar){
   if (!grid || grid.dataset.dragReady) return;
   grid.dataset.dragReady = '1';
 
-  let slot = null, previo = null, x0 = 0, y0 = 0, arrastrando = false;
-  const slots = () => [...grid.querySelectorAll('.admin-img-slot')];
+  let slot = null, x0 = 0, y0 = 0, arrastrando = false;
+  const items = () => [...grid.querySelectorAll(itemSel)];
 
   grid.addEventListener('pointerdown', e => {
-    if (e.target.closest('.ai-remove')) return;       // la ✕ borra, no arrastra
-    const s = e.target.closest('.admin-img-slot');
-    if (!s || _adminImgs.length < 2) return;
+    if (e.target.closest('button')) return;      // la ✕ borra, no arrastra
+    const s = e.target.closest(itemSel);
+    if (!s || items().length < 2) return;
     slot = s; x0 = e.clientX; y0 = e.clientY; arrastrando = false;
-    previo = [..._adminImgs];
     try { slot.setPointerCapture(e.pointerId); } catch(err) {}
   });
 
@@ -3621,24 +3629,24 @@ function initAdminImgDrag(){
     if (!slot) return;
     const dx = e.clientX - x0, dy = e.clientY - y0;
     if (!arrastrando) {
-      if (Math.hypot(dx, dy) < 8) return;             // un toque no es un arrastre
+      if (Math.hypot(dx, dy) < 8) return;        // un toque no es un arrastre
       arrastrando = true;
       slot.classList.add('dragging');
       grid.classList.add('reordering');
     }
     slot.style.transform = `translate(${dx}px, ${dy}px)`;
 
-    const sobre = slots().find(o => {
+    const sobre = items().find(o => {
       if (o === slot) return false;
       const r = o.getBoundingClientRect();
       return e.clientX >= r.left && e.clientX <= r.right
           && e.clientY >= r.top  && e.clientY <= r.bottom;
     });
     if (sobre) {
-      const lista = slots();
+      const lista = items();
       const iba_antes = lista.indexOf(slot) < lista.indexOf(sobre);
       sobre.parentNode.insertBefore(slot, iba_antes ? sobre.nextSibling : sobre);
-      // El nodo ya ocupa el hueco destino: se recalibra para que siga bajo el dedo
+      // Ya ocupa el hueco destino: se recalibra para que siga bajo el dedo
       x0 = e.clientX; y0 = e.clientY;
       slot.style.transform = '';
     }
@@ -3650,15 +3658,19 @@ function initAdminImgDrag(){
     slot.classList.remove('dragging');
     slot.style.transform = '';
     grid.classList.remove('reordering');
-    if (hubo) {
-      const orden = slots().map(el => Number(el.dataset.idx));
-      _adminImgs = orden.map(i => previo[i]);
-    }
+    const orden = items().map(el => Number(el.dataset.idx));
     slot = null; arrastrando = false;
-    if (hubo) renderAdminImgGrid();
+    if (hubo) alSoltar(orden);
   };
   grid.addEventListener('pointerup', soltar);
   grid.addEventListener('pointercancel', soltar);
+}
+
+function initAdminImgDrag(){
+  initDragReorder(document.getElementById('adminImgGrid'), '.admin-img-slot', orden => {
+    _adminImgs = orden.map(i => _adminImgs[i]);
+    renderAdminImgGrid();
+  });
 }
 
 function removeAdminImg(idx) {
@@ -3767,14 +3779,20 @@ function renderAdminHeroes(activeCat) {
     <div class="hero-cat-tabs">
       ${cats.map(c=>`<button class="hero-cat-tab${c===activeCat?' active':''}" onclick="renderAdminHeroes('${c}')">${labels[c]}</button>`).join('')}
     </div>
-    <p style="font-size:.68rem;color:var(--text-light);margin-bottom:10px;letter-spacing:.04em">Seleccionados como hero (toca para quitar):</p>
+    <p style="font-size:.68rem;color:var(--text-light);margin-bottom:10px;letter-spacing:.04em">
+      Seleccionados como hero${selected.length > 1 ? ' · arrastra para cambiar el orden en que rotan' : ''}:
+    </p>
     <div class="hero-current" id="heroCurrentWrap">
       ${selected.length === 0 ? `<span class="hero-current-empty">Sin imágenes seleccionadas${activeCat==='mujer'?' — se usa la foto por defecto':''}</span>` :
-        selected.map(id => {
+        selected.map((id, i) => {
           const p = getMergedProducts().find(x => String(x.id)===String(id));
           if (!p) return '';
           const src = prodThumb(p);
-          return `<div class="hero-thumb-wrap"><img src="${src}" alt="${p.name}"><button class="hero-thumb-remove" onclick="removeHero('${activeCat}','${id}')">✕</button></div>`;
+          return `<div class="hero-thumb-wrap${i===0?' is-first':''}" data-idx="${i}" title="${p.name}">
+            <img src="${src}" alt="${p.name}" draggable="false">
+            <span class="hero-thumb-num">${i===0 ? '1 · Primera' : i+1}</span>
+            <button class="hero-thumb-remove" onclick="removeHero('${activeCat}','${id}')">✕</button>
+          </div>`;
         }).join('')
       }
     </div>
@@ -3792,6 +3810,17 @@ function renderAdminHeroes(activeCat) {
         }).join('')
       }
     </div>`;
+
+  // El orden de CAT_HEROES es el orden en que rotan en la portada
+  initDragReorder(document.getElementById('heroCurrentWrap'), '.hero-thumb-wrap', orden => {
+    const ids = CAT_HEROES[activeCat] || [];
+    const nuevos = orden.map(i => ids[i]);
+    CAT_HEROES[activeCat] = nuevos;
+    fbSaveCatHero(activeCat, nuevos);
+    renderAdminHeroes(activeCat);
+    if (_heroSection === activeCat) startCatBannerSlideshow(activeCat);
+    toast('Orden del hero actualizado', 'ok');
+  });
 }
 function toggleHero(cat, id) {
   const ids = [...(CAT_HEROES[cat] || [])];
