@@ -3255,7 +3255,7 @@ function startCatBannerSlideshow(section) {
 
   // Cada slide es clickeable y abre su producto
   track.innerHTML = _heroSlides.map((s, i) =>
-    `<div class="cat-banner-slide${i===0?' active':''}" onclick="catBannerSlideClick(${i})" style="cursor:pointer${s.mini?`;background-image:url('${s.mini}');background-size:cover;background-position:center 20%`:''}"><img src="${s.src}" alt="" decoding="async" onload="this.classList.add('lista')" onerror="this.classList.add('lista')"${i===0?'':' loading="lazy"'}></div>`
+    `<div class="cat-banner-slide${i===0?' active':''}" onclick="catBannerSlideClick(${i})" style="cursor:pointer${s.mini?`;background-image:url('${s.mini}');background-size:cover;background-position:center 20%`:''}"><img src="${s.src}" alt="" decoding="async" onload="this.classList.add('lista')" onerror="this.classList.add('lista')" fetchpriority="${i===0?'high':'low'}"></div>`
   ).join('');
 
   // Dots
