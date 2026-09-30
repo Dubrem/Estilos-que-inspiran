@@ -1619,7 +1619,10 @@
     }
     @media(max-width:640px){
       .header-inner{padding:0 1.2rem}
-      .filter-bar { padding:68px 1.2rem 14px; }
+      /* El ticker de arriba (42px) ya queda oculto tras el header fijo (49px),
+         asi que aqui solo faltan los ultimos px: con 68 se abria un hueco
+         blanco de 61px entre el header y el hero. */
+      .filter-bar { padding:8px 1.2rem 14px; }
       .cat-banner {
         height:60vh; min-height:340px; max-height:620px;
         width:100vw; max-width:none;
