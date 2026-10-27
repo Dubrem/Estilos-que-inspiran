@@ -6010,7 +6010,7 @@ async function openAdmin(){
     `<div class="admin-empty"><div class="admin-empty-icon">⏳</div><p>Cargando pedidos…</p></div>`;
   // Los pedidos pesan ~2 KB: se pintan en cuanto llegan, sin esperar al
   // catálogo. El catálogo se refresca aparte y vuelve a pintar al terminar.
-  await syncAdminOrders();
+  await Promise.all([syncAdminOrders(), fbCargarCortes()]);
   renderAdminOrders();
   fbRefreshProductMeta({ fresh: true }).then(refrescarPedidosSiVisible);
   // Polling cada 12s para detectar pagos automáticos
@@ -6122,6 +6122,79 @@ function verAgotadas(){
   switchAdminTab('products', true);
 }
 
+/* ── CORTES DE CAJA ──────────────────────────────────
+   Un corte cierra el periodo: el dinero ya cobrado se da por repartido
+   y la cuenta vuelve a empezar en $0. Cada pedido cobrado se sella con
+   el id del corte, asi que uno que se marque pagado despues del corte
+   entra en el periodo nuevo aunque sea un pedido viejo. */
+let CORTES = [];
+const COBRADOS_ST = ['pagado','listo','enviado','despachado','completado'];
+const esCobrado = o => COBRADOS_ST.includes(o.status);
+
+async function fbCargarCortes(){
+  const data = await fbFetch('cortes');
+  CORTES = data && typeof data === 'object'
+    ? Object.values(data).filter(Boolean).sort((a,b) => (b.ts||0) - (a.ts||0))
+    : [];
+  return CORTES;
+}
+
+/** Pedidos cobrados que todavia no entran en ningun corte. */
+function pedidosDelPeriodo(){ return S.orders.filter(o => esCobrado(o) && !o.corte); }
+function totalDelPeriodo(){ return pedidosDelPeriodo().reduce((s,o) => s + (o.total||0), 0); }
+function totalDeCortes(){ return CORTES.reduce((s,c) => s + (c.total||0), 0); }
+function totalAcumulado(){ return totalDeCortes() + totalDelPeriodo(); }
+
+async function hacerCorte(){
+  const pedidos = pedidosDelPeriodo();
+  const monto = totalDelPeriodo();
+  if (!pedidos.length) { toast('No hay ingresos nuevos que cortar', 'err'); return; }
+
+  const hoy = new Date();
+  if (!confirm(
+    `¿Cerrar el corte de ${fmtMXN(monto)}?\n\n` +
+    `• ${pedidos.length} pedido${pedidos.length!==1?'s':''} cobrado${pedidos.length!==1?'s':''}\n` +
+    `• Fecha: ${hoy.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}\n\n` +
+    `Los ingresos cobrados vuelven a $0 y este monto pasa al historial.\n` +
+    `El acumulado total no se pierde.`
+  )) return;
+
+  const id = 'c' + Date.now();
+  const corte = {
+    id, ts: Date.now(),
+    fecha: hoy.toLocaleDateString('es-MX', { day:'numeric', month:'long', year:'numeric' }),
+    total: monto,
+    nPedidos: pedidos.length,
+    pedidos: pedidos.map(o => o.num),
+  };
+
+  // Sellar los pedidos primero: si algo falla, no se pierde el dinero del
+  // periodo, solo habria que repetir el corte
+  await Promise.all(pedidos.map(async o => {
+    o.corte = id;
+    if (!FIREBASE_DB_URL) return;
+    return fetch(`${FIREBASE_DB_URL}/orders/${orderKey(o.num)}/corte.json`, {
+      method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(id)
+    }).catch(()=>{});
+  }));
+  await fbSet(`cortes/${id}`, corte);
+  CORTES.unshift(corte);
+
+  renderAdminOrders();
+  toast(`Corte de ${fmtMXN(monto)} cerrado`, 'ok');
+}
+
+function verHistorialCortes(){
+  if (!CORTES.length) { toast('Aún no hay cortes cerrados', ''); return; }
+  const lineas = CORTES.map(c =>
+    `${c.fecha} — ${fmtMXN(c.total)}  (${c.nPedidos} pedido${c.nPedidos!==1?'s':''})`
+  ).join('\n');
+  alert(`HISTORIAL DE CORTES\n\n${lineas}\n\n` +
+        `Suma de cortes: ${fmtMXN(totalDeCortes())}\n` +
+        `Periodo en curso: ${fmtMXN(totalDelPeriodo())}\n` +
+        `ACUMULADO TOTAL: ${fmtMXN(totalAcumulado())}`);
+}
+
 function renderAdminOrders(){
   const stats   = document.getElementById('adminStats');
   const filtersEl = document.getElementById('adminFilters');
@@ -6129,30 +6202,18 @@ function renderAdminOrders(){
 
   /* — stats generales siempre sobre todos los pedidos — */
   const total    = S.orders.length;
-  const pendient  = S.orders.filter(o=>o.status==='pendiente').length;
-  const pagados   = S.orders.filter(o=>o.status==='pagado').length;
-  const listos    = S.orders.filter(o=>o.status==='listo').length;
-  const cancelados= S.orders.filter(o=>o.status==='cancelado').length;
-  const complet   = S.orders.filter(o=>o.status==='completado').length;
-  // Un pedido cancelado no entro dinero: queda fuera de los dos totales.
-  // Cobrado = ya se pago (y todo lo que viene despues de pagar).
-  // Por cobrar = el resto de los vivos, o sea los pendientes.
-  const COBRADOS = ['pagado','listo','enviado','despachado','completado'];
-  const vivos     = S.orders.filter(o=>o.status!=='cancelado');
-  const cobrado   = vivos.filter(o=> COBRADOS.includes(o.status)).reduce((s,o)=>s+o.total,0);
-  const porCobrar = vivos.filter(o=>!COBRADOS.includes(o.status)).reduce((s,o)=>s+o.total,0);
+  // Un pedido cancelado no entro dinero: queda fuera de los totales
+  const porCobrar = S.orders
+    .filter(o => o.status !== 'cancelado' && !esCobrado(o))
+    .reduce((s,o) => s + (o.total||0), 0);
 
   stats.innerHTML = `
-    <div class="stat-card" style="cursor:pointer" onclick="setOrderStatusFilter('all')"         title="Ver todos"><div class="stat-val">${total}</div><div class="stat-lbl">Total</div></div>
-    <div class="stat-card" style="cursor:pointer" onclick="setOrderStatusFilter('pendiente')"   title="Filtrar pendientes"><div class="stat-val">${pendient}</div><div class="stat-lbl">Pendientes</div></div>
-    <div class="stat-card" style="cursor:pointer" onclick="setOrderStatusFilter('pagado')"      title="Filtrar pagados"><div class="stat-val">${pagados}</div><div class="stat-lbl">Pagados</div></div>
-    <div class="stat-card" style="cursor:pointer" onclick="setOrderStatusFilter('listo')"       title="Filtrar listos"><div class="stat-val">${listos}</div><div class="stat-lbl">Listos</div></div>
-    <div class="stat-card" style="cursor:pointer" onclick="setOrderStatusFilter('cancelado')"  title="Filtrar cancelados"><div class="stat-val">${cancelados}</div><div class="stat-lbl">Cancelados</div></div>
-    <div class="stat-card" style="cursor:pointer" onclick="setOrderStatusFilter('completado')"  title="Filtrar completados"><div class="stat-val">${complet}</div><div class="stat-lbl">Completados</div></div>
-    <div class="stat-card" style="border-top:2px solid #0a5931" title="Pedidos ya pagados, listos, enviados y completados"><div class="stat-val" style="color:#0a5931">${fmtMXN(cobrado)}</div><div class="stat-lbl">Ingresos cobrados</div></div>
+    <div class="stat-card" style="cursor:pointer" onclick="setOrderStatusFilter('all')" title="Ver todos"><div class="stat-val">${total}</div><div class="stat-lbl">Total</div></div>
+    <div class="stat-card" style="border-top:2px solid #0a5931" title="Cobrado desde el último corte"><div class="stat-val" style="color:#0a5931">${fmtMXN(totalDelPeriodo())}</div><div class="stat-lbl">Por cortar</div></div>
     <div class="stat-card" style="border-top:2px solid #856404" title="Pedidos pendientes de pago"><div class="stat-val" style="color:#856404">${fmtMXN(porCobrar)}</div><div class="stat-lbl">Ingresos pendientes</div></div>
     <div class="stat-card" style="border-top:2px solid var(--rose)" title="Prendas disponibles en el catálogo"><div class="stat-val" style="color:var(--rose)">${prendasDisponibles()}</div><div class="stat-lbl">Prendas disponibles</div></div>
-    <div class="stat-card" style="cursor:pointer;border-top:2px solid #c0392b" onclick="verAgotadas()" title="Sin existencias — toca para verlas en Productos"><div class="stat-val" style="color:#c0392b">${prendasAgotadas()}</div><div class="stat-lbl">Prendas agotadas</div></div>`;
+    <div class="stat-card" style="cursor:pointer;border-top:2px solid #c0392b" onclick="verAgotadas()" title="Sin existencias — toca para verlas en Productos"><div class="stat-val" style="color:#c0392b">${prendasAgotadas()}</div><div class="stat-lbl">Prendas agotadas</div></div>
+    <div class="stat-card" style="cursor:pointer;border-top:2px solid #1b3a5c" onclick="verHistorialCortes()" title="Todo lo cobrado desde el inicio — toca para ver los cortes"><div class="stat-val" style="color:#1b3a5c">${fmtMXN(totalAcumulado())}</div><div class="stat-lbl">Acumulado total</div></div>`;
 
   const sf = _orderStatusFilter, df = _orderDateFilter;
   const filterActive = _isFilterActive();
@@ -6176,6 +6237,18 @@ function renderAdminOrders(){
     stats.style.display   = '';
     filtersEl.style.display = '';
     filtersEl.innerHTML = `
+      ${totalDelPeriodo() > 0 ? `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+                    background:#e8f5ec;border:1.5px solid #0a5931;border-radius:12px;padding:12px 16px;margin-bottom:12px">
+          <div>
+            <div style="font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:#0a5931;font-weight:700">Listo para cortar</div>
+            <div style="font-size:1.1rem;font-weight:800;color:#0a5931">${fmtMXN(totalDelPeriodo())}
+              <span style="font-size:.68rem;font-weight:600;opacity:.75">· ${pedidosDelPeriodo().length} pedido${pedidosDelPeriodo().length!==1?'s':''}</span></div>
+          </div>
+          <button onclick="hacerCorte()" style="padding:10px 20px;border:none;border-radius:50px;background:#0a5931;
+            color:#fff;font-family:var(--ff-body);font-size:.7rem;font-weight:700;letter-spacing:.08em;
+            text-transform:uppercase;cursor:pointer;white-space:nowrap">✂️ Hacer corte</button>
+        </div>` : ''}
       <div class="admin-filter-row">
         <button class="filter-pill active" onclick="setOrderStatusFilter('all')">Todos</button>
         <button class="filter-pill" onclick="setOrderStatusFilter('pendiente')">🕐 Pendiente</button>
