@@ -3608,7 +3608,17 @@ function getMergedProducts(){
   const added = Object.entries(PRODUCT_OVERRIDES)
     .filter(([k]) => k.startsWith('new_'))
     .map(([k, v]) => ({ ...v, id: k }));
-  return [...base, ...added];
+  // Lo recien subido va primero: Firebase devuelve las claves ordenadas
+  // por nombre, o sea del mas viejo al mas nuevo, y asi las novedades
+  // quedaban hasta el fondo de cada categoria.
+  added.sort((a, b) => tsDeProducto(b) - tsDeProducto(a));
+  return [...added, ...base];
+}
+
+/** La clave 'new_<milisegundos>' lleva dentro la fecha en que se subio. */
+function tsDeProducto(p){
+  const id = String(p && p.id || '');
+  return id.startsWith('new_') ? (parseInt(id.slice(4), 10) || 0) : 0;
 }
 
 /* ──────────────────────────────────────────────────────
@@ -3929,11 +3939,7 @@ function buildAdminCards() {
   let all = adminProducts().filter(matchAdminSearch);
 
   if (_adminSort === 'newest') {
-    all = all.slice().sort((a, b) => {
-      const ta = typeof a.id === 'string' && a.id.startsWith('new_') ? parseInt(a.id.replace('new_','')) : 0;
-      const tb = typeof b.id === 'string' && b.id.startsWith('new_') ? parseInt(b.id.replace('new_','')) : 0;
-      return tb - ta;
-    });
+    all = all.slice().sort((a, b) => tsDeProducto(b) - tsDeProducto(a));
   } else if (_adminSort === 'sku_asc') {
     const parseSKU = s => {
       const str = (s || '').trim().toUpperCase();
