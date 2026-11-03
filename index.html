@@ -1290,7 +1290,11 @@
     @media(max-width:640px){
       .admin-header { padding:0 1rem; }
       .admin-logo   { font-size:1.1rem; }
-      .admin-tabs   { padding:0 1rem; }
+      /* Cuatro pestañas ya no caben en un celular: se deslizan de lado
+         y ninguna se encoge hasta volverse ilegible. */
+      .admin-tabs   { padding:0 1rem; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+      .admin-tabs::-webkit-scrollbar { display:none; }
+      .admin-tab    { flex:0 0 auto; padding:12px 16px; }
       /* Stats: una sola fila horizontal scrolleable */
       .admin-stats  {
         padding:8px 1rem; gap:6px;
@@ -3198,7 +3202,8 @@ async function fbSaveUser(user){
 // Se escribe una sola vez al entrar y se completa al salir, para que
 // medir el tráfico no le cueste nada a la carga de la página.
 const LS_VISITANTE = 'dubrem_visitante_v1';
-const SS_VISITA    = 'dubrem_visita_v1';
+const LS_VISITA    = 'dubrem_visita_v1';
+const VENTANA_VISITA = 30 * 60 * 1000;   // media hora: el estándar de analítica
 const VISITA = { key:null, dia:null, cats:new Set(), prods:0, sucio:false };
 
 /** AAAA-MM-DD en la hora local, que es con la que piensa la dueña. */
@@ -3236,14 +3241,30 @@ function origenVisita(){
   }catch(e){ return 'directo'; }
 }
 
+/** Guarda cuál es la visita en curso y cuándo se vio actividad por última vez. */
+function visitaEnCurso(){
+  try{
+    const v = JSON.parse(localStorage.getItem(LS_VISITA) || 'null');
+    if (v && v.key && (Date.now() - (v.t || 0)) < VENTANA_VISITA) return v;
+  }catch(e){}
+  return null;
+}
+function tocarVisita(){
+  if (!VISITA.key) return;
+  try{ localStorage.setItem(LS_VISITA, JSON.stringify({ key:VISITA.key, dia:VISITA.dia, t:Date.now() })); }catch(e){}
+}
+
 async function registrarVisita(){
   if (!FIREBASE_DB_URL) return;
   if (hasAdminSession()) return;              // lo que ve la dueña no es tráfico
-  // Una sola visita por pestaña: al navegar dentro del sitio no se duplica
-  try{
-    const abierta = JSON.parse(sessionStorage.getItem(SS_VISITA) || 'null');
-    if (abierta && abierta.key){ VISITA.key = abierta.key; VISITA.dia = abierta.dia; return; }
-  }catch(e){}
+  // Una visita = una persona dentro de media hora, no una pestaña: abrir tres
+  // pestañas, recargar o volver desde MercadoPago no cuenta como tres visitas.
+  const abierta = visitaEnCurso();
+  if (abierta){
+    VISITA.key = abierta.key; VISITA.dia = abierta.dia;
+    tocarVisita();
+    return;
+  }
 
   const v   = idVisitante();
   const dia = diaLocal();
@@ -3260,7 +3281,7 @@ async function registrarVisita(){
     if (!r.ok) return;
     const { name } = await r.json();
     VISITA.key = name; VISITA.dia = dia;
-    try{ sessionStorage.setItem(SS_VISITA, JSON.stringify({ key:name, dia })); }catch(e){}
+    tocarVisita();
   }catch(e){}
 }
 
@@ -3269,7 +3290,9 @@ function anotarProducto(){ VISITA.prods++; VISITA.sucio = true; }
 
 /** Completa el registro al salir: qué categorías vio y cuántas prendas abrió. */
 function cerrarVisita(){
-  if (!VISITA.key || !VISITA.sucio || !FIREBASE_DB_URL) return;
+  if (!VISITA.key || !FIREBASE_DB_URL) return;
+  tocarVisita();                    // sigue navegando: la visita no se parte en dos
+  if (!VISITA.sucio) return;
   VISITA.sucio = false;
   try{
     fetch(`${FIREBASE_DB_URL}/traffic/${VISITA.dia}/${VISITA.key}.json`, {
@@ -4009,7 +4032,10 @@ function switchAdminTab(tab, mantenerFiltro) {
   if (!mantenerFiltro) _filtroStock = 'todos';
   guardarVista({ panel:'admin', tab });
   document.querySelectorAll('.admin-tab').forEach(b => {
-    b.classList.toggle('active', b.dataset.tab === tab);
+    const activa = b.dataset.tab === tab;
+    b.classList.toggle('active', activa);
+    // En celular la barra se desliza: la pestaña activa se trae a la vista
+    if (activa && b.scrollIntoView) b.scrollIntoView({ inline:'center', block:'nearest' });
   });
   const body    = document.getElementById('adminBody');
   const stats   = document.getElementById('adminStats');
@@ -4153,9 +4179,10 @@ async function renderAdminClientes(){
     </div>
 
     <div class="cli-sub">Visitas de los últimos 14 días</div>
-    <div class="traf-chart">${barras}</div>
+    <div class="traf-chart" id="trafChart">${barras}</div>
     <div style="font-size:.6rem;color:var(--text-light);margin-top:7px;letter-spacing:.04em">
-      Una visita = una persona que abrió la tienda. No se cuentan tus propias entradas como admin.
+      Una visita = una persona en un lapso de media hora, aunque abra varias pestañas o recargue.
+      No se cuentan tus propias entradas como admin.
       De las ${t.visitas} visitas del mes, ${t.nuevos} fueron de alguien que entraba por primera vez
       y ${t.conCuenta} de clientas con sesión iniciada.
     </div>
@@ -4175,6 +4202,10 @@ async function renderAdminClientes(){
            style="max-width:340px;margin-bottom:14px">
     <div id="cliLista"></div>
   `;
+  // En celular la gráfica no cabe entera; se abre pegada a la derecha
+  // porque el dato que se busca es el de hoy, no el de hace dos semanas.
+  const chart = document.getElementById('trafChart');
+  if (chart) chart.scrollLeft = chart.scrollWidth;
   renderListaClientes();
 }
 
