@@ -1586,6 +1586,44 @@
     .toast.ok  { background:#1a6b3a; }
     .toast.err { background:#c0392b; }
 
+    /* ============================
+       WHATSAPP FLOTANTE
+       z-index 150: por debajo del carrito (200) y los modales (300+),
+       asi los overlays lo tapan solos cuando algo esta abierto.
+    ============================ */
+    .wa-float {
+      position:fixed; z-index:150;
+      right:22px; bottom:calc(22px + env(safe-area-inset-bottom, 0px));
+      width:58px; height:58px; border-radius:50%;
+      background:#25D366; color:#fff;
+      display:flex; align-items:center; justify-content:center;
+      box-shadow:0 8px 24px rgba(37,211,102,.42), 0 2px 8px rgba(0,0,0,.18);
+      transition:transform .22s ease, box-shadow .22s ease;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .wa-float svg { width:31px; height:31px; fill:currentColor; display:block; }
+    .wa-float:hover { transform:scale(1.07); box-shadow:0 12px 30px rgba(37,211,102,.55), 0 2px 8px rgba(0,0,0,.2); }
+    .wa-float:active { transform:scale(.95); }
+    .wa-float::after {
+      content:'Escríbenos';
+      position:absolute; right:calc(100% + 12px); top:50%; transform:translateY(-50%);
+      background:var(--text-dark); color:#fff;
+      font-family:var(--ff-body); font-size:.66rem; font-weight:600;
+      letter-spacing:.08em; text-transform:uppercase;
+      padding:7px 13px; border-radius:50px; white-space:nowrap;
+      opacity:0; pointer-events:none; transition:opacity .2s ease;
+      box-shadow:0 4px 14px rgba(0,0,0,.18);
+    }
+    .wa-float:hover::after { opacity:1; }
+    @media(max-width:640px){
+      .wa-float { right:16px; bottom:calc(16px + env(safe-area-inset-bottom, 0px)); width:52px; height:52px; }
+      .wa-float svg { width:28px; height:28px; }
+      .wa-float::after { display:none; }
+    }
+    @media (prefers-reduced-motion: reduce){
+      .wa-float, .wa-float:hover, .wa-float:active { transition:none; transform:none; }
+    }
+
     /* Botones auxiliares globales */
     .btn-orders {
       padding:7px 16px; border:1.5px solid var(--rose-light);
@@ -2838,6 +2876,12 @@ function cerrarApertura(){}
 
 <div class="toast" id="toast"></div>
 
+<!-- Boton flotante de WhatsApp: siempre visible para dudas rapidas -->
+<a class="wa-float" id="waFloat" href="#" target="_blank" rel="noopener"
+   aria-label="Escríbenos por WhatsApp" title="Escríbenos por WhatsApp">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.95 1.17-.17.2-.35.22-.65.07-.3-.15-1.13-.42-2.15-1.33-.8-.71-1.33-1.59-1.49-1.89-.15-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.68-1.62-.93-2.21-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.03 1-1.03 2.44 0 1.44 1.05 2.83 1.2 3.03.15.2 2.07 3.17 5.02 4.33.7.3 1.25.48 1.68.62.7.22 1.35.19 1.86.12.57-.09 1.76-.72 2.01-1.42.25-.7.25-1.29.17-1.42-.07-.12-.27-.2-.57-.35zM12.04 21.5h-.01c-1.74 0-3.46-.47-4.96-1.35l-.36-.21-3.69.97.99-3.6-.23-.37A9.42 9.42 0 0 1 2.4 11.9c0-5.29 4.3-9.59 9.6-9.59 2.56 0 4.97 1 6.78 2.81a9.53 9.53 0 0 1 2.81 6.79c0 5.29-4.3 9.59-9.55 9.59zM20.52 3.49A11.78 11.78 0 0 0 12.04 0C5.47 0 .13 5.34.13 11.9c0 2.1.55 4.15 1.6 5.95L0 24l6.31-1.66a11.9 11.9 0 0 0 5.73 1.46h.01c6.56 0 11.9-5.34 11.9-11.9 0-3.18-1.24-6.17-3.43-8.41z"/></svg>
+</a>
+
 <!-- ========== CAMBIAR CONTRASEÑA (3 pasos) ========== -->
 <div class="modal" id="changePassModal" style="z-index:800">
   <div class="modal-overlay" onclick="closeChangePassword()"></div>
@@ -2976,6 +3020,14 @@ const S = {
 };
 const SHIP_COST  = 110;
 const WA_NUMBER  = '525563723284';   // destino de los comprobantes
+
+// El boton flotante apunta al mismo numero, con un saludo ya escrito.
+(function(){
+  const el = document.getElementById('waFloat');
+  if (!el) return;
+  const msg = '¡Hola DUBREM! Me interesa saber más sobre sus prendas.';
+  el.href = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`;
+})();
 
 /** Copia al portapapeles la CLABE que se muestra junto al botón.
  *  Lee el valor del DOM para que nunca se copie algo distinto de lo visible. */
