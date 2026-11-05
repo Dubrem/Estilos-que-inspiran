@@ -1290,7 +1290,19 @@
     .bf-fechas{ font-size:.63rem; letter-spacing:.14em; text-transform:uppercase;
                 color:rgba(255,255,255,.5); margin-top:6px; }
 
-    .bf-wheel-wrap{ position:relative; width:290px; max-width:82vw; margin:16px auto 6px; }
+    .bf-reglas{ display:flex; flex-direction:column; gap:6px; margin:12px 0 2px; }
+    .bf-regla{
+      display:flex; align-items:center; justify-content:center; gap:7px;
+      border:1px solid rgba(214,174,106,.55); background:rgba(214,174,106,.12);
+      border-radius:50px; padding:8px 12px;
+      font-size:.68rem; font-weight:700; letter-spacing:.06em; color:#F0E4D6;
+    }
+    .bf-regla b{ color:#D6AE6A; font-weight:800; }
+    .bf-regla.fuerte{ background:#D6AE6A; border-color:#D6AE6A; color:#120F10;
+                      font-size:.72rem; letter-spacing:.1em; text-transform:uppercase; }
+    .bf-regla.fuerte b{ color:#120F10; }
+
+    .bf-wheel-wrap{ position:relative; width:290px; max-width:82vw; margin:14px auto 6px; }
     .bf-wheel-wrap::before{   /* aguja */
       content:''; position:absolute; top:-7px; left:50%; transform:translateX(-50%);
       border-left:11px solid transparent; border-right:11px solid transparent;
@@ -2989,7 +3001,11 @@ function cerrarApertura(){}
     <button class="bf-x" onclick="cerrarRuleta()">✕</button>
     <div class="bf-kicker">Solo del 6 al 8 de noviembre</div>
     <h2 class="bf-title">Buen Fin <span style="color:#D6AE6A">DUBREM</span></h2>
-    <div class="bf-fechas" id="bfSub">Gira la ruleta · un solo giro por cuenta</div>
+    <div class="bf-fechas" id="bfSub">Gira y gánate tu premio</div>
+    <div class="bf-reglas">
+      <div class="bf-regla fuerte">⚠️ Un solo giro por cuenta</div>
+      <div class="bf-regla">🛍️ Los premios aplican en pedidos desde <b id="bfMinimo">$400</b></div>
+    </div>
     <div class="bf-wheel-wrap">
       <svg class="bf-wheel" id="bfWheel" viewBox="0 0 320 320" aria-hidden="true"></svg>
     </div>
@@ -3402,27 +3418,43 @@ async function cargarTrafico(dias = 30){
 // cambiando de teléfono o borrando el navegador:
 //   buenfin/giros/<claveCorreo> = { premio, desc, n, ts, usado }
 const BUENFIN = {
-  inicio: '2026-11-05',   // adelantado un día para probar; la promo real es del 6 al 8
-  fin:    '2026-11-08',
-  minimo: 500,          // el descuento aplica desde este subtotal
-  vueltaMayor: 100      // el 40% sale una sola vez: en este número de giro
+  inicio: '2026-11-05',
+  fin:    '2026-11-15',
+  minimo: 400,          // el premio aplica desde este subtotal
+  vueltaMayor:  100,    // el 40% sale una sola vez: en este número de giro
+  vueltaGratis: 500,    // el pedido gratis, en este otro
+  topeGratis:   1500    // hasta cuánto cubre el pedido gratis
 };
 
 // Las casillas van intercaladas para que no queden dos premios iguales juntos.
+// 'peso' es el ancho de la rebanada: el pedido gratis es mucho más angosto.
 const BF_CASILLAS = [
-  { id:'d10',    txt:'10%',    desc:10 },
-  { id:'d15',    txt:'15%',    desc:15 },
-  { id:'d10',    txt:'10%',    desc:10 },
-  { id:'sigue',  txt:'Sigue',  desc:0, txt2:'participando' },
-  { id:'d10',    txt:'10%',    desc:10 },
-  { id:'d15',    txt:'15%',    desc:15 },
-  { id:'regalo', txt:'Regalo', desc:0, txt2:'sorpresa' },
-  { id:'d40',    txt:'40%',    desc:40 }
+  { id:'d10',    tipo:'pct',    txt:'10%',  desc:10, peso:1 },
+  { id:'d15',    tipo:'pct',    txt:'15%',  desc:15, peso:1 },
+  { id:'d10',    tipo:'pct',    txt:'10%',  desc:10, peso:1 },
+  { id:'sigue',  tipo:'sigue',  txt:'Sigue', desc:0, peso:1, txt2:'participando' },
+  { id:'gratis', tipo:'gratis', txt:'PEDIDO GRATIS', desc:0, peso:0.34, radial:true },
+  { id:'d10',    tipo:'pct',    txt:'10%',  desc:10, peso:1 },
+  { id:'d15',    tipo:'pct',    txt:'15%',  desc:15, peso:1 },
+  { id:'regalo', tipo:'regalo', txt:'Regalo', desc:0, peso:1, txt2:'sorpresa' },
+  { id:'d40',    tipo:'pct',    txt:'40%',  desc:40, peso:1 }
 ];
 const BF_NOMBRES = {
   d10:'10% de descuento', d15:'15% de descuento', d40:'40% de descuento',
-  sigue:'Sigue participando', regalo:'Regalo sorpresa'
+  sigue:'Sigue participando', regalo:'Regalo sorpresa', gratis:'¡Pedido gratis!'
 };
+
+/** Dónde empieza, dónde acaba y a qué ángulo mira el centro de cada rebanada. */
+function anglesCasillas(){
+  const total = BF_CASILLAS.reduce((s,c) => s + c.peso, 0);
+  let acum = 0;
+  return BF_CASILLAS.map(c => {
+    const ini = acum / total * 360;
+    acum += c.peso;
+    const fin = acum / total * 360;
+    return { ini, fin, centro: (ini + fin) / 2 };
+  });
+}
 
 let MI_PREMIO = null;      // el giro de quien tiene la sesión abierta
 let _bfGirando = false;
@@ -3456,26 +3488,40 @@ function dibujarRuleta(){
   const svg = document.getElementById('bfWheel');
   if (!svg || svg.dataset.listo) return;
   const cx = 160, cy = 160, r = 155;
-  const colores = ['#2A2224','#C2667A','#2A2224','#6E6860','#2A2224','#C2667A','#6E6860','#D6AE6A'];
+  const colores = {
+    d10:'#2A2224', d15:'#C2667A', sigue:'#6E6860',
+    regalo:'#6E6860', d40:'#D6AE6A', gratis:'#0a5931'
+  };
   const pol = (ang, radio) => {
     const a = (ang - 90) * Math.PI / 180;
     return [cx + radio*Math.cos(a), cy + radio*Math.sin(a)];
   };
+  const ang = anglesCasillas();
   let html = '';
   BF_CASILLAS.forEach((c, i) => {
-    const ini = i*45 - 22.5, fin = i*45 + 22.5;
+    const { ini, fin, centro } = ang[i];
     const [x1,y1] = pol(ini, r), [x2,y2] = pol(fin, r);
-    html += `<path d="M${cx} ${cy} L${x1.toFixed(2)} ${y1.toFixed(2)} A${r} ${r} 0 0 1 ${x2.toFixed(2)} ${y2.toFixed(2)} Z"
-                   fill="${colores[i]}" stroke="#120F10" stroke-width="1.5"/>`;
+    const largo = (fin - ini) > 180 ? 1 : 0;
+    html += `<path d="M${cx} ${cy} L${x1.toFixed(2)} ${y1.toFixed(2)} A${r} ${r} 0 ${largo} 1 ${x2.toFixed(2)} ${y2.toFixed(2)} Z"
+                   fill="${colores[c.id]}" stroke="#120F10" stroke-width="1.5"/>`;
+
+    if (c.radial){
+      // La rebanada angosta no admite texto de lado a lado: se escribe hacia afuera
+      html += `<text transform="rotate(${centro} ${cx} ${cy}) rotate(-90 ${cx} 64)"
+                     x="${cx}" y="64" text-anchor="middle" fill="#fff"
+                     font-family="DM Sans, sans-serif" font-weight="800" font-size="11"
+                     letter-spacing="0.4">${c.txt}</text>`;
+      return;
+    }
     // Las casillas de la mitad de abajo se voltean 180° o el texto se lee al revés
     const grande  = c.desc > 0;
-    const volteada= i*45 > 90 && i*45 < 270;
-    const giro    = i*45 + (volteada ? 180 : 0);
+    const volteada= centro > 90 && centro < 270;
+    const giro    = centro + (volteada ? 180 : 0);
     const ty1 = c.txt2 ? 56 : 62, ty2 = 72;
     const py  = v => volteada ? 320 - v : v;
     const yA  = volteada ? py(ty2) : py(ty1);   // primer renglón
     const yB  = volteada ? py(ty1) : py(ty2);   // segundo renglón
-    const tinta = i === 7 ? '#120F10' : '#fff';
+    const tinta = c.id === 'd40' ? '#120F10' : '#fff';
     html += `<g transform="rotate(${giro} ${cx} ${cy})">
         <text x="${cx}" y="${yA}" text-anchor="middle" fill="${tinta}"
               font-family="DM Sans, sans-serif" font-weight="${grande?800:600}"
@@ -3491,7 +3537,7 @@ function dibujarRuleta(){
   svg.dataset.listo = '1';
 }
 
-/** "del 6 al 8 de noviembre", armado con las fechas reales de la promoción. */
+/** "Solo del 5 al 15 de noviembre", armado con las fechas de la promoción. */
 function rangoBuenFin(){
   const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio',
                  'agosto','septiembre','octubre','noviembre','diciembre'];
@@ -3506,6 +3552,7 @@ async function abrirRuleta(){
   if (!buenFinActivo() || !S.user) return;
   dibujarRuleta();
   document.querySelector('#bfModal .bf-kicker').textContent = rangoBuenFin();
+  document.getElementById('bfMinimo').textContent = fmtMXN(BUENFIN.minimo);
   document.getElementById('bfModal').classList.add('open');
   lockScroll();
   await cargarPremioBuenFin();
@@ -3527,30 +3574,35 @@ function pintarEstadoRuleta(){
     btn.textContent = 'Ya usaste tu giro';
     nota.textContent = '';
     const idx = BF_CASILLAS.findIndex(c => c.id === MI_PREMIO.premio);
-    if (idx >= 0) document.getElementById('bfWheel').style.transform = `rotate(${-idx*45}deg)`;
+    if (idx >= 0) document.getElementById('bfWheel').style.transform = `rotate(${-anglesCasillas()[idx].centro}deg)`;
     res.innerHTML = textoPremio(MI_PREMIO);
   } else {
     btn.disabled = false;
     btn.textContent = 'Girar la ruleta';
-    nota.textContent = `Un solo giro por cuenta. Los descuentos aplican en pedidos desde ${fmtMXN(BUENFIN.minimo)}.`;
+    nota.textContent = 'Tu premio se guarda en tu cuenta y se aplica solo al pagar.';
     res.innerHTML = '';
   }
 }
 
 function textoPremio(g){
   const nombre = BF_NOMBRES[g.premio] || g.premio;
+  const tipo = g.tipo || (g.desc > 0 ? 'pct' : g.premio);
   let detalle;
-  if (g.desc > 0) {
+  if (tipo === 'pct' || tipo === 'gratis') {
+    const que = tipo === 'gratis'
+      ? `Cubrimos tu pedido completo hasta <b>${fmtMXN(BUENFIN.topeGratis)}</b>.`
+      : '';
     detalle = g.usado
       ? `Ya lo aplicaste en tu pedido <b>${g.usado}</b>.`
-      : `Se aplica solo en tu compra, en pedidos desde <b>${fmtMXN(BUENFIN.minimo)}</b>. Válido hasta el último día de la promoción.`;
+      : `${que} Se aplica solo en tu compra, en pedidos desde <b>${fmtMXN(BUENFIN.minimo)}</b>. Válido hasta el último día de la promoción.`;
   } else if (g.premio === 'regalo') {
     detalle = 'Agregamos un detalle sorpresa a tu próximo pedido. Nosotros lo anotamos, tú solo compra.';
   } else {
     detalle = 'Esta vez no salió premio, ¡pero gracias por participar! 🩷';
   }
+  const cara = tipo === 'gratis' ? '🎉' : (g.desc > 0 ? g.desc + '%' : (g.premio === 'regalo' ? '🎁' : '🩷'));
   return `<div class="bf-resultado">
-    <div class="bf-res-premio">${g.desc > 0 ? g.desc + '%' : (g.premio === 'regalo' ? '🎁' : '🩷')}</div>
+    <div class="bf-res-premio">${cara}</div>
     <div class="bf-res-txt"><b>${nombre}</b><br>${detalle}</div>
   </div>`;
 }
@@ -3568,21 +3620,25 @@ async function girarRuleta(){
 
   const n = (await girosHechos()) + 1;
   let idx;
-  if (n === BUENFIN.vueltaMayor) {
-    idx = BF_CASILLAS.findIndex(c => c.id === 'd40');
-  } else {
-    // El 40% no entra en el sorteo normal: solo sale en la vuelta marcada
-    const posibles = BF_CASILLAS.map((c,i) => i).filter(i => BF_CASILLAS[i].id !== 'd40');
+  if (n === BUENFIN.vueltaMayor)       idx = BF_CASILLAS.findIndex(c => c.id === 'd40');
+  else if (n === BUENFIN.vueltaGratis) idx = BF_CASILLAS.findIndex(c => c.id === 'gratis');
+  else {
+    // Los dos premios mayores no entran en el sorteo normal: solo en su vuelta
+    const posibles = BF_CASILLAS
+      .map((c,i) => i)
+      .filter(i => BF_CASILLAS[i].id !== 'd40' && BF_CASILLAS[i].id !== 'gratis');
     idx = posibles[Math.floor(Math.random() * posibles.length)];
   }
   const casilla = BF_CASILLAS[idx];
-  const giro = { premio: casilla.id, desc: casilla.desc, n, ts: Date.now(), usado: false };
+  const giro = { premio: casilla.id, tipo: casilla.tipo, desc: casilla.desc, n, ts: Date.now(), usado: false };
 
-  // Girar: 6 vueltas completas y aterrizar en la casilla que tocó
-  const rueda = document.getElementById('bfWheel');
-  const jitter = (Math.random() * 28) - 14;
+  // Girar: 6 vueltas completas y aterrizar en la casilla que tocó, sin pasarse
+  const angs   = anglesCasillas();
+  const ancho  = angs[idx].fin - angs[idx].ini;
+  const jitter = (Math.random() - 0.5) * ancho * 0.7;
+  const rueda  = document.getElementById('bfWheel');
   rueda.classList.add('girando');
-  rueda.style.transform = `rotate(${360*6 - idx*45 + jitter}deg)`;
+  rueda.style.transform = `rotate(${360*6 - angs[idx].centro + jitter}deg)`;
 
   await fbSet(`buenfin/giros/${claveCorreo(S.user.email)}`, giro);
   MI_PREMIO = giro;
@@ -3599,15 +3655,25 @@ async function girarRuleta(){
 
 /* ── El descuento en el carrito ── */
 
-/** El premio solo sirve si la promoción sigue viva, no se ha usado y hay descuento. */
+/** El premio solo sirve si la promoción sigue viva, no se ha usado y da dinero. */
 function premioAplicable(){
-  if (!buenFinActivo() || !MI_PREMIO || MI_PREMIO.usado || !MI_PREMIO.desc) return null;
-  return MI_PREMIO;
+  if (!buenFinActivo() || !MI_PREMIO || MI_PREMIO.usado) return null;
+  const tipo = MI_PREMIO.tipo || (MI_PREMIO.desc > 0 ? 'pct' : null);
+  return (tipo === 'pct' || tipo === 'gratis') ? MI_PREMIO : null;
 }
+/** Cuánto se le quita a cada precio. 0 = la prenda sale gratis. */
 function factorDescuento(){
   const p = premioAplicable();
-  if (!p) return 1;
-  return cartSubtotal() >= BUENFIN.minimo ? (1 - p.desc/100) : 1;
+  const sub = cartSubtotal();
+  if (!p || sub < BUENFIN.minimo) return 1;
+  if ((p.tipo || 'pct') === 'gratis')
+    return sub <= BUENFIN.topeGratis ? 0 : 1 - BUENFIN.topeGratis/sub;
+  return 1 - p.desc/100;
+}
+/** Cómo se llama el premio en el carrito: «40%» o «Pedido gratis». */
+function etiquetaPremio(p){
+  if (!p) return '';
+  return (p.tipo || 'pct') === 'gratis' ? 'Pedido gratis' : p.desc + '%';
 }
 function subtotalConDescuento(){
   const f = factorDescuento();
@@ -3622,7 +3688,7 @@ function montoDescuento(){ return Math.round((cartSubtotal() - subtotalConDescue
 /** El premio se gasta con el pedido: no se puede repetir en la siguiente compra. */
 function marcarPremioUsado(orden){
   if (!MI_PREMIO || MI_PREMIO.usado || !S.user) return;
-  const usa = (orden.bfDesc > 0) || orden.bfRegalo;
+  const usa = (orden.bfMonto > 0) || orden.bfRegalo;
   if (!usa) return;
   MI_PREMIO.usado = orden.num;
   fbSet(`buenfin/giros/${claveCorreo(S.user.email)}/usado`, orden.num);
@@ -3631,7 +3697,7 @@ function marcarPremioUsado(orden){
 /** Al cancelar un pedido, el premio que se había gastado vuelve a estar libre. */
 async function liberarPremioBuenFin(orden){
   if (!orden || !orden.email || !FIREBASE_DB_URL) return;
-  if (!orden.bfDesc && !orden.bfRegalo) return;
+  if (!orden.bfMonto && !orden.bfRegalo) return;
   const ruta = `buenfin/giros/${claveCorreo(orden.email)}`;
   const giro = await fbFetch(ruta);
   if (!giro || giro.usado !== orden.num) return;   // ya se usó en otro pedido
@@ -3648,8 +3714,11 @@ function avisoBuenFin(){
     return '';
   }
   const falta = BUENFIN.minimo - cartSubtotal();
-  return falta > 0
-    ? `<div class="bf-chip"><span class="bf-chip-ico">🎉</span><span>Tu <b>${p.desc}% del Buen Fin</b> se activa en pedidos desde ${fmtMXN(BUENFIN.minimo)}. Te faltan <b>${fmtMXN(falta)}</b>.</span></div>`
+  const esGratis = (p.tipo || 'pct') === 'gratis';
+  if (falta > 0)
+    return `<div class="bf-chip"><span class="bf-chip-ico">🎉</span><span>Tu premio del Buen Fin (<b>${etiquetaPremio(p)}</b>) se activa en pedidos desde ${fmtMXN(BUENFIN.minimo)}. Te faltan <b>${fmtMXN(falta)}</b>.</span></div>`;
+  return esGratis
+    ? `<div class="bf-chip"><span class="bf-chip-ico">🎁</span><span><b>¡Pedido gratis!</b> Cubrimos hasta ${fmtMXN(BUENFIN.topeGratis)} de este pedido.</span></div>`
     : `<div class="bf-chip"><span class="bf-chip-ico">🎉</span><span><b>Buen Fin DUBREM:</b> ${p.desc}% de descuento aplicado a este pedido.</span></div>`;
 }
 
@@ -6366,7 +6435,9 @@ function setPayMethod(m){
   document.getElementById('pmBankCheck').style.opacity = m==='bank' ? '1' : '0';
   document.getElementById('bankCard').style.display = m==='bank' ? '' : 'none';
   const btn = document.getElementById('btnConfirmarPedido');
-  if(btn) btn.textContent = m==='mp' ? '💳 Pagar con MercadoPago' : '✓ Confirmar Pedido';
+  // Si el premio dejó el pedido en $0 no hay nada que pagar: no se ofrece pasarela
+  const nadaQuePagar = (subtotalConDescuento() + S.shipCost) <= 0;
+  if(btn) btn.textContent = (m==='mp' && !nadaQuePagar) ? '💳 Pagar con MercadoPago' : '✓ Confirmar Pedido';
 }
 function startCheckout(){
   if(!S.cart.length){ toast('Tu carrito está vacío','err'); return; }
@@ -6408,7 +6479,7 @@ function summaryHTML(){
   const lines=S.cart.map(item=>{ const p=findProduct(item.id); return p?`<div class="summary-line"><span>${p.name} × ${item.qty}</span><span>${fmtMXN(p.price*item.qty)}</span></div>`:''; }).join('');
   const deliveryLbl = DELIVERY_LABELS[S.delivery] || '🏪 Recoger en tienda';
   const lineaDesc = desc > 0
-    ? `<div class="summary-line bf-desc"><span>Descuento Buen Fin (${MI_PREMIO.desc}%)</span><span>− ${fmtMXN(desc)}</span></div>`
+    ? `<div class="summary-line bf-desc"><span>Descuento Buen Fin (${etiquetaPremio(premioAplicable())})</span><span>− ${fmtMXN(desc)}</span></div>`
     : '';
   return `${avisoBuenFin()}<div class="summary-hdr">Resumen del Pedido</div>${lines}<div class="summary-line"><span>Subtotal</span><span>${fmtMXN(sub)}</span></div>${lineaDesc}<div class="summary-line"><span>Envío (${deliveryLbl})</span><span>${S.shipCost===0?'Gratis':fmtMXN(S.shipCost)}</span></div><div class="summary-total"><span>Total</span><span>${fmtMXN(total)} MXN</span></div>`;
 }
@@ -6470,7 +6541,8 @@ async function confirmOrder(){
   };
   // Buen Fin: queda anotado en el pedido para que el panel lo muestre
   if (descuento > 0 && premioUsado){
-    newOrder.bfDesc    = premioUsado.desc;
+    newOrder.bfPremio  = etiquetaPremio(premioUsado);
+    newOrder.bfDesc    = premioUsado.desc || 0;
     newOrder.bfMonto   = descuento;
     newOrder.bfSubtotal= cartSubtotal();
   }
@@ -6493,7 +6565,8 @@ async function confirmOrder(){
     if (document.querySelector('.products-section.catalog-visible')) renderGrid(_currentFilter);
   });
 
-  if(S.payMethod === 'mp'){
+  // Un pedido que quedó en $0 no pasa por MercadoPago: no hay nada que cobrar
+  if(S.payMethod === 'mp' && total > 0){
     // Pago con MercadoPago — redirigir a su checkout
     const confirmBtn2 = document.getElementById('btnConfirmarPedido');
     if(confirmBtn2){ confirmBtn2.textContent = '⏳ Preparando pago…'; }
@@ -6506,11 +6579,13 @@ async function confirmOrder(){
         return { id: String(item.id), title: name, quantity: item.qty, unit_price: conDesc };
       });
       if(S.shipCost > 0) mpItems.push({ id:'envio', title:'Envío', quantity:1, unit_price: S.shipCost });
+      // Con «pedido gratis» las prendas quedan en $0 y MercadoPago las rechaza
+      const mpCobrables = mpItems.filter(it => it.unit_price > 0);
       const r = await fetch('/api/create-preference', {
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify({
-          items: mpItems,
+          items: mpCobrables,
           payer: { name: S.user?.name || '', email: S.user?.email || '' },
           orderNum: num,
           backUrl: window.location.origin + window.location.pathname,
@@ -6543,8 +6618,11 @@ async function confirmOrder(){
   }
 
   // Pago por transferencia bancaria — flujo original
-  const msg = `¡Hola! 🖤 Ya realicé la transferencia bancaria de *${fmtMXN(total)} MXN* para mi pedido *${num}*. `
-            + `Por favor confirmar el despacho. ¡Gracias! — DUBREM`;
+  const msg = total <= 0
+    ? `¡Hola! 🎉 Mi pedido *${num}* quedó en *$0* con el premio Pedido Gratis del Buen Fin. `
+      + `Quedo pendiente de la confirmación. ¡Gracias! — DUBREM`
+    : `¡Hola! 🖤 Ya realicé la transferencia bancaria de *${fmtMXN(total)} MXN* para mi pedido *${num}*. `
+      + `Por favor confirmar el despacho. ¡Gracias! — DUBREM`;
   document.getElementById('btnWhatsApp').href =
     `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`;
 
@@ -7179,7 +7257,7 @@ function buildOrderCard(o){
         <div style="text-align:right">
           <span class="status-badge status-${st}">${statusMap[st]||st}</span>
           <div style="font-weight:700;font-size:1rem;margin-top:6px;color:var(--rose-dark)">${fmtMXN(o.total)} MXN</div>
-          ${o.bfDesc ? `<div style="font-size:.66rem;color:#0a5931;font-weight:700;margin-top:3px">🎉 Buen Fin −${o.bfDesc}% (${fmtMXN(o.bfMonto)})</div>` : ''}
+          ${o.bfMonto ? `<div style="font-size:.66rem;color:#0a5931;font-weight:700;margin-top:3px">🎉 Buen Fin · ${o.bfPremio || ('−'+o.bfDesc+'%')} (−${fmtMXN(o.bfMonto)})</div>` : ''}
           ${o.bfRegalo ? `<div style="font-size:.66rem;color:#856404;font-weight:700;margin-top:3px">🎁 Lleva regalo sorpresa</div>` : ''}
         </div>
       </div>
