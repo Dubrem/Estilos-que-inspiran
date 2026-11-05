@@ -3427,7 +3427,8 @@ const BUENFIN = {
   fin:    '2026-11-15',
   minimo: 300,          // el premio aplica desde este subtotal
   vueltaMayor:  100,    // el 40% sale una sola vez: en este número de giro
-  vueltaGratis: 500,    // el pedido gratis, en este otro
+  vueltaGratis: null,   // el pedido gratis se ve en la ruleta pero no se entrega
+                        // a nadie; ponle un número de giro para habilitarlo
   topeGratis:   1500    // hasta cuánto cubre el pedido gratis
 };
 
@@ -3625,8 +3626,10 @@ async function girarRuleta(){
 
   const n = (await girosHechos()) + 1;
   let idx;
-  if (n === BUENFIN.vueltaMayor)       idx = BF_CASILLAS.findIndex(c => c.id === 'd40');
-  else if (n === BUENFIN.vueltaGratis) idx = BF_CASILLAS.findIndex(c => c.id === 'gratis');
+  if (BUENFIN.vueltaMayor && n === BUENFIN.vueltaMayor)
+    idx = BF_CASILLAS.findIndex(c => c.id === 'd40');
+  else if (BUENFIN.vueltaGratis && n === BUENFIN.vueltaGratis)
+    idx = BF_CASILLAS.findIndex(c => c.id === 'gratis');
   else {
     // Los dos premios mayores no entran en el sorteo normal: solo en su vuelta
     const posibles = BF_CASILLAS
