@@ -3008,7 +3008,7 @@ function cerrarApertura(){}
     <h2 class="bf-title">Buen Fin <span style="color:#D6AE6A">DUBREM</span></h2>
     <div class="bf-fechas" id="bfSub">Gira y gánate tu premio</div>
     <div class="bf-reglas">
-      <div class="bf-regla fuerte">⚠️ Un solo giro por cuenta</div>
+      <div class="bf-regla fuerte" id="bfReglaGiro">⚠️ Un solo giro por cuenta</div>
       <div class="bf-regla">🛍️ Los premios aplican en pedidos desde <b id="bfMinimo">$300</b></div>
     </div>
     <div class="bf-wheel-wrap">
@@ -3464,6 +3464,16 @@ function anglesCasillas(){
 
 let MI_PREMIO = null;      // el giro de quien tiene la sesión abierta
 let _bfGirando = false;
+let _bfRotacion = 0;       // grados acumulados: el segundo giro sigue de largo
+
+/** «Sigue participando» no es premio: regala un segundo giro, y solo uno. */
+function puedeRegirar(g){
+  return !!g && g.premio === 'sigue' && (g.intentos || 1) < 2;
+}
+/** ¿A esta cuenta todavía le queda algo por girar? */
+function ruletaPendiente(){
+  return !MI_PREMIO || puedeRegirar(MI_PREMIO);
+}
 
 function buenFinActivo(){
   const hoy = diaLocal();
@@ -3575,12 +3585,22 @@ function pintarEstadoRuleta(){
   const res = document.getElementById('bfResultado');
   const nota= document.getElementById('bfNota');
   if (!btn) return;
+  // El aviso de arriba no puede decir «un solo giro» a quien le regalamos otro
+  const regla = document.getElementById('bfReglaGiro');
+  if (regla) regla.textContent = puedeRegirar(MI_PREMIO)
+    ? '🔄 Te queda una segunda oportunidad'
+    : '⚠️ Un solo giro por cuenta';
+
   if (MI_PREMIO){
-    btn.disabled = true;
-    btn.textContent = 'Ya usaste tu giro';
-    nota.textContent = '';
+    const otra = puedeRegirar(MI_PREMIO);
+    btn.disabled = !otra;
+    btn.textContent = otra ? '🔄 Girar otra vez' : 'Ya usaste tu giro';
+    nota.textContent = otra ? 'Esta es tu última oportunidad.' : '';
     const idx = BF_CASILLAS.findIndex(c => c.id === MI_PREMIO.premio);
-    if (idx >= 0) document.getElementById('bfWheel').style.transform = `rotate(${-anglesCasillas()[idx].centro}deg)`;
+    if (idx >= 0){
+      _bfRotacion = -anglesCasillas()[idx].centro;
+      document.getElementById('bfWheel').style.transform = `rotate(${_bfRotacion}deg)`;
+    }
     res.innerHTML = textoPremio(MI_PREMIO);
   } else {
     btn.disabled = false;
@@ -3603,10 +3623,15 @@ function textoPremio(g){
       : `${que} Se aplica solo en tu compra, en pedidos desde <b>${fmtMXN(BUENFIN.minimo)}</b>. Válido hasta el último día de la promoción.`;
   } else if (g.premio === 'regalo') {
     detalle = 'Agregamos un detalle sorpresa a tu próximo pedido. Nosotros lo anotamos, tú solo compra.';
+  } else if (puedeRegirar(g)) {
+    detalle = '¡Te regalamos <b>una segunda oportunidad</b>! Vuelve a girar la ruleta.';
   } else {
     detalle = 'Esta vez no salió premio, ¡pero gracias por participar! 🩷';
   }
-  const cara = tipo === 'gratis' ? '🎉' : (g.desc > 0 ? g.desc + '%' : (g.premio === 'regalo' ? '🎁' : '🩷'));
+  const cara = tipo === 'gratis' ? '🎉'
+             : g.desc > 0 ? g.desc + '%'
+             : g.premio === 'regalo' ? '🎁'
+             : puedeRegirar(g) ? '🔄' : '🩷';
   return `<div class="bf-resultado">
     <div class="bf-res-premio">${cara}</div>
     <div class="bf-res-txt"><b>${nombre}</b><br>${detalle}</div>
@@ -3620,44 +3645,60 @@ async function girarRuleta(){
   btn.disabled = true;
   btn.textContent = 'Girando…';
 
-  // Se vuelve a consultar: si ya giró en otro teléfono, no hay segundo intento
+  // Se vuelve a consultar: si ya terminó en otro teléfono, no hay giro extra
   await cargarPremioBuenFin();
-  if (MI_PREMIO){ _bfGirando = false; pintarEstadoRuleta(); return; }
+  if (MI_PREMIO && !puedeRegirar(MI_PREMIO)){ _bfGirando = false; pintarEstadoRuleta(); return; }
 
-  const n = (await girosHechos()) + 1;
+  const segundo = !!MI_PREMIO;                     // viene de «sigue participando»
+  const n = MI_PREMIO ? MI_PREMIO.n : (await girosHechos()) + 1;
   let idx;
-  if (BUENFIN.vueltaMayor && n === BUENFIN.vueltaMayor)
+  if (BUENFIN.vueltaMayor && n === BUENFIN.vueltaMayor && !segundo)
     idx = BF_CASILLAS.findIndex(c => c.id === 'd40');
-  else if (BUENFIN.vueltaGratis && n === BUENFIN.vueltaGratis)
+  else if (BUENFIN.vueltaGratis && n === BUENFIN.vueltaGratis && !segundo)
     idx = BF_CASILLAS.findIndex(c => c.id === 'gratis');
   else {
-    // Los dos premios mayores no entran en el sorteo normal: solo en su vuelta
+    // Los premios mayores solo salen en su vuelta. En la segunda oportunidad
+    // tampoco puede repetirse «sigue participando»: dejaría a la clienta en nada.
+    const fuera = ['d40', 'gratis'].concat(segundo ? ['sigue'] : []);
     const posibles = BF_CASILLAS
       .map((c,i) => i)
-      .filter(i => BF_CASILLAS[i].id !== 'd40' && BF_CASILLAS[i].id !== 'gratis');
+      .filter(i => !fuera.includes(BF_CASILLAS[i].id));
     idx = posibles[Math.floor(Math.random() * posibles.length)];
   }
   const casilla = BF_CASILLAS[idx];
-  const giro = { premio: casilla.id, tipo: casilla.tipo, desc: casilla.desc, n, ts: Date.now(), usado: false };
+  const giro = {
+    premio: casilla.id, tipo: casilla.tipo, desc: casilla.desc,
+    n, intentos: segundo ? 2 : 1, ts: Date.now(), usado: false
+  };
 
-  // Girar: 6 vueltas completas y aterrizar en la casilla que tocó, sin pasarse
-  const angs   = anglesCasillas();
-  const ancho  = angs[idx].fin - angs[idx].ini;
-  const jitter = (Math.random() - 0.5) * ancho * 0.7;
-  const rueda  = document.getElementById('bfWheel');
+  // Girar hacia adelante desde donde quedó, 6 vueltas, sin pasarse de casilla
+  const angs    = anglesCasillas();
+  const ancho   = angs[idx].fin - angs[idx].ini;
+  const jitter  = (Math.random() - 0.5) * ancho * 0.7;
+  const actual  = ((_bfRotacion % 360) + 360) % 360;
+  const destino = ((360 - angs[idx].centro) % 360 + 360) % 360;
+  _bfRotacion += 360*6 + ((destino - actual + 360) % 360) + jitter;
+  const rueda = document.getElementById('bfWheel');
   rueda.classList.add('girando');
-  rueda.style.transform = `rotate(${360*6 - angs[idx].centro + jitter}deg)`;
+  rueda.style.transform = `rotate(${_bfRotacion}deg)`;
 
   await fbSet(`buenfin/giros/${claveCorreo(S.user.email)}`, giro);
   MI_PREMIO = giro;
 
   setTimeout(() => {
     _bfGirando = false;
-    btn.textContent = 'Ya usaste tu giro';
-    document.getElementById('bfNota').textContent = '';
+    const otra = puedeRegirar(giro);
+    const regla2 = document.getElementById('bfReglaGiro');
+    if (regla2) regla2.textContent = otra
+      ? '🔄 Te queda una segunda oportunidad'
+      : '⚠️ Un solo giro por cuenta';
+    btn.disabled = !otra;
+    btn.textContent = otra ? '🔄 Girar otra vez' : 'Ya usaste tu giro';
+    document.getElementById('bfNota').textContent = otra ? 'Esta es tu última oportunidad.' : '';
     document.getElementById('bfResultado').innerHTML = textoPremio(giro);
     refreshCartUI();
     if (casilla.desc > 0) toast(`🎉 ¡Ganaste ${casilla.desc}% de descuento!`, 'ok');
+    else if (otra)        toast('🔄 ¡Tienes otra oportunidad! Vuelve a girar', 'ok');
   }, 5100);
 }
 
@@ -4633,9 +4674,12 @@ function etiquetaGiro(email){
   const cuando = g.ts ? fechaCorta(g.ts) : '';
   if (g.usado)
     return `<span class="cli-bf usado" title="Giró el ${cuando}">🎡 ${nombre} · usado en ${g.usado}</span>`;
+  if (puedeRegirar(g))
+    return `<span class="cli-bf" title="Giró el ${cuando}">🔄 ${nombre} · le queda 2ª oportunidad</span>`;
   const tipo = g.tipo || (g.desc > 0 ? 'pct' : g.premio);
   const porUsar = (tipo === 'pct' || tipo === 'gratis' || tipo === 'regalo');
-  return `<span class="cli-bf" title="Giró el ${cuando}">🎡 ${nombre}${porUsar ? ' · sin usar' : ''}</span>`;
+  const extra = g.intentos > 1 ? ' (2º giro)' : '';
+  return `<span class="cli-bf" title="Giró el ${cuando}">🎡 ${nombre}${extra}${porUsar ? ' · sin usar' : ''}</span>`;
 }
 
 function renderListaClientes(){
@@ -5713,7 +5757,7 @@ function showCatalog(section, pushHistory = true) {
   _currentSection = section;
   anotarCategoria(section);
   // Buen Fin: la ruleta sale al entrar a una categoría, mientras no haya girado
-  if (buenFinActivo() && S.user && !MI_PREMIO) setTimeout(abrirRuleta, 900);
+  if (buenFinActivo() && S.user && ruletaPendiente()) setTimeout(abrirRuleta, 900);
   _currentFilter  = 'all';
   _currentSizeFilter = null;
   const si = document.getElementById('searchInput');
