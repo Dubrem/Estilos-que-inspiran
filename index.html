@@ -3402,7 +3402,7 @@ async function cargarTrafico(dias = 30){
 // cambiando de teléfono o borrando el navegador:
 //   buenfin/giros/<claveCorreo> = { premio, desc, n, ts, usado }
 const BUENFIN = {
-  inicio: '2026-11-06',
+  inicio: '2026-11-05',   // adelantado un día para probar; la promo real es del 6 al 8
   fin:    '2026-11-08',
   minimo: 500,          // el descuento aplica desde este subtotal
   vueltaMayor: 100      // el 40% sale una sola vez: en este número de giro
@@ -3491,9 +3491,21 @@ function dibujarRuleta(){
   svg.dataset.listo = '1';
 }
 
+/** "del 6 al 8 de noviembre", armado con las fechas reales de la promoción. */
+function rangoBuenFin(){
+  const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio',
+                 'agosto','septiembre','octubre','noviembre','diciembre'];
+  const [, mi, di] = BUENFIN.inicio.split('-').map(Number);
+  const [, mf, df] = BUENFIN.fin.split('-').map(Number);
+  return mi === mf
+    ? `Solo del ${di} al ${df} de ${MESES[mf-1]}`
+    : `Solo del ${di} de ${MESES[mi-1]} al ${df} de ${MESES[mf-1]}`;
+}
+
 async function abrirRuleta(){
   if (!buenFinActivo() || !S.user) return;
   dibujarRuleta();
+  document.querySelector('#bfModal .bf-kicker').textContent = rangoBuenFin();
   document.getElementById('bfModal').classList.add('open');
   lockScroll();
   await cargarPremioBuenFin();
@@ -3531,7 +3543,7 @@ function textoPremio(g){
   if (g.desc > 0) {
     detalle = g.usado
       ? `Ya lo aplicaste en tu pedido <b>${g.usado}</b>.`
-      : `Se aplica solo en tu compra, en pedidos desde <b>${fmtMXN(BUENFIN.minimo)}</b>. Válido hasta el 8 de noviembre.`;
+      : `Se aplica solo en tu compra, en pedidos desde <b>${fmtMXN(BUENFIN.minimo)}</b>. Válido hasta el último día de la promoción.`;
   } else if (g.premio === 'regalo') {
     detalle = 'Agregamos un detalle sorpresa a tu próximo pedido. Nosotros lo anotamos, tú solo compra.';
   } else {
