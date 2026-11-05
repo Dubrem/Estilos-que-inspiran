@@ -1260,6 +1260,11 @@
                 background:#25D366; color:#fff; text-decoration:none; font-size:.6rem; font-weight:700;
                 letter-spacing:.08em; text-transform:uppercase; padding:5px 11px; border-radius:50px; }
     .cli-wa:hover { filter:brightness(.93); }
+    .cli-bf   { display:inline-flex; align-items:center; gap:6px; margin-top:8px; align-self:flex-start;
+                padding:4px 10px; border-radius:50px; font-size:.6rem; font-weight:700;
+                letter-spacing:.06em; background:#120F10; color:#D6AE6A; }
+    .cli-bf.usado  { background:var(--blush-light); color:var(--text-light); }
+    .cli-bf.sinpremio{ background:var(--blush-light); color:var(--text-light); }
     .cli-pie  { margin-top:9px; padding-top:9px; border-top:1px solid var(--border);
                 display:flex; gap:14px; font-size:.62rem; color:var(--text-light); }
     .cli-pie b { color:var(--rose); font-weight:700; }
@@ -4460,6 +4465,7 @@ function switchAdminTab(tab, mantenerFiltro) {
    CLIENTES REGISTRADOS Y TRÁFICO
 ────────────────────────────────────────────────────── */
 let _trafico    = null;   // { '2026-11-03': { clave: {...} } }
+let _girosBF    = {};     // { claveCorreo: giro } — lo que sacó cada clienta
 let _cliBuscar  = '';
 
 /** Los nombres y correos los escribe la gente, así que no entran crudos al HTML. */
@@ -4533,13 +4539,18 @@ async function renderAdminClientes(){
   if (!sec) return;
   sec.innerHTML = `<div class="cli-vacio">Cargando registros y visitas…</div>`;
 
-  await Promise.all([ syncUsers(), cargarTrafico(30).then(t => { _trafico = t; }) ]);
+  await Promise.all([
+    syncUsers(),
+    cargarTrafico(30).then(t => { _trafico = t; }),
+    fbFetch('buenfin/giros').then(g => { _girosBF = g || {}; })
+  ]);
   if (pestanaAdminActiva() !== 'clientes') return;   // cambió de pestaña mientras cargaba
 
   const t   = resumenTrafico(_trafico, 14);
   const act = actividadDeClientes();
   const hace30 = Date.now() - 30*24*60*60*1000;
   const altasRecientes = (S.users || []).filter(u => u.createdAt && u.createdAt >= hace30).length;
+  const girosDados = Object.keys(_girosBF || {}).length;
   const maxBarra = Math.max(1, ...t.serie.map(d => d.visitas));
 
   const barras = t.serie.map(d => {
@@ -4572,6 +4583,7 @@ async function renderAdminClientes(){
       <div class="stat-card" style="border-top:2px solid #1b3a5c"><div class="stat-val" style="color:#1b3a5c">${t.unicos}</div><div class="stat-lbl">Personas distintas</div></div>
       <div class="stat-card" style="border-top:2px solid #0a5931"><div class="stat-val" style="color:#0a5931">${(S.users || []).length}</div><div class="stat-lbl">Registradas</div></div>
       <div class="stat-card"><div class="stat-val">${altasRecientes}</div><div class="stat-lbl">Altas 30 días</div></div>
+      ${girosDados ? `<div class="stat-card" style="border-top:2px solid #D6AE6A" title="Cuentas que ya giraron la ruleta del Buen Fin"><div class="stat-val" style="color:#B0863A">${girosDados}</div><div class="stat-lbl">Giros Buen Fin</div></div>` : ''}
     </div>
 
     <div class="cli-sub">Visitas de los últimos 14 días</div>
@@ -4608,6 +4620,19 @@ async function renderAdminClientes(){
 function filtrarClientes(v){
   _cliBuscar = v || '';
   renderListaClientes();
+}
+
+/** Lo que sacó una clienta en la ruleta, listo para pintar en su ficha. */
+function etiquetaGiro(email){
+  const g = _girosBF[claveCorreo(email)];
+  if (!g) return '<span class="cli-bf sinpremio">🎡 No ha girado</span>';
+  const nombre = BF_NOMBRES[g.premio] || g.premio;
+  const cuando = g.ts ? fechaCorta(g.ts) : '';
+  if (g.usado)
+    return `<span class="cli-bf usado" title="Giró el ${cuando}">🎡 ${nombre} · usado en ${g.usado}</span>`;
+  const tipo = g.tipo || (g.desc > 0 ? 'pct' : g.premio);
+  const porUsar = (tipo === 'pct' || tipo === 'gratis' || tipo === 'regalo');
+  return `<span class="cli-bf" title="Giró el ${cuando}">🎡 ${nombre}${porUsar ? ' · sin usar' : ''}</span>`;
 }
 
 function renderListaClientes(){
@@ -4650,6 +4675,7 @@ function renderListaClientes(){
       <div class="cli-dato">${escHtml(u.email)}</div>
       ${tel ? `<div class="cli-dato">${escHtml(u.phone)}</div>` : ''}
       <div class="cli-dato" style="color:var(--text-light);font-size:.62rem;margin-top:4px">Alta: ${escHtml(alta)}</div>
+      ${etiquetaGiro(u.email)}
       ${tel ? `<a class="cli-wa" target="_blank" rel="noopener"
                   href="https://wa.me/52${tel}?text=${encodeURIComponent('Hola ' + (u.name||'') + ', te saludamos de DUBREM 🩷')}">💬 WhatsApp</a>` : ''}
       <div class="cli-pie">
