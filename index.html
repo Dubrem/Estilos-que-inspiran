@@ -1271,6 +1271,58 @@
       .traf-col { flex:1 0 22px; }
     }
 
+    /* ── RULETA BUEN FIN ── */
+    .bf-modal{ display:none; position:fixed; inset:0; z-index:750; align-items:center; justify-content:center; padding:16px; }
+    .bf-modal.open{ display:flex; }
+    .bf-overlay{ position:absolute; inset:0; background:rgba(13,13,12,.88); backdrop-filter:blur(3px); }
+    .bf-box{
+      position:relative; width:100%; max-width:390px; background:#120F10; color:#fff;
+      border:1px solid rgba(214,174,106,.45); border-radius:18px; padding:20px 18px 22px;
+      text-align:center; max-height:94vh; overflow-y:auto;
+      box-shadow:0 24px 70px rgba(0,0,0,.6);
+    }
+    .bf-x{ position:absolute; top:10px; right:12px; width:30px; height:30px; border-radius:50%;
+           border:1px solid rgba(255,255,255,.25); background:transparent; color:rgba(255,255,255,.7);
+           font-size:.9rem; cursor:pointer; line-height:1; }
+    .bf-kicker{ font-size:.58rem; font-weight:700; letter-spacing:.28em; text-transform:uppercase;
+                color:#D6AE6A; margin-bottom:4px; }
+    .bf-title{ font-family:var(--ff-display); font-size:1.9rem; letter-spacing:.09em; margin:0; line-height:1; }
+    .bf-fechas{ font-size:.63rem; letter-spacing:.14em; text-transform:uppercase;
+                color:rgba(255,255,255,.5); margin-top:6px; }
+
+    .bf-wheel-wrap{ position:relative; width:290px; max-width:82vw; margin:16px auto 6px; }
+    .bf-wheel-wrap::before{   /* aguja */
+      content:''; position:absolute; top:-7px; left:50%; transform:translateX(-50%);
+      border-left:11px solid transparent; border-right:11px solid transparent;
+      border-top:19px solid #D6AE6A; z-index:3; filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));
+    }
+    .bf-wheel{ width:100%; height:auto; display:block; border-radius:50%;
+               box-shadow:0 0 0 6px #1D1819, 0 0 0 8px #D6AE6A, 0 14px 40px rgba(0,0,0,.55); }
+    .bf-wheel.girando{ transition:transform 5s cubic-bezier(.16,.72,.18,1); }
+
+    .bf-girar{
+      width:100%; margin-top:14px; padding:14px; border:none; border-radius:50px;
+      background:linear-gradient(135deg,#D6AE6A,#B0863A); color:#120F10;
+      font-family:var(--ff-body); font-size:.78rem; font-weight:800; letter-spacing:.16em;
+      text-transform:uppercase; cursor:pointer; transition:filter .2s, opacity .2s;
+    }
+    .bf-girar:hover{ filter:brightness(1.08); }
+    .bf-girar:disabled{ opacity:.45; cursor:default; }
+    .bf-nota{ font-size:.62rem; color:rgba(255,255,255,.45); margin-top:10px; line-height:1.5; }
+
+    .bf-resultado{ margin-top:16px; padding:16px 14px; border:1px solid rgba(214,174,106,.5);
+                   border-radius:14px; background:rgba(214,174,106,.1); }
+    .bf-res-premio{ font-family:var(--ff-display); font-size:2.1rem; letter-spacing:.06em; color:#D6AE6A; line-height:1; }
+    .bf-res-txt{ font-size:.76rem; color:rgba(255,255,255,.8); margin-top:8px; line-height:1.55; }
+
+    /* Aviso del premio dentro del carrito y el checkout */
+    .bf-chip{ display:flex; align-items:center; gap:9px; padding:9px 12px; margin-bottom:10px;
+              background:#120F10; color:#fff; border-radius:10px; font-size:.68rem; line-height:1.4; }
+    .bf-chip b{ color:#D6AE6A; }
+    .bf-chip .bf-chip-ico{ font-size:1rem; }
+    .summary-line.bf-desc span{ color:#0a5931; font-weight:700; }
+    .cart-subtotal-row.bf-desc span{ color:#0a5931; font-weight:700; }
+
     /* Product edit modal textarea */
     textarea.form-input { resize: vertical; min-height: 80px; font-family: var(--ff-body); line-height: 1.5; }
     select.form-input { cursor: pointer; }
@@ -2329,7 +2381,9 @@ function cerrarApertura(){}
   <div class="cart-body" id="cartBody"></div>
   <div id="cartFoot" style="display:none">
     <div class="cart-foot">
+      <div id="cBuenFin"></div>
       <div class="cart-subtotal-row"><span>Subtotal</span><span id="cSubtotal"></span></div>
+      <div class="cart-subtotal-row bf-desc" id="cDescRow" style="display:none"><span>Descuento Buen Fin</span><span id="cDesc"></span></div>
       <div class="cart-total-row"><span>Total</span><span id="cTotal"></span></div>
       <button class="btn-checkout" onclick="startCheckout()">Proceder al Pago →</button>
     </div>
@@ -2928,6 +2982,23 @@ function cerrarApertura(){}
   </div>
 </footer>
 
+<!-- ========== RULETA BUEN FIN ========== -->
+<div class="bf-modal" id="bfModal">
+  <div class="bf-overlay" onclick="cerrarRuleta()"></div>
+  <div class="bf-box">
+    <button class="bf-x" onclick="cerrarRuleta()">✕</button>
+    <div class="bf-kicker">Solo del 6 al 8 de noviembre</div>
+    <h2 class="bf-title">Buen Fin <span style="color:#D6AE6A">DUBREM</span></h2>
+    <div class="bf-fechas" id="bfSub">Gira la ruleta · un solo giro por cuenta</div>
+    <div class="bf-wheel-wrap">
+      <svg class="bf-wheel" id="bfWheel" viewBox="0 0 320 320" aria-hidden="true"></svg>
+    </div>
+    <button class="bf-girar" id="bfGirar" onclick="girarRuleta()">Girar la ruleta</button>
+    <div class="bf-nota" id="bfNota">Los descuentos aplican en pedidos desde $500.</div>
+    <div id="bfResultado"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- Boton flotante de WhatsApp: siempre visible para dudas rapidas -->
@@ -3324,6 +3395,250 @@ async function cargarTrafico(dias = 30){
     if (!r.ok) return {};
     return (await r.json()) || {};
   }catch(e){ return {}; }
+}
+
+// ── Buen Fin: ruleta de premios ──────────────────────
+// Un giro por cuenta, guardado en Firebase para que no se pueda repetir
+// cambiando de teléfono o borrando el navegador:
+//   buenfin/giros/<claveCorreo> = { premio, desc, n, ts, usado }
+const BUENFIN = {
+  inicio: '2026-11-06',
+  fin:    '2026-11-08',
+  minimo: 500,          // el descuento aplica desde este subtotal
+  vueltaMayor: 100      // el 40% sale una sola vez: en este número de giro
+};
+
+// Las casillas van intercaladas para que no queden dos premios iguales juntos.
+const BF_CASILLAS = [
+  { id:'d10',    txt:'10%',    desc:10 },
+  { id:'d15',    txt:'15%',    desc:15 },
+  { id:'d10',    txt:'10%',    desc:10 },
+  { id:'sigue',  txt:'Sigue',  desc:0, txt2:'participando' },
+  { id:'d10',    txt:'10%',    desc:10 },
+  { id:'d15',    txt:'15%',    desc:15 },
+  { id:'regalo', txt:'Regalo', desc:0, txt2:'sorpresa' },
+  { id:'d40',    txt:'40%',    desc:40 }
+];
+const BF_NOMBRES = {
+  d10:'10% de descuento', d15:'15% de descuento', d40:'40% de descuento',
+  sigue:'Sigue participando', regalo:'Regalo sorpresa'
+};
+
+let MI_PREMIO = null;      // el giro de quien tiene la sesión abierta
+let _bfGirando = false;
+
+function buenFinActivo(){
+  const hoy = diaLocal();
+  return hoy >= BUENFIN.inicio && hoy <= BUENFIN.fin;
+}
+function claveCorreo(email){ return String(email||'').replace(/[.#$[\]@]/g,'_'); }
+
+/** Lee el premio de esta cuenta. Se consulta a Firebase, no al navegador. */
+async function cargarPremioBuenFin(){
+  MI_PREMIO = null;
+  if (!S.user || !FIREBASE_DB_URL) return null;
+  const g = await fbFetch(`buenfin/giros/${claveCorreo(S.user.email)}`);
+  MI_PREMIO = (g && g.premio) ? g : null;
+  return MI_PREMIO;
+}
+
+/** Cuántos giros se han hecho en toda la tienda (para saber si toca el 40%). */
+async function girosHechos(){
+  try{
+    const r = await fetch(`${FIREBASE_DB_URL}/buenfin/giros.json?shallow=true`);
+    if (!r.ok) return 0;
+    const d = await r.json();
+    return d ? Object.keys(d).length : 0;
+  }catch(e){ return 0; }
+}
+
+function dibujarRuleta(){
+  const svg = document.getElementById('bfWheel');
+  if (!svg || svg.dataset.listo) return;
+  const cx = 160, cy = 160, r = 155;
+  const colores = ['#2A2224','#C2667A','#2A2224','#6E6860','#2A2224','#C2667A','#6E6860','#D6AE6A'];
+  const pol = (ang, radio) => {
+    const a = (ang - 90) * Math.PI / 180;
+    return [cx + radio*Math.cos(a), cy + radio*Math.sin(a)];
+  };
+  let html = '';
+  BF_CASILLAS.forEach((c, i) => {
+    const ini = i*45 - 22.5, fin = i*45 + 22.5;
+    const [x1,y1] = pol(ini, r), [x2,y2] = pol(fin, r);
+    html += `<path d="M${cx} ${cy} L${x1.toFixed(2)} ${y1.toFixed(2)} A${r} ${r} 0 0 1 ${x2.toFixed(2)} ${y2.toFixed(2)} Z"
+                   fill="${colores[i]}" stroke="#120F10" stroke-width="1.5"/>`;
+    // Las casillas de la mitad de abajo se voltean 180° o el texto se lee al revés
+    const grande  = c.desc > 0;
+    const volteada= i*45 > 90 && i*45 < 270;
+    const giro    = i*45 + (volteada ? 180 : 0);
+    const ty1 = c.txt2 ? 56 : 62, ty2 = 72;
+    const py  = v => volteada ? 320 - v : v;
+    const yA  = volteada ? py(ty2) : py(ty1);   // primer renglón
+    const yB  = volteada ? py(ty1) : py(ty2);   // segundo renglón
+    const tinta = i === 7 ? '#120F10' : '#fff';
+    html += `<g transform="rotate(${giro} ${cx} ${cy})">
+        <text x="${cx}" y="${yA}" text-anchor="middle" fill="${tinta}"
+              font-family="DM Sans, sans-serif" font-weight="${grande?800:600}"
+              font-size="${grande?26:14}">${c.txt}</text>
+        ${c.txt2 ? `<text x="${cx}" y="${yB}" text-anchor="middle" fill="rgba(255,255,255,.85)"
+              font-family="DM Sans, sans-serif" font-weight="600" font-size="11">${c.txt2}</text>` : ''}
+      </g>`;
+  });
+  html += `<circle cx="${cx}" cy="${cy}" r="26" fill="#120F10" stroke="#D6AE6A" stroke-width="2"/>
+           <text x="${cx}" y="${cy+5}" text-anchor="middle" fill="#D6AE6A"
+                 font-family="DM Sans, sans-serif" font-weight="800" font-size="13">BF</text>`;
+  svg.innerHTML = html;
+  svg.dataset.listo = '1';
+}
+
+async function abrirRuleta(){
+  if (!buenFinActivo() || !S.user) return;
+  dibujarRuleta();
+  document.getElementById('bfModal').classList.add('open');
+  lockScroll();
+  await cargarPremioBuenFin();
+  pintarEstadoRuleta();
+}
+function cerrarRuleta(){
+  document.getElementById('bfModal').classList.remove('open');
+  unlockScroll();
+}
+
+/** Deja la ventana en el estado que toca: puede girar, o ya giró. */
+function pintarEstadoRuleta(){
+  const btn = document.getElementById('bfGirar');
+  const res = document.getElementById('bfResultado');
+  const nota= document.getElementById('bfNota');
+  if (!btn) return;
+  if (MI_PREMIO){
+    btn.disabled = true;
+    btn.textContent = 'Ya usaste tu giro';
+    nota.textContent = '';
+    const idx = BF_CASILLAS.findIndex(c => c.id === MI_PREMIO.premio);
+    if (idx >= 0) document.getElementById('bfWheel').style.transform = `rotate(${-idx*45}deg)`;
+    res.innerHTML = textoPremio(MI_PREMIO);
+  } else {
+    btn.disabled = false;
+    btn.textContent = 'Girar la ruleta';
+    nota.textContent = `Un solo giro por cuenta. Los descuentos aplican en pedidos desde ${fmtMXN(BUENFIN.minimo)}.`;
+    res.innerHTML = '';
+  }
+}
+
+function textoPremio(g){
+  const nombre = BF_NOMBRES[g.premio] || g.premio;
+  let detalle;
+  if (g.desc > 0) {
+    detalle = g.usado
+      ? `Ya lo aplicaste en tu pedido <b>${g.usado}</b>.`
+      : `Se aplica solo en tu compra, en pedidos desde <b>${fmtMXN(BUENFIN.minimo)}</b>. Válido hasta el 8 de noviembre.`;
+  } else if (g.premio === 'regalo') {
+    detalle = 'Agregamos un detalle sorpresa a tu próximo pedido. Nosotros lo anotamos, tú solo compra.';
+  } else {
+    detalle = 'Esta vez no salió premio, ¡pero gracias por participar! 🩷';
+  }
+  return `<div class="bf-resultado">
+    <div class="bf-res-premio">${g.desc > 0 ? g.desc + '%' : (g.premio === 'regalo' ? '🎁' : '🩷')}</div>
+    <div class="bf-res-txt"><b>${nombre}</b><br>${detalle}</div>
+  </div>`;
+}
+
+async function girarRuleta(){
+  if (_bfGirando || !S.user || !buenFinActivo()) return;
+  const btn = document.getElementById('bfGirar');
+  _bfGirando = true;
+  btn.disabled = true;
+  btn.textContent = 'Girando…';
+
+  // Se vuelve a consultar: si ya giró en otro teléfono, no hay segundo intento
+  await cargarPremioBuenFin();
+  if (MI_PREMIO){ _bfGirando = false; pintarEstadoRuleta(); return; }
+
+  const n = (await girosHechos()) + 1;
+  let idx;
+  if (n === BUENFIN.vueltaMayor) {
+    idx = BF_CASILLAS.findIndex(c => c.id === 'd40');
+  } else {
+    // El 40% no entra en el sorteo normal: solo sale en la vuelta marcada
+    const posibles = BF_CASILLAS.map((c,i) => i).filter(i => BF_CASILLAS[i].id !== 'd40');
+    idx = posibles[Math.floor(Math.random() * posibles.length)];
+  }
+  const casilla = BF_CASILLAS[idx];
+  const giro = { premio: casilla.id, desc: casilla.desc, n, ts: Date.now(), usado: false };
+
+  // Girar: 6 vueltas completas y aterrizar en la casilla que tocó
+  const rueda = document.getElementById('bfWheel');
+  const jitter = (Math.random() * 28) - 14;
+  rueda.classList.add('girando');
+  rueda.style.transform = `rotate(${360*6 - idx*45 + jitter}deg)`;
+
+  await fbSet(`buenfin/giros/${claveCorreo(S.user.email)}`, giro);
+  MI_PREMIO = giro;
+
+  setTimeout(() => {
+    _bfGirando = false;
+    btn.textContent = 'Ya usaste tu giro';
+    document.getElementById('bfNota').textContent = '';
+    document.getElementById('bfResultado').innerHTML = textoPremio(giro);
+    refreshCartUI();
+    if (casilla.desc > 0) toast(`🎉 ¡Ganaste ${casilla.desc}% de descuento!`, 'ok');
+  }, 5100);
+}
+
+/* ── El descuento en el carrito ── */
+
+/** El premio solo sirve si la promoción sigue viva, no se ha usado y hay descuento. */
+function premioAplicable(){
+  if (!buenFinActivo() || !MI_PREMIO || MI_PREMIO.usado || !MI_PREMIO.desc) return null;
+  return MI_PREMIO;
+}
+function factorDescuento(){
+  const p = premioAplicable();
+  if (!p) return 1;
+  return cartSubtotal() >= BUENFIN.minimo ? (1 - p.desc/100) : 1;
+}
+function subtotalConDescuento(){
+  const f = factorDescuento();
+  if (f === 1) return cartSubtotal();
+  return S.cart.reduce((s,i) => {
+    const p = findProduct(i.id);
+    return s + (p ? Math.round(p.price * f * 100)/100 * i.qty : 0);
+  }, 0);
+}
+function montoDescuento(){ return Math.round((cartSubtotal() - subtotalConDescuento()) * 100)/100; }
+
+/** El premio se gasta con el pedido: no se puede repetir en la siguiente compra. */
+function marcarPremioUsado(orden){
+  if (!MI_PREMIO || MI_PREMIO.usado || !S.user) return;
+  const usa = (orden.bfDesc > 0) || orden.bfRegalo;
+  if (!usa) return;
+  MI_PREMIO.usado = orden.num;
+  fbSet(`buenfin/giros/${claveCorreo(S.user.email)}/usado`, orden.num);
+}
+
+/** Al cancelar un pedido, el premio que se había gastado vuelve a estar libre. */
+async function liberarPremioBuenFin(orden){
+  if (!orden || !orden.email || !FIREBASE_DB_URL) return;
+  if (!orden.bfDesc && !orden.bfRegalo) return;
+  const ruta = `buenfin/giros/${claveCorreo(orden.email)}`;
+  const giro = await fbFetch(ruta);
+  if (!giro || giro.usado !== orden.num) return;   // ya se usó en otro pedido
+  await fbSet(`${ruta}/usado`, false);
+  if (S.user && S.user.email === orden.email && MI_PREMIO) MI_PREMIO.usado = false;
+}
+
+/** Aviso que se pinta arriba del carrito y del resumen. */
+function avisoBuenFin(){
+  const p = premioAplicable();
+  if (!p) {
+    if (buenFinActivo() && MI_PREMIO && MI_PREMIO.premio === 'regalo' && !MI_PREMIO.usado)
+      return `<div class="bf-chip"><span class="bf-chip-ico">🎁</span><span>Tienes un <b>regalo sorpresa</b> del Buen Fin. Lo agregamos a este pedido.</span></div>`;
+    return '';
+  }
+  const falta = BUENFIN.minimo - cartSubtotal();
+  return falta > 0
+    ? `<div class="bf-chip"><span class="bf-chip-ico">🎉</span><span>Tu <b>${p.desc}% del Buen Fin</b> se activa en pedidos desde ${fmtMXN(BUENFIN.minimo)}. Te faltan <b>${fmtMXN(falta)}</b>.</span></div>`
+    : `<div class="bf-chip"><span class="bf-chip-ico">🎉</span><span><b>Buen Fin DUBREM:</b> ${p.desc}% de descuento aplicado a este pedido.</span></div>`;
 }
 
 // ── Pedidos en Firebase ──────────────────────────────
@@ -5054,6 +5369,7 @@ document.addEventListener('DOMContentLoaded', () => {
   refreshCartUI();
   // Login, registro y recuperar contraseña sincronizan usuarios al usarse; aquí solo si ya hay sesión
   if (S.user) setTimeout(() => syncUsers(), 4000);
+  if (S.user && buenFinActivo()) cargarPremioBuenFin().then(refreshCartUI);
 
   // Restaurar sección desde hash en URL (para refresh y navegación directa)
   const _initHash = location.hash.slice(1);
@@ -5286,6 +5602,8 @@ function showCatalog(section, pushHistory = true) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
   _currentSection = section;
   anotarCategoria(section);
+  // Buen Fin: la ruleta sale al entrar a una categoría, mientras no haya girado
+  if (buenFinActivo() && S.user && !MI_PREMIO) setTimeout(abrirRuleta, 900);
   _currentFilter  = 'all';
   _currentSizeFilter = null;
   const si = document.getElementById('searchInput');
@@ -5789,9 +6107,17 @@ function renderCartBody() {
         <button class="cart-item-del" onclick="removeFromCart(${idArg})" title="Eliminar">🗑</button>
       </div>`;
   }).join('');
-  const sub = cartSubtotal();
+  const sub  = cartSubtotal();
+  const desc = montoDescuento();
   document.getElementById('cSubtotal').textContent = fmtMXN(sub)+' MXN';
-  document.getElementById('cTotal').textContent    = fmtMXN(sub)+' MXN';
+  document.getElementById('cTotal').textContent    = fmtMXN(sub - desc)+' MXN';
+  const filaDesc = document.getElementById('cDescRow');
+  if (filaDesc){
+    filaDesc.style.display = desc > 0 ? '' : 'none';
+    document.getElementById('cDesc').textContent = '− ' + fmtMXN(desc) + ' MXN';
+  }
+  const aviso = document.getElementById('cBuenFin');
+  if (aviso) aviso.innerHTML = avisoBuenFin();
   foot.style.display='block';
 }
 function openCart()  { document.getElementById('cartOverlay').classList.add('open'); document.getElementById('cartSidebar').classList.add('open'); lockScroll(); renderCartBody(); }
@@ -5837,6 +6163,7 @@ async function doLogin() {
     saveSession();
     closeLoginModal();
     renderLoginArea();
+    cargarPremioBuenFin().then(refreshCartUI);
     toast(`✓ ¡Bienvenid@, ${found.name}!`,'ok');
   } else {
     document.getElementById('loginErr').classList.add('show');
@@ -5846,7 +6173,7 @@ async function doLogin() {
 function doLogout(){
   showConfirm('¿Deseas cerrar sesión?', () => {
     S.cart=[]; saveCart();
-    S.user=null; saveSession(); renderLoginArea(); refreshCartUI(); toast('Sesión cerrada','');
+    S.user=null; MI_PREMIO=null; saveSession(); renderLoginArea(); refreshCartUI(); toast('Sesión cerrada','');
   });
 }
 function showConfirm(msg, onYes){
@@ -6006,6 +6333,7 @@ async function doRegister(){
     saveSession();
     closeRegisterModal();
     renderLoginArea();
+    cargarPremioBuenFin().then(refreshCartUI);
     toast(`✓ ¡Cuenta creada! Bienvenid@, ${name}`, 'ok');
   } finally {
     btn.disabled=false; btn.textContent='Crear Cuenta';
@@ -6064,10 +6392,13 @@ function goStep(n){
   buildSummaries();
 }
 function summaryHTML(){
-  const sub=cartSubtotal(), total=sub+S.shipCost;
+  const sub=cartSubtotal(), desc=montoDescuento(), total=sub-desc+S.shipCost;
   const lines=S.cart.map(item=>{ const p=findProduct(item.id); return p?`<div class="summary-line"><span>${p.name} × ${item.qty}</span><span>${fmtMXN(p.price*item.qty)}</span></div>`:''; }).join('');
   const deliveryLbl = DELIVERY_LABELS[S.delivery] || '🏪 Recoger en tienda';
-  return `<div class="summary-hdr">Resumen del Pedido</div>${lines}<div class="summary-line"><span>Subtotal</span><span>${fmtMXN(sub)}</span></div><div class="summary-line"><span>Envío (${deliveryLbl})</span><span>${S.shipCost===0?'Gratis':fmtMXN(S.shipCost)}</span></div><div class="summary-total"><span>Total</span><span>${fmtMXN(total)} MXN</span></div>`;
+  const lineaDesc = desc > 0
+    ? `<div class="summary-line bf-desc"><span>Descuento Buen Fin (${MI_PREMIO.desc}%)</span><span>− ${fmtMXN(desc)}</span></div>`
+    : '';
+  return `${avisoBuenFin()}<div class="summary-hdr">Resumen del Pedido</div>${lines}<div class="summary-line"><span>Subtotal</span><span>${fmtMXN(sub)}</span></div>${lineaDesc}<div class="summary-line"><span>Envío (${deliveryLbl})</span><span>${S.shipCost===0?'Gratis':fmtMXN(S.shipCost)}</span></div><div class="summary-total"><span>Total</span><span>${fmtMXN(total)} MXN</span></div>`;
 }
 function buildSummaries(){
   const h=summaryHTML();
@@ -6102,7 +6433,11 @@ async function confirmOrder(){
   const num='BE-'+String(Date.now()).slice(-6)+'-'+String(Math.floor(Math.random()*900)+100);
   document.getElementById('orderNum').textContent=num;
 
-  const total = cartSubtotal() + S.shipCost;
+  // El descuento se congela aquí: lo que se cobra y lo que se guarda son lo mismo
+  const premioUsado = premioAplicable();
+  const descuento   = montoDescuento();
+  const factor      = factorDescuento();
+  const total = subtotalConDescuento() + S.shipCost;
 
   // Guardar pedido en S.orders para el panel admin
   const orderItems = S.cart.map(item=>{
@@ -6121,6 +6456,16 @@ async function confirmOrder(){
     status: 'pendiente',   // pendiente | pagado | listo | enviado | completado
     items: orderItems,
   };
+  // Buen Fin: queda anotado en el pedido para que el panel lo muestre
+  if (descuento > 0 && premioUsado){
+    newOrder.bfDesc    = premioUsado.desc;
+    newOrder.bfMonto   = descuento;
+    newOrder.bfSubtotal= cartSubtotal();
+  }
+  if (buenFinActivo() && MI_PREMIO && MI_PREMIO.premio === 'regalo' && !MI_PREMIO.usado){
+    newOrder.bfRegalo = true;
+  }
+  marcarPremioUsado(newOrder);
   S.orders.push(newOrder);
   fbSaveOrder(newOrder); // guardar en Firebase
 
@@ -6145,7 +6490,8 @@ async function confirmOrder(){
         const p = findProduct(item.id);
         const name  = (p && p.name)  || item.name  || 'Producto';
         const price = (p && p.price) || item.price || 1;
-        return { id: String(item.id), title: name, quantity: item.qty, unit_price: Math.round(price * 100) / 100 };
+        const conDesc = Math.round(price * factor * 100) / 100;
+        return { id: String(item.id), title: name, quantity: item.qty, unit_price: conDesc };
       });
       if(S.shipCost > 0) mpItems.push({ id:'envio', title:'Envío', quantity:1, unit_price: S.shipCost });
       const r = await fetch('/api/create-preference', {
@@ -6821,6 +7167,8 @@ function buildOrderCard(o){
         <div style="text-align:right">
           <span class="status-badge status-${st}">${statusMap[st]||st}</span>
           <div style="font-weight:700;font-size:1rem;margin-top:6px;color:var(--rose-dark)">${fmtMXN(o.total)} MXN</div>
+          ${o.bfDesc ? `<div style="font-size:.66rem;color:#0a5931;font-weight:700;margin-top:3px">🎉 Buen Fin −${o.bfDesc}% (${fmtMXN(o.bfMonto)})</div>` : ''}
+          ${o.bfRegalo ? `<div style="font-size:.66rem;color:#856404;font-weight:700;margin-top:3px">🎁 Lleva regalo sorpresa</div>` : ''}
         </div>
       </div>
       <div class="order-card-body">
@@ -6945,6 +7293,9 @@ async function cancelOrder(orderNum){
   fbRefreshProductMeta({ fresh: true });
   order.status = 'cancelado';
   await fbUpdateOrderStatus(orderNum, 'cancelado');
+  // Igual que el stock: si el pedido no se concretó, el premio del Buen Fin
+  // vuelve a quedar disponible para esa clienta.
+  await liberarPremioBuenFin(order);
   renderAdminOrders();
   toast(`Pedido ${orderNum} cancelado — stock liberado`, 'ok');
 }
