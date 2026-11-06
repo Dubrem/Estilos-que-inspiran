@@ -1304,6 +1304,12 @@
     .env-chip:hover { background:var(--rose); border-color:var(--rose); color:#fff; }
     .env-cuenta{ margin-left:auto; font-size:.68rem; color:var(--text-med); }
     .env-cuenta b { color:var(--rose); }
+    .env-masivo{ background:var(--rose-pale); border:1px solid #E9D3D9; border-radius:12px;
+                 padding:12px 14px; margin-bottom:12px; font-size:.68rem; line-height:1.55;
+                 color:var(--text-med); }
+    .env-masivo b { color:var(--text-dark); }
+    .env-masivo small { display:block; margin-top:9px; font-size:.6rem; color:var(--text-light); }
+    .env-chip.claro { background:#fff; }
     .env-lista { flex:1 1 auto; overflow-y:auto; -webkit-overflow-scrolling:touch;
                  border:1px solid var(--border); border-radius:12px; background:#fff; min-height:120px; }
     .env-fila  { display:flex; align-items:center; gap:11px; padding:9px 13px;
@@ -2795,6 +2801,17 @@ function cerrarApertura(){}
         <button class="env-chip" onclick="marcarTodosEnvio(false)">Quitar todas</button>
         <button class="env-chip" onclick="reiniciarEnvios()">Borrar enviados</button>
         <span class="env-cuenta"><b id="envSel">0</b> seleccionadas</span>
+      </div>
+
+      <div class="env-masivo">
+        <b>¿Una sola vez a todas?</b> Usa la lista de difusión de WhatsApp: un mensaje
+        les llega a todas por separado, como si se los mandaras uno por uno.
+        <div class="env-barra" style="margin:10px 0 0">
+          <button class="env-chip claro" onclick="copiarMensajeEnvio()">1 · Copiar mensaje</button>
+          <button class="env-chip claro" onclick="descargarContactos()">2 · Bajar contactos</button>
+        </div>
+        <small>Guarda los contactos, crea la difusión con las seleccionadas y pega el texto.
+        Ojo: la difusión solo le llega a quien te tenga guardada en su teléfono.</small>
       </div>
       <input class="form-input" id="envBuscar" placeholder="Buscar nombre o teléfono…"
              oninput="filtrarEnvios(this.value)" style="margin-bottom:10px">
@@ -4934,6 +4951,47 @@ function renderEnvios(){
       ? `Abrir chat de ${cola[0].nombre.split(' ')[0]}  ·  faltan ${cola.length}`
       : (_envSel.size ? 'Ya les mandaste a todas' : 'Selecciona a quién mandarle');
   }
+}
+
+/** El texto tal como quedará, con un nombre genérico: la difusión es un solo mensaje
+    para todas, así que ahí no se puede personalizar el nombre. */
+function copiarMensajeEnvio(){
+  const base = (document.getElementById('envTexto')?.value || '')
+    .replace(/\s*\{nombre\}/g, '').replace(/^Hola\b/, 'Hola');
+  const copiar = txt => navigator.clipboard
+    ? navigator.clipboard.writeText(txt)
+    : Promise.reject();
+  copiar(base)
+    .then(() => toast('Mensaje copiado — pégalo en la difusión'))
+    .catch(() => {
+      // Safari viejo sin portapapeles: al menos que lo pueda seleccionar a mano
+      const ta = document.getElementById('envTexto');
+      if (ta) { ta.focus(); ta.select(); }
+      toast('Copia el texto de arriba a mano');
+    });
+}
+
+/** Archivo de contactos con las clientas marcadas, para guardarlas todas de golpe.
+    Sin contacto guardado no se puede armar la lista de difusión. */
+function descargarContactos(){
+  const sel = clientesConTel().filter(c => _envSel.has(c.email));
+  if (!sel.length) return toast('No hay clientas seleccionadas');
+  const vcf = sel.map(c => [
+    'BEGIN:VCARD',
+    'VERSION:3.0',
+    `FN:${c.nombre} · DUBREM`,
+    `N:;${c.nombre};;;`,
+    'ORG:Clientas DUBREM',
+    `TEL;TYPE=CELL:+52${c.tel}`,
+    'END:VCARD'
+  ].join('\r\n')).join('\r\n');
+
+  const url = URL.createObjectURL(new Blob([vcf], { type: 'text/vcard;charset=utf-8' }));
+  const a = document.createElement('a');
+  a.href = url; a.download = 'Clientas-DUBREM.vcf';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+  toast(`${sel.length} contactos listos para guardar`);
 }
 
 function enviarSiguiente(){
