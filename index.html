@@ -3457,11 +3457,11 @@ const BF_NOMBRES = {
 // Los números son el porcentaje directo con el que sale cada premio.
 // Peso 0 = la casilla se ve en la ruleta pero no se entrega.
 const BF_PESOS = {
-  d10:  60,
-  d15:  20,
-  regalo:15,
-  d05:   5,
-  sigue: 0
+  d10:   60,
+  d15:   15,
+  d05:   10,
+  regalo: 5,
+  sigue: 10    // lo que sobra de los otros cuatro; da derecho a un segundo giro
 };
 
 /** Elige el premio según su peso y devuelve una casilla que lo muestre. */
