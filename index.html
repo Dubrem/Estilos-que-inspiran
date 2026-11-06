@@ -3454,12 +3454,14 @@ const BF_NOMBRES = {
 // El sorteo no va por rebanadas sino por premio: el 10% ocupa dos casillas
 // pero pesa lo mismo que el 15%. Peso 0 = la casilla se ve en la ruleta pero
 // no se entrega. «Sigue» y «regalo» conservan su 14% de siempre.
+// Los números son el porcentaje directo con el que sale cada premio.
+// Peso 0 = la casilla se ve en la ruleta pero no se entrega.
 const BF_PESOS = {
-  d05:   0,    // apagado; ponle 15 para que vuelva a salir
-  d10:  15,
-  d15:  15,
-  sigue: 6,
-  regalo:6
+  d10:  60,
+  d15:  20,
+  regalo:15,
+  d05:   5,
+  sigue: 0
 };
 
 /** Elige el premio según su peso y devuelve una casilla que lo muestre. */
