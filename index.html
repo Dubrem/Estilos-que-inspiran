@@ -3452,15 +3452,22 @@ const BF_NOMBRES = {
 };
 
 // El sorteo no va por rebanadas sino por premio: el 10% ocupa dos casillas
-// pero pesa lo mismo que el 5% y el 15%. «Sigue» y «regalo» conservan la
-// probabilidad que tenían (3/21 ≈ 14% cada uno).
-const BF_PESOS = { d05:5, d10:5, d15:5, sigue:3, regalo:3 };
+// pero pesa lo mismo que el 15%. Peso 0 = la casilla se ve en la ruleta pero
+// no se entrega. «Sigue» y «regalo» conservan su 14% de siempre.
+const BF_PESOS = {
+  d05:   0,    // apagado; ponle 15 para que vuelva a salir
+  d10:  15,
+  d15:  15,
+  sigue: 6,
+  regalo:6
+};
 
 /** Elige el premio según su peso y devuelve una casilla que lo muestre. */
 function sortearCasilla(){
-  const total = Object.values(BF_PESOS).reduce((a,b) => a+b, 0);
-  let tiro = Math.random() * total, elegido = 'd10';
-  for (const [id, peso] of Object.entries(BF_PESOS)){
+  const vivos = Object.entries(BF_PESOS).filter(([, peso]) => peso > 0);
+  const total = vivos.reduce((a, [, peso]) => a + peso, 0);
+  let tiro = Math.random() * total, elegido = vivos[0][0];
+  for (const [id, peso] of vivos){
     tiro -= peso;
     if (tiro < 0) { elegido = id; break; }
   }
