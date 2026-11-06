@@ -1282,6 +1282,58 @@
       .traf-col { flex:1 0 22px; }
     }
 
+    /* Envío masivo de invitaciones por WhatsApp */
+    .env-modal .modal-box { max-width:560px; padding:28px 24px 0; display:flex; flex-direction:column;
+                            max-height:92vh; }
+    .env-head  { flex:0 0 auto; }
+    .env-titulo{ font-family:var(--ff-display); font-size:1.5rem; font-weight:400; letter-spacing:.04em;
+                 color:var(--text-dark); margin:0 0 4px; }
+    .env-sub   { font-size:.68rem; color:var(--text-light); letter-spacing:.04em; margin:0 0 16px; }
+    .env-texto { width:100%; min-height:132px; resize:vertical; font:inherit; font-size:.76rem;
+                 line-height:1.55; padding:12px 14px; border:1px solid var(--border); border-radius:12px;
+                 color:var(--text-dark); background:var(--cream); }
+    .env-texto:focus { outline:none; border-color:var(--rose); }
+    .env-tip   { font-size:.6rem; color:var(--text-light); letter-spacing:.04em; margin:6px 0 14px; }
+    .env-tip b { color:var(--rose); }
+    .env-barra { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+    .env-chip  { background:var(--blush-light); border:1px solid var(--border); color:var(--text-med);
+                 font-size:.62rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+                 padding:6px 13px; border-radius:50px; }
+    .env-chip:hover { background:var(--rose); border-color:var(--rose); color:#fff; }
+    .env-cuenta{ margin-left:auto; font-size:.68rem; color:var(--text-med); }
+    .env-cuenta b { color:var(--rose); }
+    .env-lista { flex:1 1 auto; overflow-y:auto; -webkit-overflow-scrolling:touch;
+                 border:1px solid var(--border); border-radius:12px; background:#fff; min-height:120px; }
+    .env-fila  { display:flex; align-items:center; gap:11px; padding:9px 13px;
+                 border-bottom:1px solid var(--blush-light); cursor:pointer; }
+    .env-fila:last-child { border-bottom:none; }
+    .env-fila.ya { background:#F3FAF5; }
+    .env-fila input { width:19px; height:19px; accent-color:var(--rose); flex:0 0 auto; }
+    .env-quien { flex:1; min-width:0; }
+    .env-quien b { display:block; font-size:.76rem; font-weight:600; color:var(--text-dark);
+                   white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .env-quien small { font-size:.62rem; color:var(--text-light); }
+    .env-ok { flex:0 0 auto; font-size:.56rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+              color:#0a5931; background:#D9F2E3; padding:3px 9px; border-radius:50px; }
+    .env-pie { flex:0 0 auto; position:sticky; bottom:0; background:#fff; padding:14px 0 20px;
+               margin-top:12px; border-top:1px solid var(--border); }
+    .env-enviar { width:100%; background:#25D366; color:#fff; border:none; border-radius:50px;
+                  padding:15px; font-size:.78rem; font-weight:700; letter-spacing:.1em;
+                  text-transform:uppercase; display:flex; align-items:center; justify-content:center; gap:9px; }
+    .env-enviar:hover:not(:disabled) { filter:brightness(.93); }
+    .env-enviar:disabled { background:var(--blush); color:var(--text-light); }
+    .env-nota { font-size:.6rem; color:var(--text-light); text-align:center; margin-top:9px; line-height:1.5; }
+    .env-nota a { color:var(--text-med); }
+    .cli-masivo { background:#25D366; color:#fff; border:none; border-radius:50px; padding:9px 18px;
+                  font-size:.62rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+                  display:inline-flex; align-items:center; gap:7px; margin-bottom:14px; }
+    .cli-masivo:hover { filter:brightness(.93); }
+    @media(max-width:640px){
+      .env-modal .modal-box { padding:22px 16px 0; max-height:calc(100svh - 20px); }
+      .env-texto { min-height:96px; }
+      .env-titulo { font-size:1.25rem; }
+    }
+
     /* ── RULETA BUEN FIN ── */
     .bf-modal{ display:none; position:fixed; inset:0; z-index:750; align-items:center; justify-content:center; padding:16px; }
     .bf-modal.open{ display:flex; }
@@ -2721,6 +2773,40 @@ function cerrarApertura(){}
       </div>
     </div>
     <button class="btn-primary" style="width:100%;margin-top:4px" onclick="doAdminLogin()">Entrar al Panel</button>
+  </div>
+</div>
+
+<!-- ========== INVITACIONES POR WHATSAPP (admin) ========== -->
+<div class="modal env-modal" id="envioModal">
+  <div class="modal-overlay" onclick="cerrarEnvios()"></div>
+  <div class="modal-box">
+    <div class="env-head">
+      <button class="modal-x" onclick="cerrarEnvios()">✕</button>
+      <h2 class="env-titulo">Invitación por WhatsApp</h2>
+      <p class="env-sub">Elige a quién le mandas y el mensaje sale ya escrito</p>
+
+      <textarea class="env-texto" id="envTexto" oninput="guardarTextoEnvio(this.value)"></textarea>
+      <p class="env-tip">Donde escribas <b>{nombre}</b> se pone el nombre de pila de cada clienta.</p>
+
+      <div class="env-barra">
+        <button class="env-chip" onclick="marcarTodosEnvio(true)">Seleccionar todas</button>
+        <button class="env-chip" onclick="marcarTodosEnvio(false)">Quitar todas</button>
+        <button class="env-chip" onclick="reiniciarEnvios()">Borrar enviados</button>
+        <span class="env-cuenta"><b id="envSel">0</b> seleccionadas</span>
+      </div>
+      <input class="form-input" id="envBuscar" placeholder="Buscar nombre o teléfono…"
+             oninput="filtrarEnvios(this.value)" style="margin-bottom:10px">
+    </div>
+
+    <div class="env-lista" id="envLista"></div>
+
+    <div class="env-pie">
+      <button class="env-enviar" id="envBtn" onclick="enviarSiguiente()">Enviar</button>
+      <p class="env-nota">
+        Se abre un chat a la vez: mandas, regresas y aquí ya quedó palomeada.<br>
+        Hazlo en tandas de 10 a 15 — WhatsApp castiga a quien dispara muchos mensajes seguidos.
+      </p>
+    </div>
   </div>
 </div>
 
@@ -4678,6 +4764,7 @@ async function renderAdminClientes(){
     </div>
 
     <div class="cli-sub">Personas registradas</div>
+    <button class="cli-masivo" onclick="abrirEnvios()">💬 Mandar mensaje a varias</button>
     <input class="form-input" id="cliBuscar" placeholder="Buscar por nombre, correo o teléfono…"
            value="${escHtml(_cliBuscar)}" oninput="filtrarClientes(this.value)"
            style="max-width:340px;margin-bottom:14px">
@@ -4709,6 +4796,153 @@ function etiquetaGiro(email){
   const porUsar = (tipo === 'pct' || tipo === 'gratis' || tipo === 'regalo');
   const extra = g.intentos > 1 ? ' (2º giro)' : '';
   return `<span class="cli-bf" title="Giró el ${cuando}">🎡 ${nombre}${extra}${porUsar ? ' · sin usar' : ''}</span>`;
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Invitaciones por WhatsApp a varias clientas
+
+   No se mandan solas: WhatsApp no deja mandar desde una página, y una
+   cuenta que dispara decenas de mensajes seguidos termina bloqueada.
+   Lo que hace esto es dejar cada chat abierto con el texto ya puesto,
+   de uno en uno, y llevar la cuenta de por dónde vas.
+   ────────────────────────────────────────────────────────────── */
+const LS_ENVIOS    = 'dubrem_envios_wa_v1';
+const LS_MSG_ENVIO = 'dubrem_msg_wa_v1';
+
+const MSG_ENVIO_DEFECTO =
+  'Hola {nombre} 👋\n\n' +
+  'En DUBREM nos adelantamos al Buen Fin 🎉\n\n' +
+  'Entra a la tienda en línea y gira la ruleta: hay descuentos de hasta 40%, ' +
+  'regalos sorpresa y promociones en toda la ropa.\n\n' +
+  'Un giro por cuenta, así que aprovéchalo 😉\n\n' +
+  '👉 https://dubrem.vercel.app/#inicio';
+
+let _envSel      = new Set();   // correos marcados en esta sesión
+let _envEnviados = new Set();   // teléfonos a los que ya abriste el chat
+let _envBuscar   = '';
+
+function leerEnviados(){
+  try { return new Set(JSON.parse(localStorage.getItem(LS_ENVIOS)) || []); }
+  catch (e) { return new Set(); }
+}
+function guardarEnviados(){
+  try { localStorage.setItem(LS_ENVIOS, JSON.stringify([..._envEnviados])); } catch (e) {}
+}
+function guardarTextoEnvio(v){
+  try { localStorage.setItem(LS_MSG_ENVIO, v); } catch (e) {}
+}
+function textoEnvioGuardado(){
+  try { return localStorage.getItem(LS_MSG_ENVIO) || MSG_ENVIO_DEFECTO; }
+  catch (e) { return MSG_ENVIO_DEFECTO; }
+}
+
+/** Clientas con teléfono utilizable, ordenadas por nombre. */
+function clientesConTel(){
+  return (S.users || [])
+    .filter(u => u && u.email && normalizePhone(u.phone || '').length === 10)
+    .map(u => ({
+      email: String(u.email).toLowerCase(),
+      nombre: String(u.name || '').trim() || 'Sin nombre',
+      tel: normalizePhone(u.phone)
+    }))
+    .sort((a,b) => a.nombre.localeCompare(b.nombre, 'es'));
+}
+
+function mensajeParaEnvio(cli){
+  const pila = cli.nombre.split(' ')[0];
+  const base = document.getElementById('envTexto')?.value || textoEnvioGuardado();
+  return base.replace(/\{nombre\}/g, pila === 'Sin' ? '' : pila).replace(/\s+$/,'');
+}
+
+function abrirEnvios(){
+  _envEnviados = leerEnviados();
+  _envBuscar   = '';
+  // De entrada van marcadas las que todavía no reciben el mensaje:
+  // así "enviar" nunca repite con quien ya lo tiene.
+  _envSel = new Set(clientesConTel().filter(c => !_envEnviados.has(c.tel)).map(c => c.email));
+  const ta = document.getElementById('envTexto');
+  if (ta) ta.value = textoEnvioGuardado();
+  const bus = document.getElementById('envBuscar');
+  if (bus) bus.value = '';
+  document.getElementById('envioModal')?.classList.add('open');
+  renderEnvios();
+}
+function cerrarEnvios(){ document.getElementById('envioModal')?.classList.remove('open'); }
+
+function filtrarEnvios(v){ _envBuscar = String(v || '').trim().toLowerCase(); renderEnvios(); }
+
+function toggleEnvio(email){
+  _envSel.has(email) ? _envSel.delete(email) : _envSel.add(email);
+  renderEnvios();
+}
+
+/** Marca o desmarca solo lo que está a la vista, para que el buscador sirva de filtro. */
+function marcarTodosEnvio(si){
+  visiblesEnvio().forEach(c => si ? _envSel.add(c.email) : _envSel.delete(c.email));
+  renderEnvios();
+}
+
+function reiniciarEnvios(){
+  if (!_envEnviados.size) return;
+  if (!confirm('¿Borrar la marca de enviados? Las vuelve a poner todas como pendientes.')) return;
+  _envEnviados = new Set();
+  guardarEnviados();
+  _envSel = new Set(clientesConTel().map(c => c.email));
+  renderEnvios();
+}
+
+function visiblesEnvio(){
+  const q = _envBuscar;
+  if (!q) return clientesConTel();
+  const digitos = q.replace(/\D/g,'');
+  return clientesConTel().filter(c =>
+    c.nombre.toLowerCase().includes(q) || (!!digitos && c.tel.includes(digitos))
+  );
+}
+
+/** Siguiente de la cola: marcada y sin mensaje todavía. */
+function pendientesEnvio(){
+  return clientesConTel().filter(c => _envSel.has(c.email) && !_envEnviados.has(c.tel));
+}
+
+function renderEnvios(){
+  const cont = document.getElementById('envLista');
+  if (!cont) return;
+  const vis = visiblesEnvio();
+
+  cont.innerHTML = vis.length ? vis.map(c => {
+    const ya = _envEnviados.has(c.tel);
+    return `<label class="env-fila${ya ? ' ya' : ''}">
+      <input type="checkbox" ${_envSel.has(c.email) ? 'checked' : ''}
+             onchange="toggleEnvio('${escHtml(c.email)}')">
+      <span class="env-quien"><b>${escHtml(c.nombre)}</b>
+        <small>${c.tel.slice(0,3)} ${c.tel.slice(3,6)} ${c.tel.slice(6)}</small></span>
+      ${ya ? '<span class="env-ok">Enviado</span>' : ''}
+    </label>`;
+  }).join('') : `<div class="cli-vacio" style="border:none">Nadie coincide con esa búsqueda.</div>`;
+
+  const sel = document.getElementById('envSel');
+  if (sel) sel.textContent = _envSel.size;
+
+  const btn  = document.getElementById('envBtn');
+  const cola = pendientesEnvio();
+  if (btn) {
+    btn.disabled = !cola.length;
+    btn.textContent = cola.length
+      ? `Abrir chat de ${cola[0].nombre.split(' ')[0]}  ·  faltan ${cola.length}`
+      : (_envSel.size ? 'Ya les mandaste a todas' : 'Selecciona a quién mandarle');
+  }
+}
+
+function enviarSiguiente(){
+  const cola = pendientesEnvio();
+  if (!cola.length) return;
+  const cli = cola[0];
+  // El window.open va dentro del clic: si se deja para después, el navegador lo bloquea.
+  window.open(`https://wa.me/52${cli.tel}?text=${encodeURIComponent(mensajeParaEnvio(cli))}`, '_blank');
+  _envEnviados.add(cli.tel);
+  guardarEnviados();
+  renderEnvios();
 }
 
 function renderListaClientes(){
