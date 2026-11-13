@@ -17,6 +17,7 @@
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
   <link rel="icon" href="/assets/favicon-32.png" sizes="32x32" type="image/png" />
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+  <link rel="preload" as="image" href="/img/buenfin.jpg" fetchpriority="high" />
   <meta name="theme-color" content="#0B0608" />
 
   <!-- Open Graph (WhatsApp, Facebook) -->
@@ -491,7 +492,7 @@
                     background:#C0121A; color:#fff; font-size:.82rem; font-weight:800;
                     letter-spacing:.03em; padding:8px 15px; border-radius:50px;
                     box-shadow:0 4px 14px rgba(0,0,0,.3); }
-    @media(max-width:640px){ .promo-badge { font-size:.74rem; padding:7px 13px; } }
+    @media(max-width:640px){ .promo-badge { font-size:.58rem; padding:5px 10px; top:10px; right:10px; } }
     .cart-item-off{ font-size:.58rem; font-weight:700; letter-spacing:.06em;
                     color:#C0121A; margin-top:2px; }
     .sum-off      { color:#C0121A; font-weight:800; font-size:.9em; }
@@ -732,13 +733,14 @@
     @media(max-width:640px){
       /* En celular los chips se van en renglones y el bloque crecía demasiado:
          mejor una sola fila que se desliza con el dedo. */
-      .desc-filter-wrap { gap:6px; padding:9px 10px; margin-top:10px;
+      .desc-filter-wrap { gap:5px; padding:7px 9px; margin-top:9px; border-radius:10px;
                           flex-wrap:nowrap; justify-content:flex-start;
                           overflow-x:auto; -webkit-overflow-scrolling:touch;
                           scrollbar-width:none; }
       .desc-filter-wrap::-webkit-scrollbar { display:none; }
       .desc-filter-label, .desc-chip { flex-shrink:0; }
-      .desc-chip { padding:6px 12px; font-size:.63rem; }
+      .desc-filter-label { font-size:.54rem; letter-spacing:.1em; }
+      .desc-chip { padding:5px 10px; font-size:.56rem; letter-spacing:.04em; }
     }
 
     /* ============================
@@ -2441,7 +2443,7 @@ function cerrarApertura(){}
     <button class="promo-pop-x" onclick="cerrarPromo()" aria-label="Cerrar">✕</button>
     <img src="/img/buenfin.jpg" onclick="showCatalog('mujer')"
          alt="Buen Fin DUBREM — ofertas desde el 50% de descuento del 13 al 17 de noviembre"
-         decoding="async">
+         fetchpriority="high">
     <button class="promo-pop-cta" onclick="showCatalog('mujer')">Ver ofertas →</button>
   </div>
 </div>
@@ -5940,7 +5942,7 @@ document.addEventListener('DOMContentLoaded', () => {
     showCatalog(_initHash, false);
   } else {
     history.replaceState({}, '', location.pathname);
-    setTimeout(abrirPromo, 900);   // deja ver la portada antes de taparla
+    abrirPromo();
   }
 
   // Reabrir el panel que estaba abierto antes de recargar
@@ -6106,24 +6108,17 @@ const PROMO = {
   descuentos: [30, 40, 50]
 };
 
-/* La ventana se cierra con la ✕, con el fondo o entrando al catálogo.
-   Una vez cerrada no vuelve a salir en el día: quien ya la vio no tiene
-   por qué toparse con ella en cada visita. */
-const LS_PROMO_VISTA = 'dubrem_promo_vista_v1';
-
+/* La ventana sale en cuanto carga la portada, en cada visita, y se quita
+   con la ✕, tocando el fondo, con Escape o entrando al catálogo. */
 function abrirPromo(){
   if (!promoActiva()) return;
-  try { if (localStorage.getItem(LS_PROMO_VISTA) === diaLocal()) return; } catch (e) {}
   const el = document.getElementById('promoPop');
   if (el) el.classList.add('open');
 }
 
-function cerrarPromo(silencio){
+function cerrarPromo(){
   const el = document.getElementById('promoPop');
-  if (!el || !el.classList.contains('open')) return;
-  el.classList.remove('open');
-  // Al entrar al catálogo se cierra sin darla por vista: puede volver mañana igual
-  if (!silencio) { try { localStorage.setItem(LS_PROMO_VISTA, diaLocal()); } catch (e) {} }
+  if (el) el.classList.remove('open');
 }
 
 function promoActiva(){
@@ -6271,7 +6266,7 @@ function closeMobileNav(){ document.getElementById('mobileNav').classList.remove
 function showCatalog(section, pushHistory = true) {
   if (pushHistory) history.pushState({ section }, '', '#' + section);
   document.getElementById('inicio').style.display = 'none';
-  cerrarPromo(true);
+  cerrarPromo();
   document.querySelector('.filter-bar').classList.add('catalog-visible');
   document.querySelector('.products-section').classList.add('catalog-visible');
   document.querySelector('.footer').classList.add('catalog-visible');
