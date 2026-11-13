@@ -460,6 +460,32 @@
     .hero-tagline,.hero-location { display:none; }
 
     /* ─── Ticker ─── */
+    /* Publicidad del Buen Fin en la portada */
+    .promo-banner { position:relative; display:block; width:100%; cursor:pointer;
+                    background:#5B0C10; line-height:0; overflow:hidden; }
+    .promo-banner img { width:100%; height:auto; display:block;
+                        transition:transform .6s cubic-bezier(.22,1,.36,1); }
+    .promo-banner:hover img { transform:scale(1.02); }
+    /* Debajo de la imagen, no encima: cualquier botón sobrepuesto tapaba las fechas */
+    .promo-banner-cta { display:block; background:#8B1014; color:#fff; text-align:center;
+                        font-size:.66rem; font-weight:700; letter-spacing:.16em;
+                        text-transform:uppercase; padding:14px 20px; line-height:1; }
+    .promo-banner:hover .promo-banner-cta { background:#A3141A; }
+    @media(max-width:640px){
+      .promo-banner-cta { font-size:.58rem; padding:12px 16px; letter-spacing:.12em; }
+    }
+
+    /* Precios con descuento del Buen Fin */
+    .precio-antes { color:var(--text-light); text-decoration:line-through;
+                    font-weight:400; margin-right:5px; opacity:.75; }
+    .promo-badge  { position:absolute; top:12px; right:12px; z-index:3;
+                    background:#C0121A; color:#fff; font-size:.62rem; font-weight:800;
+                    letter-spacing:.06em; padding:5px 10px; border-radius:50px;
+                    box-shadow:0 4px 14px rgba(0,0,0,.3); }
+    .cart-item-off{ font-size:.58rem; font-weight:700; letter-spacing:.06em;
+                    color:#C0121A; margin-top:2px; }
+    .sum-off      { color:#C0121A; font-weight:800; font-size:.9em; }
+
     .hero-ticker {
       background: var(--rose); overflow: hidden; padding: .52rem 0;
     }
@@ -2367,6 +2393,13 @@ function cerrarApertura(){}
 </section>
 
 
+<!-- ========== PUBLICIDAD BUEN FIN ========== -->
+<section class="promo-banner" id="promoBanner" onclick="showCatalog('mujer')">
+  <img src="/img/buenfin.jpg" alt="Buen Fin DUBREM — ofertas desde el 50% de descuento del 13 al 17 de noviembre"
+       loading="lazy" decoding="async">
+  <span class="promo-banner-cta">Ver ofertas →</span>
+</section>
+
 <!-- ========== TICKER ========== -->
 <div class="hero-ticker" aria-hidden="true">
   <div class="hero-ticker-track">
@@ -2466,7 +2499,8 @@ function cerrarApertura(){}
     <div class="cart-foot">
       <div id="cBuenFin"></div>
       <div class="cart-subtotal-row"><span>Subtotal</span><span id="cSubtotal"></span></div>
-      <div class="cart-subtotal-row bf-desc" id="cDescRow" style="display:none"><span>Descuento Buen Fin</span><span id="cDesc"></span></div>
+      <div class="cart-subtotal-row bf-desc" id="cPromoRow" style="display:none"><span>Promoción Buen Fin</span><span id="cPromo"></span></div>
+      <div class="cart-subtotal-row bf-desc" id="cDescRow" style="display:none"><span>Premio de la ruleta</span><span id="cDesc"></span></div>
       <div class="cart-total-row"><span>Total</span><span id="cTotal"></span></div>
       <button class="btn-checkout" onclick="startCheckout()">Proceder al Pago →</button>
     </div>
@@ -6004,6 +6038,98 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ──────────────────────────────────────────────────────
    UTILIDADES
 ────────────────────────────────────────────────────── */
+/* ──────────────────────────────────────────────────────────────
+   PROMOCIÓN BUEN FIN — descuentos por prenda
+
+   El precio que se cobra NO cambia: sigue siendo el de la ficha del
+   producto. Lo que se calcula aquí es el precio "antes" — el de lista
+   inflado — para que al aplicarle el descuento quede exactamente en el
+   precio real. Así nada se toca en la base de datos y apagar la promo
+   es cambiar una fecha.
+   ────────────────────────────────────────────────────────────── */
+const PROMO = {
+  inicio: '2026-11-13',
+  fin:    '2026-11-17',
+  cats:   ['mujer','hombre','juvenil','maternidad','ninos'],
+  parte:  70,              // porcentaje del catálogo que entra en promoción
+  descuentos: [30, 40, 50]
+};
+
+function promoActiva(){
+  const hoy = diaLocal();
+  return hoy >= PROMO.inicio && hoy <= PROMO.fin;
+}
+
+/** Hash estable del id: la misma prenda sale siempre con el mismo
+    descuento, en cualquier teléfono, sin guardar nada en la base. */
+function hashId(id, sal){
+  const s = String(id) + sal;
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++){
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return Math.abs(h);
+}
+
+/* El reparto se hace por categoría, no prenda por prenda: al azar, una
+   categoría chica se iba al 50% o al 90%. Se ordenan sus prendas por el
+   hash (orden fijo pero revuelto), entran las primeras 70% y a ésas se
+   les va alternando 30, 40 y 50. */
+let _mapaPromo = null, _firmaPromo = '';
+
+function mapaPromo(){
+  const firma = promoActiva()
+    ? PRODUCTS.length + ':' + Object.keys(PRODUCT_OVERRIDES).length
+    : 'off';
+  if (_mapaPromo && _firmaPromo === firma) return _mapaPromo;
+
+  const mapa = {};
+  if (promoActiva()) {
+    const todo = getMergedProducts().filter(p => p && !p.hidden && p.price > 0);
+    for (const cat of PROMO.cats) {
+      const lote = todo.filter(p => p.cat === cat)
+                       .sort((a,b) => hashId(a.id,'orden') - hashId(b.id,'orden'));
+      const cuantas = Math.round(lote.length * PROMO.parte / 100);
+      lote.slice(0, cuantas).forEach((p, i) => {
+        mapa[p.id] = PROMO.descuentos[i % PROMO.descuentos.length];
+      });
+    }
+  }
+  _mapaPromo = mapa; _firmaPromo = firma;
+  return mapa;
+}
+
+/** Qué descuento le toca a una prenda: 0, 30, 40 o 50. */
+function descuentoPromo(p){
+  if (!p || !promoActiva() || !p.price) return 0;
+  return mapaPromo()[p.id] || 0;
+}
+
+/** Precio tachado. Sin descuento es el precio normal. */
+function precioLista(p){
+  const d = descuentoPromo(p);
+  return d ? Math.round(p.price / (1 - d/100)) : p.price;
+}
+
+/** Lo que sumarían las prendas del carrito a precio de lista. */
+function subtotalLista(){
+  return S.cart.reduce((s,i) => {
+    const p = findProduct(i.id);
+    return s + (p ? precioLista(p) * i.qty : 0);
+  }, 0);
+}
+/** Lo que se ahorra por la promoción de prendas (no por la ruleta). */
+function ahorroPromo(){ return subtotalLista() - cartSubtotal(); }
+
+/** Precio para las tarjetas y la ficha: tachado + vigente. */
+function htmlPrecio(p, clase){
+  const d = descuentoPromo(p);
+  if (!d) return `${fmtMXN(p.price)} <sup>MXN</sup>`;
+  return `<span class="precio-antes">${fmtMXN(precioLista(p))}</span> ` +
+         `<span class="${clase || ''}">${fmtMXN(p.price)} <sup>MXN</sup></span>`;
+}
+
 function fmtMXN(n){ return '$' + n.toLocaleString('es-MX'); }
 
 function triggerMpSuccess(orden, pending) {
@@ -6074,6 +6200,8 @@ function closeMobileNav(){ document.getElementById('mobileNav').classList.remove
 function showCatalog(section, pushHistory = true) {
   if (pushHistory) history.pushState({ section }, '', '#' + section);
   document.getElementById('inicio').style.display = 'none';
+  const promo = document.getElementById('promoBanner');
+  if (promo) promo.style.display = 'none';
   document.querySelector('.filter-bar').classList.add('catalog-visible');
   document.querySelector('.products-section').classList.add('catalog-visible');
   document.querySelector('.footer').classList.add('catalog-visible');
@@ -6112,6 +6240,8 @@ function reintentarCarga() {
 function showHero() {
   clearInterval(_heroInterval);
   document.getElementById('inicio').style.display = '';
+  const promo = document.getElementById('promoBanner');
+  if (promo) promo.style.display = promoActiva() ? '' : 'none';
   document.querySelector('.filter-bar').classList.remove('catalog-visible');
   document.querySelector('.products-section').classList.remove('catalog-visible');
   document.querySelector('.footer').classList.remove('catalog-visible');
@@ -6310,6 +6440,7 @@ function cardHTML(p) {
       <div class="product-img-wrap" onclick="openLightbox(${idArg})">
         <img src="${prodThumb(p) || IMG_FALLBACK}" alt="${p.name}" onerror="imgErr(this)" loading="lazy" decoding="async">
         <span class="cat-badge">${catLabel(p.subcat || p.cat)}</span>
+        ${descuentoPromo(p) ? `<span class="promo-badge">−${descuentoPromo(p)}%</span>` : ''}
         <button class="card-quick-add" id="badd${p.id}" onclick="event.stopPropagation();addToCart(${idArg})" ${eff===0?'disabled':''}>${quickLbl}</button>
       </div>
       <div class="product-info">
@@ -6317,7 +6448,7 @@ function cardHTML(p) {
         ${sizesHtml}
         <div class="product-footer">
           <div class="card-price-col">
-            <div class="product-price">${fmtMXN(p.price)} <sup>MXN</sup></div>
+            <div class="product-price">${htmlPrecio(p)}</div>
             <div class="product-stock ${eff<=5?'low':''}" id="stk${p.id}">${stkTxt}</div>
           </div>
           <button class="card-cart-btn" onclick="addToCart(${idArg})" ${eff===0?'disabled':''} title="${quickLbl}">${cartIcon}</button>
@@ -6373,7 +6504,7 @@ async function openLightbox(id) {
   document.getElementById('lbCat').textContent   = catLabel(p.cat);
   document.getElementById('lbName').textContent  = p.name;
   document.getElementById('lbDesc').textContent  = p.desc;
-  document.getElementById('lbPrice').textContent = fmtMXN(p.price) + ' MXN';
+  document.getElementById('lbPrice').innerHTML = htmlPrecio(p);
   updateLbStock(p);
   // Renderizar tallas
   const wrap  = document.getElementById('lbSizesWrap');
@@ -6576,8 +6707,11 @@ function renderCartBody() {
         <div class="cart-item-info">
           <div class="cart-item-name">${p.name}</div>
           ${item.size ? `<div class="cart-item-unit" style="color:var(--rose);font-weight:700">Talla: ${item.size}</div>` : ''}
-          <div class="cart-item-unit">${fmtMXN(p.price)} c/u</div>
+          <div class="cart-item-unit">${descuentoPromo(p)
+              ? `<span class="precio-antes">${fmtMXN(precioLista(p))}</span> ${fmtMXN(p.price)} c/u`
+              : `${fmtMXN(p.price)} c/u`}</div>
           <div class="cart-item-price">${fmtMXN(p.price*item.qty)}</div>
+          ${descuentoPromo(p) ? `<div class="cart-item-off">−${descuentoPromo(p)}% Buen Fin</div>` : ''}
           <div class="qty-controls">
             <button class="qty-btn" onclick="changeQty(${idArg},-1)">−</button>
             <span class="qty-num">${item.qty}</span>
@@ -6587,10 +6721,18 @@ function renderCartBody() {
         <button class="cart-item-del" onclick="removeFromCart(${idArg})" title="Eliminar">🗑</button>
       </div>`;
   }).join('');
-  const sub  = cartSubtotal();
-  const desc = montoDescuento();
-  document.getElementById('cSubtotal').textContent = fmtMXN(sub)+' MXN';
+  const sub   = cartSubtotal();
+  const desc  = montoDescuento();
+  const promo = ahorroPromo();
+  // El subtotal se muestra a precio de lista y la promoción baja de ahí:
+  // el total sigue siendo el de siempre.
+  document.getElementById('cSubtotal').textContent = fmtMXN(sub + promo)+' MXN';
   document.getElementById('cTotal').textContent    = fmtMXN(sub - desc)+' MXN';
+  const filaPromo = document.getElementById('cPromoRow');
+  if (filaPromo){
+    filaPromo.style.display = promo > 0 ? '' : 'none';
+    document.getElementById('cPromo').textContent = '− ' + fmtMXN(promo) + ' MXN';
+  }
   const filaDesc = document.getElementById('cDescRow');
   if (filaDesc){
     filaDesc.style.display = desc > 0 ? '' : 'none';
@@ -6874,13 +7016,21 @@ function goStep(n){
   buildSummaries();
 }
 function summaryHTML(){
-  const sub=cartSubtotal(), desc=montoDescuento(), total=sub-desc+S.shipCost;
-  const lines=S.cart.map(item=>{ const p=findProduct(item.id); return p?`<div class="summary-line"><span>${p.name} × ${item.qty}</span><span>${fmtMXN(p.price*item.qty)}</span></div>`:''; }).join('');
+  const sub=cartSubtotal(), desc=montoDescuento(), promo=ahorroPromo(), total=sub-desc+S.shipCost;
+  const lines=S.cart.map(item=>{
+    const p=findProduct(item.id); if(!p) return '';
+    const off = descuentoPromo(p);
+    // Cada renglón va a precio de lista; lo rebajado se junta más abajo.
+    return `<div class="summary-line"><span>${p.name} × ${item.qty}${off?` <b class="sum-off">−${off}%</b>`:''}</span><span>${fmtMXN(precioLista(p)*item.qty)}</span></div>`;
+  }).join('');
   const deliveryLbl = DELIVERY_LABELS[S.delivery] || '🏪 Recoger en tienda';
-  const lineaDesc = desc > 0
-    ? `<div class="summary-line bf-desc"><span>Descuento Buen Fin (${etiquetaPremio(premioAplicable())})</span><span>− ${fmtMXN(desc)}</span></div>`
+  const lineaPromo = promo > 0
+    ? `<div class="summary-line bf-desc"><span>Promoción Buen Fin</span><span>− ${fmtMXN(promo)}</span></div>`
     : '';
-  return `${avisoBuenFin()}<div class="summary-hdr">Resumen del Pedido</div>${lines}<div class="summary-line"><span>Subtotal</span><span>${fmtMXN(sub)}</span></div>${lineaDesc}<div class="summary-line"><span>Envío (${deliveryLbl})</span><span>${S.shipCost===0?'Gratis':fmtMXN(S.shipCost)}</span></div><div class="summary-total"><span>Total</span><span>${fmtMXN(total)} MXN</span></div>`;
+  const lineaDesc = desc > 0
+    ? `<div class="summary-line bf-desc"><span>Premio de la ruleta (${etiquetaPremio(premioAplicable())})</span><span>− ${fmtMXN(desc)}</span></div>`
+    : '';
+  return `${avisoBuenFin()}<div class="summary-hdr">Resumen del Pedido</div>${lines}<div class="summary-line"><span>Subtotal</span><span>${fmtMXN(sub + promo)}</span></div>${lineaPromo}${lineaDesc}<div class="summary-line"><span>Envío (${deliveryLbl})</span><span>${S.shipCost===0?'Gratis':fmtMXN(S.shipCost)}</span></div><div class="summary-total"><span>Total</span><span>${fmtMXN(total)} MXN</span></div>`;
 }
 function buildSummaries(){
   const h=summaryHTML();
