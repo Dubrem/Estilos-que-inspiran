@@ -7173,7 +7173,7 @@ async function confirmOrder(){
   // Guardar pedido en S.orders para el panel admin
   const orderItems = S.cart.map(item=>{
     const p = findProduct(item.id);
-    return { id:item.id, name:p?.name||item.name||'', qty:item.qty, price:p?.price||item.price||0, size:item.size||null, done:false };
+    return { id:item.id, name:p?.name||item.name||'', cat:p?.cat||item.cat||'', qty:item.qty, price:p?.price||item.price||0, size:item.size||null, done:false };
   });
   const newOrder = {
     num,
@@ -7616,7 +7616,9 @@ function _filterOrders(){
   let list = [...S.orders];
 
   /* filtro de estado */
-  if(_orderStatusFilter !== 'all'){
+  if(_orderStatusFilter === 'accesorios'){
+    list = list.filter(tieneAccesorios);
+  } else if(_orderStatusFilter !== 'all'){
     list = list.filter(o => o.status === _orderStatusFilter);
   }
 
@@ -7676,6 +7678,35 @@ function verAgotadas(){
 let CORTES = [];
 const COBRADOS_ST = ['pagado','listo','enviado','despachado','completado'];
 const esCobrado = o => COBRADOS_ST.includes(o.status);
+
+/* ── CUENTA APARTE DE ACCESORIOS ─────────────────────
+   Lo vendido en la categoria Accesorios se lleva en su propia suma. El
+   pedido sigue completo en la lista de siempre; aparte contamos solo los
+   renglones de esa categoria. Los pedidos viejos no guardaron la
+   categoria en el renglon, asi que se consulta el catalogo por id. */
+function catDeItem(it){
+  if (it && it.cat) return it.cat;
+  const p = it ? findProduct(it.id) : null;
+  return p ? (p.cat || '') : '';
+}
+function esItemAccesorio(it){ return catDeItem(it) === 'accesorios'; }
+function tieneAccesorios(o){  return (o.items||[]).some(esItemAccesorio); }
+function piezasAccesorios(o){ return (o.items||[]).filter(esItemAccesorio).reduce((s,it)=>s+(it.qty||0),0); }
+
+/** Lo que dejo de accesorios un pedido: sin envio y con el premio de la
+    ruleta repartido a proporcion, para que nunca sume de mas. */
+function montoAccesorios(o){
+  const bruto = (o.items||[]).filter(esItemAccesorio)
+                  .reduce((s,it)=>s+(it.price||0)*(it.qty||0),0);
+  if (!bruto) return 0;
+  const sub = o.bfSubtotal || 0, desc = o.bfMonto || 0;
+  return sub > 0 && desc > 0 ? Math.round(bruto * (sub - desc) / sub) : bruto;
+}
+function accCobrado(){     return S.orders.filter(esCobrado).reduce((s,o)=>s+montoAccesorios(o),0); }
+function accPendiente(){   return S.orders.filter(o=>o.status!=='cancelado' && !esCobrado(o)).reduce((s,o)=>s+montoAccesorios(o),0); }
+function accPiezas(){      return S.orders.filter(esCobrado).reduce((s,o)=>s+piezasAccesorios(o),0); }
+function accPedidos(){     return S.orders.filter(o => o.status !== 'cancelado' && tieneAccesorios(o)).length; }
+function verAccesorios(){  setOrderStatusFilter('accesorios'); }
 
 async function fbCargarCortes(){
   const data = await fbFetch('cortes');
@@ -7741,6 +7772,27 @@ function verHistorialCortes(){
         `ACUMULADO TOTAL: ${fmtMXN(totalAcumulado())}`);
 }
 
+/** Tablero del apartado de accesorios: las cifras de esa categoria sola,
+    separadas de los totales de la tienda. */
+function resumenAccesoriosHTML(){
+  const celda = (val, txt) =>
+    `<div style="flex:1 1 120px;min-width:110px">
+       <div style="font-size:1.25rem;font-weight:800;color:#4b327a;line-height:1.1">${val}</div>
+       <div style="font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:#6b4e9e;font-weight:700;margin-top:3px">${txt}</div>
+     </div>`;
+  return `
+    <div style="background:#f3eefb;border:1.5px solid #6b4e9e;border-radius:12px;padding:14px 16px;margin-bottom:14px">
+      <div style="font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:#6b4e9e;font-weight:800;margin-bottom:10px">Cuenta aparte · Accesorios</div>
+      <div style="display:flex;flex-wrap:wrap;gap:12px">
+        ${celda(fmtMXN(accCobrado()),   'Cobrado')}
+        ${celda(fmtMXN(accPendiente()), 'Por cobrar')}
+        ${celda(accPiezas(),            'Piezas vendidas')}
+        ${celda(accPedidos(),           'Pedidos')}
+      </div>
+      <div style="font-size:.6rem;color:#6b4e9e;margin-top:10px;opacity:.85">Solo los renglones de Accesorios · sin envío</div>
+    </div>`;
+}
+
 function renderAdminOrders(){
   const stats   = document.getElementById('adminStats');
   const filtersEl = document.getElementById('adminFilters');
@@ -7759,7 +7811,8 @@ function renderAdminOrders(){
     <div class="stat-card" style="border-top:2px solid #856404" title="Pedidos pendientes de pago"><div class="stat-val" style="color:#856404">${fmtMXN(porCobrar)}</div><div class="stat-lbl">Ingresos pendientes</div></div>
     <div class="stat-card" style="border-top:2px solid var(--rose)" title="Prendas disponibles en el catálogo"><div class="stat-val" style="color:var(--rose)">${prendasDisponibles()}</div><div class="stat-lbl">Prendas disponibles</div></div>
     <div class="stat-card" style="cursor:pointer;border-top:2px solid #c0392b" onclick="verAgotadas()" title="Sin existencias — toca para verlas en Productos"><div class="stat-val" style="color:#c0392b">${prendasAgotadas()}</div><div class="stat-lbl">Prendas agotadas</div></div>
-    <div class="stat-card" style="cursor:pointer;border-top:2px solid #1b3a5c" onclick="verHistorialCortes()" title="Todo lo cobrado desde el inicio — toca para ver los cortes"><div class="stat-val" style="color:#1b3a5c">${fmtMXN(totalAcumulado())}</div><div class="stat-lbl">Acumulado total</div></div>`;
+    <div class="stat-card" style="cursor:pointer;border-top:2px solid #1b3a5c" onclick="verHistorialCortes()" title="Todo lo cobrado desde el inicio — toca para ver los cortes"><div class="stat-val" style="color:#1b3a5c">${fmtMXN(totalAcumulado())}</div><div class="stat-lbl">Acumulado total</div></div>
+    <div class="stat-card" style="cursor:pointer;border-top:2px solid #6b4e9e" onclick="verAccesorios()" title="Cuenta aparte: solo lo vendido en Accesorios — toca para ver esos pedidos"><div class="stat-val" style="color:#6b4e9e">${fmtMXN(accCobrado())}</div><div class="stat-lbl">Accesorios</div></div>`;
 
   const sf = _orderStatusFilter, df = _orderDateFilter;
   const filterActive = _isFilterActive();
@@ -7768,7 +7821,7 @@ function renderAdminOrders(){
     /* — filtro activo: ocultar stats y filtros, mostrar barra compacta — */
     stats.style.display   = 'none';
     filtersEl.style.display = 'none';
-    const statusLabels = { pendiente:'🕐 Pendiente', pagado:'✅ Pagado', listo:'🏪 Listo', cancelado:'❌ Cancelado', completado:'🎉 Completado' };
+    const statusLabels = { pendiente:'🕐 Pendiente', pagado:'✅ Pagado', listo:'🏪 Listo', cancelado:'❌ Cancelado', completado:'🎉 Completado', accesorios:'👜 Accesorios' };
     const activeLabel  = sf !== 'all' ? statusLabels[sf] : df !== 'all' ? {today:'Hoy',week:'Esta semana',month:'Este mes'}[df] : `"${_orderSearch}"`;
     const filtered = _filterOrders();
     body.innerHTML = `
@@ -7776,6 +7829,7 @@ function renderAdminOrders(){
         <span style="font-size:.78rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--rose)">${activeLabel} — ${filtered.length} pedido${filtered.length!==1?'s':''}</span>
         <button onclick="clearAdminFilters()" style="padding:6px 16px;border:1.5px solid var(--rose);background:transparent;color:var(--rose);border-radius:50px;font-size:.65rem;font-weight:700;cursor:pointer;letter-spacing:.08em;text-transform:uppercase">← Ver todos</button>
       </div>
+      ${sf === 'accesorios' ? resumenAccesoriosHTML() : ''}
       ${filtered.length ? `<div class="admin-orders-grid">${filtered.map(orderCardHTML).join('')}</div>`
         : `<div class="admin-empty"><div class="admin-empty-icon">🔍</div><p>Sin resultados.</p></div>`}`;
   } else {
