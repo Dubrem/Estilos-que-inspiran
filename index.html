@@ -710,6 +710,37 @@
     .size-chip:hover { border-color:var(--rose); color:var(--rose); }
     .size-chip.active { background:var(--text-dark); border-color:var(--text-dark); color:var(--cream); box-shadow:none; }
 
+    /* Filtro de descuentos del Buen Fin */
+    .desc-filter-wrap {
+      display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap;
+      max-width:700px; margin:12px auto 0; padding:10px 12px;
+      background:#FFF1F1; border:1px solid #F0CFD1; border-radius:12px;
+    }
+    .desc-filter-label {
+      font-size:.62rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+      color:#8B1014; white-space:nowrap;
+    }
+    .desc-chip {
+      padding:7px 15px; border:1px solid #E6B9BC; border-radius:50px;
+      background:#fff; color:#8B1014;
+      font-size:.68rem; font-weight:700; letter-spacing:.06em;
+      cursor:pointer; white-space:nowrap; transition:all .18s;
+    }
+    .desc-chip:hover { border-color:#C0121A; }
+    .desc-chip.active { background:#C0121A; border-color:#C0121A; color:#fff; }
+    .desc-chip .cuantas { font-weight:400; opacity:.75; }
+    @media(max-width:640px){
+      /* En celular los chips se van en renglones y el bloque crecía demasiado:
+         mejor una sola fila que se desliza con el dedo. */
+      .desc-filter-wrap { gap:6px; padding:9px 10px; margin-top:10px;
+                          flex-wrap:nowrap; justify-content:flex-start;
+                          overflow-x:auto; -webkit-overflow-scrolling:touch;
+                          scrollbar-width:none; }
+      .desc-filter-wrap::-webkit-scrollbar { display:none; }
+      .desc-filter-label, .desc-chip { flex-shrink:0; }
+      .desc-chip { padding:6px 12px; font-size:.63rem; }
+    }
+
     /* ============================
        PRODUCTS GRID — portrait 3:4
     ============================ */
@@ -2455,6 +2486,8 @@ function cerrarApertura(){}
     </div>
     <!-- Tabs ocultos para compatibilidad con goToSection -->
     <div class="filter-tabs" id="filterTabs" style="display:none"></div>
+    <!-- Filtro de descuentos del Buen Fin -->
+    <div class="desc-filter-wrap" id="descFilterWrap" style="display:none"></div>
     <!-- Filtro de tallas -->
     <div class="size-filter-wrap" id="sizeFilterWrap" style="display:none"></div>
   </div>
@@ -6251,6 +6284,7 @@ function showCatalog(section, pushHistory = true) {
   if (buenFinActivo() && S.user && ruletaPendiente()) setTimeout(abrirRuleta, 900);
   _currentFilter  = 'all';
   _currentSizeFilter = null;
+  _filtroDesc = null;
   const si = document.getElementById('searchInput');
   if (si) si.value = '';
   _searchQuery = '';
@@ -6384,6 +6418,34 @@ function renderSearchResults(query) {
 }
 
 let _currentSizeFilter = null;
+let _filtroDesc = null;        // null = todas · 'any' = solo con descuento · 30/40/50
+
+/** Chips de descuento. Solo aparecen si la categoría trae prendas rebajadas. */
+function renderFiltroDesc(products){
+  const wrap = document.getElementById('descFilterWrap');
+  if (!wrap) return;
+  const conDesc = products.filter(p => descuentoPromo(p));
+  if (!conDesc.length) { wrap.style.display = 'none'; _filtroDesc = null; return; }
+
+  const cuenta = d => conDesc.filter(p => descuentoPromo(p) === d).length;
+  const chip = (val, txt, n) =>
+    `<button class="desc-chip${_filtroDesc === val ? ' active' : ''}" onclick="filtrarPorDesc(${
+      typeof val === 'string' ? `'${val}'` : val})">${txt}${
+      n != null ? ` <span class="cuantas">(${n})</span>` : ''}</button>`;
+
+  wrap.style.display = 'flex';
+  wrap.innerHTML =
+    `<span class="desc-filter-label">🔥 Buen Fin</span>` +
+    chip(null, 'Ver todo', products.length) +
+    chip('any', 'Con descuento', conDesc.length) +
+    PROMO.descuentos.filter(d => cuenta(d)).map(d => chip(d, 'Ahorra ' + d + '%', cuenta(d))).join('');
+}
+
+function filtrarPorDesc(val){
+  _filtroDesc = val;
+  _currentSizeFilter = null;   // las tallas disponibles cambian con el filtro
+  renderGrid(_currentFilter);
+}
 
 function renderSizeFilter(products) {
   const wrap = document.getElementById('sizeFilterWrap');
@@ -6413,6 +6475,7 @@ function filterBySize(size, btn) {
 function filterBy(subcat, btn) {
   _currentFilter = subcat;
   _currentSizeFilter = null;
+  _filtroDesc = null;
   clearSearch();
   // Tabs ocultos
   if (btn) { document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
@@ -6442,6 +6505,10 @@ function renderGrid(subcat) {
   let all = getMergedProducts().filter(p => !p.hidden);
   if (_currentSection) all = all.filter(p => p.cat === _currentSection);
   let list = (subcat === 'all') ? all : all.filter(p => p.subcat === subcat);
+  // Los chips se arman antes de filtrar: así no desaparecen al usarlos
+  renderFiltroDesc(list);
+  if (_filtroDesc === 'any')      list = list.filter(p => descuentoPromo(p));
+  else if (_filtroDesc)           list = list.filter(p => descuentoPromo(p) === _filtroDesc);
   renderSizeFilter(list);
   if (_currentSizeFilter) list = list.filter(p => (p.sizes||[]).includes(_currentSizeFilter));
   if (!list.length) {
@@ -6454,7 +6521,9 @@ function renderGrid(subcat) {
         <button onclick="reintentarCarga()" style="background:var(--rose);color:#fff;border:none;padding:12px 28px;border-radius:50px;font-family:var(--ff-body);font-size:.85rem;letter-spacing:.08em;cursor:pointer;">↺ Reintentar</button>
       </div>`;
     } else {
-      grid.innerHTML = '<p class="no-products">No hay productos en esta categoría.</p>';
+      grid.innerHTML = `<p class="no-products">${_filtroDesc
+        ? 'No hay prendas con ese descuento en esta categoría.'
+        : 'No hay productos en esta categoría.'}</p>`;
     }
     return;
   }
