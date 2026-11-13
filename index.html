@@ -460,28 +460,38 @@
     .hero-tagline,.hero-location { display:none; }
 
     /* ─── Ticker ─── */
-    /* Publicidad del Buen Fin en la portada */
-    .promo-banner { position:relative; display:block; width:100%; cursor:pointer;
-                    background:#5B0C10; line-height:0; overflow:hidden; }
-    .promo-banner img { width:100%; height:auto; display:block;
-                        transition:transform .6s cubic-bezier(.22,1,.36,1); }
-    .promo-banner:hover img { transform:scale(1.02); }
-    /* Debajo de la imagen, no encima: cualquier botón sobrepuesto tapaba las fechas */
-    .promo-banner-cta { display:block; background:#8B1014; color:#fff; text-align:center;
-                        font-size:.66rem; font-weight:700; letter-spacing:.16em;
-                        text-transform:uppercase; padding:14px 20px; line-height:1; }
-    .promo-banner:hover .promo-banner-cta { background:#A3141A; }
+    /* Publicidad del Buen Fin: ventana emergente de la portada */
+    .promo-pop { display:none; position:fixed; inset:0; z-index:400;
+                 align-items:center; justify-content:center; padding:20px; }
+    .promo-pop.open { display:flex; }
+    .promo-pop-fondo { position:absolute; inset:0; background:rgba(10,4,5,.82);
+                       backdrop-filter:blur(5px); }
+    .promo-pop-caja { position:relative; z-index:1; width:100%; max-width:560px;
+                      background:#5B0C10; border-radius:18px; overflow:hidden; line-height:0;
+                      box-shadow:0 30px 80px rgba(0,0,0,.6); animation:popIn .35s ease; }
+    .promo-pop-caja img { width:100%; height:auto; display:block; cursor:pointer; }
+    .promo-pop-x { position:absolute; top:10px; right:10px; z-index:2;
+                   width:34px; height:34px; border-radius:50%; border:none;
+                   background:rgba(0,0,0,.55); color:#fff; font-size:14px; line-height:1;
+                   display:flex; align-items:center; justify-content:center; }
+    .promo-pop-x:hover { background:#000; }
+    .promo-pop-cta { display:block; width:100%; border:none; background:#8B1014; color:#fff;
+                     font-size:.7rem; font-weight:700; letter-spacing:.16em;
+                     text-transform:uppercase; padding:15px 20px; line-height:1; }
+    .promo-pop-cta:hover { background:#A3141A; }
     @media(max-width:640px){
-      .promo-banner-cta { font-size:.58rem; padding:12px 16px; letter-spacing:.12em; }
+      .promo-pop { padding:16px; }
+      .promo-pop-cta { font-size:.6rem; padding:13px 16px; letter-spacing:.12em; }
     }
 
     /* Precios con descuento del Buen Fin */
     .precio-antes { color:var(--text-light); text-decoration:line-through;
                     font-weight:400; margin-right:5px; opacity:.75; }
     .promo-badge  { position:absolute; top:12px; right:12px; z-index:3;
-                    background:#C0121A; color:#fff; font-size:.62rem; font-weight:800;
-                    letter-spacing:.06em; padding:5px 10px; border-radius:50px;
+                    background:#C0121A; color:#fff; font-size:.82rem; font-weight:800;
+                    letter-spacing:.03em; padding:8px 15px; border-radius:50px;
                     box-shadow:0 4px 14px rgba(0,0,0,.3); }
+    @media(max-width:640px){ .promo-badge { font-size:.74rem; padding:7px 13px; } }
     .cart-item-off{ font-size:.58rem; font-weight:700; letter-spacing:.06em;
                     color:#C0121A; margin-top:2px; }
     .sum-off      { color:#C0121A; font-weight:800; font-size:.9em; }
@@ -2394,11 +2404,16 @@ function cerrarApertura(){}
 
 
 <!-- ========== PUBLICIDAD BUEN FIN ========== -->
-<section class="promo-banner" id="promoBanner" onclick="showCatalog('mujer')">
-  <img src="/img/buenfin.jpg" alt="Buen Fin DUBREM — ofertas desde el 50% de descuento del 13 al 17 de noviembre"
-       loading="lazy" decoding="async">
-  <span class="promo-banner-cta">Ver ofertas →</span>
-</section>
+<div class="promo-pop" id="promoPop">
+  <div class="promo-pop-fondo" onclick="cerrarPromo()"></div>
+  <div class="promo-pop-caja">
+    <button class="promo-pop-x" onclick="cerrarPromo()" aria-label="Cerrar">✕</button>
+    <img src="/img/buenfin.jpg" onclick="showCatalog('mujer')"
+         alt="Buen Fin DUBREM — ofertas desde el 50% de descuento del 13 al 17 de noviembre"
+         decoding="async">
+    <button class="promo-pop-cta" onclick="showCatalog('mujer')">Ver ofertas →</button>
+  </div>
+</div>
 
 <!-- ========== TICKER ========== -->
 <div class="hero-ticker" aria-hidden="true">
@@ -5892,6 +5907,7 @@ document.addEventListener('DOMContentLoaded', () => {
     showCatalog(_initHash, false);
   } else {
     history.replaceState({}, '', location.pathname);
+    setTimeout(abrirPromo, 900);   // deja ver la portada antes de taparla
   }
 
   // Reabrir el panel que estaba abierto antes de recargar
@@ -5909,6 +5925,8 @@ document.addEventListener('DOMContentLoaded', () => {
       openOrdersPanel();
     }
   })();
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarPromo(); });
 
   // Retorno desde MercadoPago
   (function(){
@@ -6055,6 +6073,26 @@ const PROMO = {
   descuentos: [30, 40, 50]
 };
 
+/* La ventana se cierra con la ✕, con el fondo o entrando al catálogo.
+   Una vez cerrada no vuelve a salir en el día: quien ya la vio no tiene
+   por qué toparse con ella en cada visita. */
+const LS_PROMO_VISTA = 'dubrem_promo_vista_v1';
+
+function abrirPromo(){
+  if (!promoActiva()) return;
+  try { if (localStorage.getItem(LS_PROMO_VISTA) === diaLocal()) return; } catch (e) {}
+  const el = document.getElementById('promoPop');
+  if (el) el.classList.add('open');
+}
+
+function cerrarPromo(silencio){
+  const el = document.getElementById('promoPop');
+  if (!el || !el.classList.contains('open')) return;
+  el.classList.remove('open');
+  // Al entrar al catálogo se cierra sin darla por vista: puede volver mañana igual
+  if (!silencio) { try { localStorage.setItem(LS_PROMO_VISTA, diaLocal()); } catch (e) {} }
+}
+
 function promoActiva(){
   const hoy = diaLocal();
   return hoy >= PROMO.inicio && hoy <= PROMO.fin;
@@ -6200,8 +6238,7 @@ function closeMobileNav(){ document.getElementById('mobileNav').classList.remove
 function showCatalog(section, pushHistory = true) {
   if (pushHistory) history.pushState({ section }, '', '#' + section);
   document.getElementById('inicio').style.display = 'none';
-  const promo = document.getElementById('promoBanner');
-  if (promo) promo.style.display = 'none';
+  cerrarPromo(true);
   document.querySelector('.filter-bar').classList.add('catalog-visible');
   document.querySelector('.products-section').classList.add('catalog-visible');
   document.querySelector('.footer').classList.add('catalog-visible');
@@ -6240,8 +6277,6 @@ function reintentarCarga() {
 function showHero() {
   clearInterval(_heroInterval);
   document.getElementById('inicio').style.display = '';
-  const promo = document.getElementById('promoBanner');
-  if (promo) promo.style.display = promoActiva() ? '' : 'none';
   document.querySelector('.filter-bar').classList.remove('catalog-visible');
   document.querySelector('.products-section').classList.remove('catalog-visible');
   document.querySelector('.footer').classList.remove('catalog-visible');
@@ -6440,7 +6475,7 @@ function cardHTML(p) {
       <div class="product-img-wrap" onclick="openLightbox(${idArg})">
         <img src="${prodThumb(p) || IMG_FALLBACK}" alt="${p.name}" onerror="imgErr(this)" loading="lazy" decoding="async">
         <span class="cat-badge">${catLabel(p.subcat || p.cat)}</span>
-        ${descuentoPromo(p) ? `<span class="promo-badge">−${descuentoPromo(p)}%</span>` : ''}
+        ${descuentoPromo(p) ? `<span class="promo-badge">Ahorra ${descuentoPromo(p)}%</span>` : ''}
         <button class="card-quick-add" id="badd${p.id}" onclick="event.stopPropagation();addToCart(${idArg})" ${eff===0?'disabled':''}>${quickLbl}</button>
       </div>
       <div class="product-info">
@@ -6711,7 +6746,7 @@ function renderCartBody() {
               ? `<span class="precio-antes">${fmtMXN(precioLista(p))}</span> ${fmtMXN(p.price)} c/u`
               : `${fmtMXN(p.price)} c/u`}</div>
           <div class="cart-item-price">${fmtMXN(p.price*item.qty)}</div>
-          ${descuentoPromo(p) ? `<div class="cart-item-off">−${descuentoPromo(p)}% Buen Fin</div>` : ''}
+          ${descuentoPromo(p) ? `<div class="cart-item-off">Ahorras ${descuentoPromo(p)}% · Buen Fin</div>` : ''}
           <div class="qty-controls">
             <button class="qty-btn" onclick="changeQty(${idArg},-1)">−</button>
             <span class="qty-num">${item.qty}</span>
@@ -7021,7 +7056,7 @@ function summaryHTML(){
     const p=findProduct(item.id); if(!p) return '';
     const off = descuentoPromo(p);
     // Cada renglón va a precio de lista; lo rebajado se junta más abajo.
-    return `<div class="summary-line"><span>${p.name} × ${item.qty}${off?` <b class="sum-off">−${off}%</b>`:''}</span><span>${fmtMXN(precioLista(p)*item.qty)}</span></div>`;
+    return `<div class="summary-line"><span>${p.name} × ${item.qty}${off?` <b class="sum-off">Ahorra ${off}%</b>`:''}</span><span>${fmtMXN(precioLista(p)*item.qty)}</span></div>`;
   }).join('');
   const deliveryLbl = DELIVERY_LABELS[S.delivery] || '🏪 Recoger en tienda';
   const lineaPromo = promo > 0
